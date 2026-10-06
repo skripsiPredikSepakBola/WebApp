@@ -53,7 +53,22 @@ Aplikasi web Flask untuk memprediksi pertandingan sepak bola berdasarkan pemain 
    python app.py
    ```
 
-5. Buka [http://127.0.0.1:5000](http://127.0.0.1:5000) di browser. Hentikan server dengan `Ctrl+C`.
+   Jika port 5000 sedang dipakai program lain, jalankan di port 5001:
+
+   **macOS / Linux**
+
+   ```bash
+   PORT=5001 python app.py
+   ```
+
+   **Windows PowerShell**
+
+   ```powershell
+   $env:PORT = "5001"
+   python app.py
+   ```
+
+5. Buka `http://127.0.0.1:5000` di browser, atau `http://127.0.0.1:5001` jika memakai port 5001. Hentikan server dengan `Ctrl+C`.
 
 Aplikasi membaca database pemain, preset, dan model relatif terhadap lokasi `app.py`. Biarkan file aset di root repository dan jangan menjalankan aplikasi dari folder lain dengan memindahkan file-file tersebut.
 
