@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TacticalPredict — 400+ Clubs & National Teams Football Match AI</title>
+  <meta name="description" content="Pure player-based AI football match predictor with 400+ clubs and countries. Starting XI, bench depth, Poisson xG, and Explainable AI (XAI).">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-icon-box">⚽</div>
+        <div class="brand-text-group">
+          <h1 class="brand-title">Tactical<span>Predict</span></h1>
+          <span class="brand-sub">Pure Player Engine • 400+ Squad Presets</span>
+        </div>
+      </div>
+      
+      <!-- Quick Presets -->
+      <div class="header-presets">
+        <span class="presets-tag">⚡ Quick Clashes:</span>
+        <button class="preset-chip" onclick="loadMatchPreset('Spain (National Team)', 'England (National Team)')">🇪🇸 Spain vs 🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</button>
+        <button class="preset-chip" onclick="loadMatchPreset('Argentina (National Team)', 'France (National Team)')">🇦🇷 Argentina vs 🇫🇷 France</button>
+        <button class="preset-chip" onclick="loadMatchPreset('Real Madrid', 'FC Barcelona')">👑 Real Madrid vs Barça</button>
+        <button class="preset-chip" onclick="loadMatchPreset('Arsenal FC', 'Manchester City')">⚔️ Arsenal vs Man City</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    
+    <!-- Top Action Bar -->
+    <div class="action-bar-hero">
+      <button id="predict-btn" class="btn-predict-main" onclick="runPrediction()">
+        <span class="btn-icon">⚽</span>
+        <span class="btn-text">Predict Match & Goalscorers</span>
+      </button>
+    </div>
+
+    <!-- Prediction Results Section (Hidden until predicted) -->
+    <section id="results-card" class="results-section hidden">
+      
+      <!-- Hero Scoreboard Card -->
+      <div class="scoreboard-card">
+        <div class="sb-team sb-team-home">
+          <span class="sb-team-badge sb-badge-home">SQUAD 1</span>
+          <h2 class="sb-team-title" id="score-home-name">Squad 1</h2>
+          <span class="sb-team-xg-pill">Projected xG: <strong id="score-home-xg" style="color: var(--emerald-primary);">1.85</strong></span>
+        </div>
+
+        <div class="sb-center-display">
+          <span class="sb-winner-tag" id="winner-display">Squad 1 Victory Projected</span>
+          <div class="sb-score-digits" id="score-projected-val">2 - 1</div>
+          <span class="sb-score-sub">Most Likely Scoreline</span>
+        </div>
+
+        <div class="sb-team sb-team-away">
+          <span class="sb-team-badge sb-badge-away">SQUAD 2</span>
+          <h2 class="sb-team-title" id="score-away-name">Squad 2</h2>
+          <span class="sb-team-xg-pill">Projected xG: <strong id="score-away-xg" style="color: var(--blue-primary);">1.20</strong></span>
+        </div>
+      </div>
+
+      <!-- Mode Switcher Tabs -->
+      <div class="view-mode-tabs">
+        <button class="mode-tab active" id="tab-3class" onclick="switchViewMode('3class')">3-Class Probabilities</button>
+        <button class="mode-tab" id="tab-scores" onclick="switchViewMode('scores')">Exact Scorelines Matrix</button>
+        <button class="mode-tab" id="tab-binary" onclick="switchViewMode('binary')">Binary Win Probability (68.1%)</button>
+        <button class="mode-tab" id="tab-xai" onclick="switchViewMode('xai')">🧠 Key Match Drivers (XAI)</button>
+      </div>
+
+      <!-- 3-Class Probability Bars -->
+      <div id="view-3class" class="probability-container">
+        <div class="prob-box home-prob">
+          <div class="prob-header-row">
+            <span class="prob-team-name" id="prob-home-name">Squad 1 Win</span>
+            <span class="prob-value-big" id="prob-home-val">50.0%</span>
+          </div>
+          <div class="prob-track"><div class="prob-fill" id="prob-home-bar" style="width: 50.0%"></div></div>
+        </div>
+        <div class="prob-box draw-prob">
+          <div class="prob-header-row">
+            <span class="prob-team-name">Draw</span>
+            <span class="prob-value-big" id="prob-draw-val">25.0%</span>
+          </div>
+          <div class="prob-track"><div class="prob-fill" id="prob-draw-bar" style="width: 25.0%"></div></div>
+        </div>
+        <div class="prob-box away-prob">
+          <div class="prob-header-row">
+            <span class="prob-team-name" id="prob-away-name">Squad 2 Win</span>
+            <span class="prob-value-big" id="prob-away-val">25.0%</span>
+          </div>
+          <div class="prob-track"><div class="prob-fill" id="prob-away-bar" style="width: 25.0%"></div></div>
+        </div>
+      </div>
+
+      <!-- Exact Scorelines Matrix View -->
+      <div id="view-scores" class="scores-distribution-card hidden">
+        <div class="scores-header-row">
+          <div class="scores-title-group">
+            <h4>🎯 Bivariate Poisson Exact Scoreline Matrix</h4>
+            <span class="scores-subtitle">Top projected exact full-time scorelines with precise team attribution</span>
+          </div>
+          <div class="over-under-pill" id="over-under-display">
+            Over 2.5 Goals: <strong>55.0%</strong>
+          </div>
+        </div>
+        <div class="scores-grid" id="exact-scores-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Binary Win Confidence View -->
+      <div id="view-binary" class="binary-card hidden">
+        <div class="binary-header">
+          <span class="binary-title">Squad 1 Win Confidence Metric</span>
+          <span class="binary-score" id="bin-home-val">68.4%</span>
+        </div>
+        <div class="prob-track" style="height: 10px; margin-bottom: 12px;"><div class="prob-fill" id="bin-home-bar" style="width: 68.4%; background: linear-gradient(90deg, var(--blue-primary) 0%, var(--emerald-primary) 100%);"></div></div>
+        <div class="binary-footer">
+          <span>Verdict: <strong id="bin-verdict" style="color: #fff;">Squad 1 Victory Projected</strong></span>
+          <span>Confidence Tier: <strong id="bin-tier" style="color: var(--amber-primary);">High</strong></span>
+        </div>
+      </div>
+
+      <!-- Explainable AI (XAI) Drivers View -->
+      <div id="view-xai" class="xai-container hidden">
+        <div class="xai-header">
+          <div class="xai-title-row">
+            <h4>🧠 Explainable AI: Key Tactical Match Drivers</h4>
+            <span class="xai-subtitle">Local feature attribution sensitivity (factors driving the victory probability)</span>
+          </div>
+        </div>
+        <div class="xai-factors-grid" id="xai-factors-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Goalscorers AI Arena -->
+      <div class="scorers-arena">
+        <div class="scorers-column">
+          <h3 class="scorers-col-title">🎯 <span id="home-scorers-title">Squad 1</span> Top Goalscorers</h3>
+          <div class="scorers-list" id="home-scorers-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <div class="scorers-column">
+          <h3 class="scorers-col-title">🎯 <span id="away-scorers-title">Squad 2</span> Top Goalscorers</h3>
+          <div class="scorers-list" id="away-scorers-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Tactical Head-to-Head Comparison -->
+      <div class="tactical-breakdown">
+        <h3>⚔️ Head-to-Head Tactical Ratings</h3>
+        <div class="metrics-grid" id="tactical-metrics-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Squads Customizer Arena -->
+    <div class="arena-grid">
+      
+      <!-- SQUAD 1 PANEL -->
+      <section class="team-panel home-panel">
+        <div class="panel-header">
+          <div class="team-badge home-badge">SQUAD 1 (TEAM A)</div>
+          <div class="team-title-row">
+            <input type="text" id="home-team-name" class="team-name-input" value="Spain (National Team)" placeholder="Squad 1 Name" oninput="updateTeamLabels()">
+          </div>
+
+          <!-- Squad Preset Search & Selector -->
+          <div class="control-row">
+            <label for="home-preset-select">🔍 Search & Select Squad (400+ Teams):</label>
+            <div class="preset-search-box">
+              <input type="text" id="home-preset-filter" class="preset-filter-input" placeholder="Quick filter (e.g. Spain, Arsenal, Dortmund)..." oninput="filterPresetDropdown('home', this.value)">
+              <select id="home-preset-select" onchange="loadSingleTeamPreset('home', this.value)">
+                <!-- Dynamically populated by JS -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Formation Selector -->
+          <div class="control-row">
+            <label for="home-formation-select">📐 Tactical Formation:</label>
+            <select id="home-formation-select" onchange="changeFormation('home', this.value)">
+              <option value="4-3-3" selected>4-3-3 (4 DEF, 3 MID, 3 ATT)</option>
+              <option value="4-2-3-1">4-2-3-1 (4 DEF, 5 MID, 1 ATT)</option>
+              <option value="4-4-2">4-4-2 (4 DEF, 4 MID, 2 ATT)</option>
+              <option value="3-5-2">3-5-2 (3 DEF, 5 MID, 2 ATT)</option>
+              <option value="3-4-3">3-4-3 (3 DEF, 4 MID, 3 ATT)</option>
+              <option value="5-3-2">5-3-2 (5 DEF, 3 MID, 2 ATT)</option>
+              <option value="5-4-1">5-4-1 (5 DEF, 4 MID, 1 ATT)</option>
+              <option value="4-1-4-1">4-1-4-1 (4 DEF, 5 MID, 1 ATT)</option>
+            </select>
+          </div>
+
+          <!-- Pre-Match Form Selector -->
+          <div class="control-row">
+            <label for="home-form-select">📈 Squad Momentum (Last 5 Games):</label>
+            <select id="home-form-select">
+              <option value="2.6" selected>🔥 Excellent (4 Wins, 1 Draw)</option>
+              <option value="2.0">🟢 Good (3 Wins, 1 Draw, 1 Loss)</option>
+              <option value="1.4">🟡 Average (2 Wins, 1 Draw, 2 Losses)</option>
+              <option value="0.6">🔴 Poor (0-1 Wins, Multiple Losses)</option>
+            </select>
+          </div>
+          
+          <!-- Rating Stats Badge -->
+          <div class="team-stats-summary">
+            <div class="stat-item">
+              <span class="stat-label">Starting XI Avg</span>
+              <span class="stat-number" id="home-xi-avg">--</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Bench Avg</span>
+              <span class="stat-number" id="home-bench-avg">--</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Starters</span>
+              <span class="stat-number" id="home-starters-count">11/11</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Starting XI Section -->
+        <div class="lineup-section">
+          <div class="section-title">
+            <h4>Starting XI (<span id="home-formation-display">4-3-3</span>)</h4>
+            <span class="slot-hint">Search 50,000+ players</span>
+          </div>
+          <div class="slots-container" id="home-starters-container">
+            <!-- 11 Starters Slots generated by JS -->
+          </div>
+        </div>
+
+        <!-- Substitutes Bench Section -->
+        <div class="lineup-section subs-section">
+          <div class="section-title">
+            <h4>Substitutes & Bench Depth</h4>
+            <button class="btn-add-sub" onclick="addSubstituteSlot('home')">➕ Add Substitute</button>
+          </div>
+          <div class="slots-container" id="home-subs-container">
+            <!-- Subs dynamically added here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- SQUAD 2 PANEL -->
+      <section class="team-panel away-panel">
+        <div class="panel-header">
+          <div class="team-badge away-badge">SQUAD 2 (TEAM B)</div>
+          <div class="team-title-row">
+            <input type="text" id="away-team-name" class="team-name-input" value="England (National Team)" placeholder="Squad 2 Name" oninput="updateTeamLabels()">
+          </div>
+
+          <!-- Squad Preset Search & Selector -->
+          <div class="control-row">
+            <label for="away-preset-select">🔍 Search & Select Squad (400+ Teams):</label>
+            <div class="preset-search-box">
+              <input type="text" id="away-preset-filter" class="preset-filter-input" placeholder="Quick filter (e.g. England, Barca, Bayern)..." oninput="filterPresetDropdown('away', this.value)">
+              <select id="away-preset-select" onchange="loadSingleTeamPreset('away', this.value)">
+                <!-- Dynamically populated by JS -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Formation Selector -->
+          <div class="control-row">
+            <label for="away-formation-select">📐 Tactical Formation:</label>
+            <select id="away-formation-select" onchange="changeFormation('away', this.value)">
+              <option value="4-3-3">4-3-3 (4 DEF, 3 MID, 3 ATT)</option>
+              <option value="4-2-3-1" selected>4-2-3-1 (4 DEF, 5 MID, 1 ATT)</option>
+              <option value="4-4-2">4-4-2 (4 DEF, 4 MID, 2 ATT)</option>
+              <option value="3-5-2">3-5-2 (3 DEF, 5 MID, 2 ATT)</option>
+              <option value="3-4-3">3-4-3 (3 DEF, 4 MID, 3 ATT)</option>
+              <option value="5-3-2">5-3-2 (5 DEF, 3 MID, 2 ATT)</option>
+              <option value="5-4-1">5-4-1 (5 DEF, 4 MID, 1 ATT)</option>
+              <option value="4-1-4-1">4-1-4-1 (4 DEF, 5 MID, 1 ATT)</option>
+            </select>
+          </div>
+
+          <!-- Pre-Match Form Selector -->
+          <div class="control-row">
+            <label for="away-form-select">📈 Squad Momentum (Last 5 Games):</label>
+            <select id="away-form-select">
+              <option value="2.6">🔥 Excellent (4 Wins, 1 Draw)</option>
+              <option value="2.0" selected>🟢 Good (3 Wins, 1 Draw, 1 Loss)</option>
+              <option value="1.4">🟡 Average (2 Wins, 1 Draw, 2 Losses)</option>
+              <option value="0.6">🔴 Poor (0-1 Wins, Multiple Losses)</option>
+            </select>
+          </div>
+
+          <!-- Rating Stats Badge -->
+          <div class="team-stats-summary">
+            <div class="stat-item">
+              <span class="stat-label">Starting XI Avg</span>
+              <span class="stat-number" id="away-xi-avg">--</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Bench Avg</span>
+              <span class="stat-number" id="away-bench-avg">--</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Starters</span>
+              <span class="stat-number" id="away-starters-count">11/11</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Starting XI Section -->
+        <div class="lineup-section">
+          <div class="section-title">
+            <h4>Starting XI (<span id="away-formation-display">4-2-3-1</span>)</h4>
+            <span class="slot-hint">Search 50,000+ players</span>
+          </div>
+          <div class="slots-container" id="away-starters-container">
+            <!-- 11 Starters Slots generated by JS -->
+          </div>
+        </div>
+
+        <!-- Substitutes Bench Section -->
+        <div class="lineup-section subs-section">
+          <div class="section-title">
+            <h4>Substitutes & Bench Depth</h4>
+            <button class="btn-add-sub" onclick="addSubstituteSlot('away')">➕ Add Substitute</button>
+          </div>
+          <div class="slots-container" id="away-subs-container">
+            <!-- Subs dynamically added here -->
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>TacticalPredict • Pure Symmetrical Player Model • 400+ Clubs & Nations • Transfermarkt Dataset</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
