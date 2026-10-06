@@ -102,7 +102,7 @@ Request produksi UI mengirim pemain sebagai objek yang berisi `id`, `name`, dan 
 | `advanced_feature_cols.joblib` | Urutan fitur input yang diharapkan model. |
 | `requirements.txt` | Dependency Python. |
 
-File model `.joblib` harus diperlakukan sebagai pasangan dengan kode dan dependency yang sesuai. Mengganti atau melatih ulang model mungkin memerlukan versi scikit-learn yang digunakan saat model disimpan.
+File model `.joblib` disimpan dengan scikit-learn 1.6.1. Versi ini dipatok di `requirements.txt` karena model scikit-learn tidak dijamin dapat dimuat lintas versi.
 
 ## Tentang panel XAI
 
