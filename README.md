@@ -10,6 +10,8 @@ Aplikasi web Flask untuk memprediksi pertandingan sepak bola berdasarkan pemain 
 
 ## Menjalankan secara lokal
 
+> **Penting:** repository ini berisi source code, belum berupa situs yang di-host secara online. Alamat `http://127.0.0.1:5000` hanya dapat dibuka di komputer yang menjalankan server aplikasi. Membuka alamat itu langsung dari chat tidak akan menyalakan server.
+
 1. Clone repository dan masuk ke folder project:
 
    ```bash
@@ -19,27 +21,30 @@ Aplikasi web Flask untuk memprediksi pertandingan sepak bola berdasarkan pemain 
 
    Jika SSH belum diatur, gunakan URL HTTPS dari halaman GitHub repository.
 
-2. Buat dan aktifkan virtual environment:
+2. Pastikan interpreter yang dipakai Python 3.10 atau lebih baru. Contoh di bawah memakai Python 3.11. Periksa dulu dengan `python3.11 --version` (macOS/Linux) atau `py -3.11 --version` (Windows). Jika belum terpasang, pasang Python 3.11 terlebih dahulu.
+
+   Buat dan aktifkan virtual environment dari interpreter tersebut:
 
    **macOS / Linux**
 
    ```bash
-   python3 -m venv .venv
+   python3.11 -m venv .venv
    source .venv/bin/activate
    ```
 
    **Windows PowerShell**
 
    ```powershell
-   py -m venv .venv
+   py -3.11 -m venv .venv
    .venv\Scripts\Activate.ps1
    ```
 
 3. Pasang dependency:
 
    ```bash
+   python --version
    python -m pip install --upgrade pip
-   pip install -r requirements.txt
+   python -m pip install -r requirements.txt
    ```
 
 4. Jalankan server:
