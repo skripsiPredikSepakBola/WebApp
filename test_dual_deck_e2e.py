@@ -258,10 +258,77 @@ class TestDualDeckE2E(unittest.TestCase):
     def test_sync_status_endpoint(self):
         res = self.client.get('/api/sync/status')
         self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.headers.get('Access-Control-Allow-Origin'), '*')
         data = res.get_json()
         self.assertEqual(data.get('status'), 'ok')
         for k in ('enabled', 'running', 'supabase_configured', 'interval_sec', 'matches_synced'):
             self.assertIn(k, data)
+
+    def test_sync_post_and_cors(self):
+        opt = self.client.open('/api/sync', method='OPTIONS')
+        self.assertEqual(opt.status_code, 204)
+        self.assertEqual(opt.headers.get('Access-Control-Allow-Origin'), '*')
+
+        res = self.client.post('/api/sync')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.headers.get('Access-Control-Allow-Origin'), '*')
+        data = res.get_json()
+        self.assertEqual(data.get('status'), 'success')
+        self.assertGreater(int(data.get('matches_synced') or 0), 0)
+
+    def test_gh_pages_xlsx_beautified_export(self):
+        import base64
+        import io
+        import json
+        import shutil
+        import subprocess
+        import zipfile
+        import openpyxl
+
+        if not shutil.which('node'):
+            self.skipTest('Node.js not available for gh-pages-engine XLSX verification')
+
+        eng_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'js', 'gh-pages-engine.js').replace('\\', '/')
+        sample = {
+            'home_name': 'Spain (National Team)',
+            'away_name': 'England (National Team)',
+            'summary': {'headline': 'Spain favoured to win (46.2%)', 'confidence': 'Medium', 'points': ['Point 1', 'Point 2']},
+            'probabilities': {'home': 46.2, 'draw': 25.1, 'away': 28.7},
+            'score_prediction': {
+                'projected_home_xg': 1.72, 'projected_away_xg': 1.18, 'most_likely_score': '2 - 1',
+                'top_scores': [{'score': '2 - 1', 'prob': 11.4}], 'score_grid': [[5.1, 4.2], [7.8, 6.4]], 'over_2_5_prob': 53.6,
+            },
+            'goalscorers': {
+                'home': [{'name': 'Lamine Yamal', 'pos': 'ATT', 'slot_pos': 'RW', 'rating': 88, 'effective_rating': 88, 'oop_penalty': 0, 'club': 'FC Barcelona', 'age': 19, 'height': 180, 'career_goals': 25, 'goals_per_90': 0.42, 'anytime_prob': 34.5, 'expected_goals': 0.42}],
+                'away': [{'name': 'Harry Kane', 'pos': 'ATT', 'slot_pos': 'ST', 'rating': 91, 'effective_rating': 91, 'oop_penalty': 0, 'club': 'Bayern Munich', 'age': 33, 'height': 188, 'career_goals': 350, 'goals_per_90': 0.78, 'anytime_prob': 45.2, 'expected_goals': 0.60}],
+            },
+            'tactical_metrics': [{'label': 'Attack line', 'home': 86.3, 'away': 84.1}],
+            'lineups': {
+                'home': [{'name': 'Lamine Yamal', 'role': 'RW', 'slot_pos': 'RW', 'pos': 'ATT', 'rating': 88, 'effective_rating': 88, 'oop_penalty': 0, 'club': 'FC Barcelona', 'age': 19, 'height': 180, 'val': 200000000, 'goals_per_90': 0.42, 'total_goals': 25}],
+                'away': [{'name': 'Harry Kane', 'role': 'ST', 'slot_pos': 'ST', 'pos': 'ATT', 'rating': 91, 'effective_rating': 91, 'oop_penalty': 0, 'club': 'Bayern Munich', 'age': 33, 'height': 188, 'val': 90000000, 'goals_per_90': 0.78, 'total_goals': 350}],
+            },
+            'home_stats': {'starter_count': 11, 'starter_overall_mean': 85.4, 'starter_market_val_sum': 950000000},
+            'away_stats': {'starter_count': 11, 'starter_overall_mean': 84.2, 'starter_market_val_sum': 890000000},
+            'inputs': {'home_form_pts': 2.2, 'away_form_pts': 1.9, 'knockout': False, 'report_date': '2026-11-01'},
+        }
+        js = (
+            f"const eng = require({json.dumps(eng_path)});"
+            f"const b = eng.buildXlsxBytes({json.dumps(sample)}, {{model_3class_metrics:{{accuracy:56.2}},methodology:{{test_period:'2023-2026'}}}});"
+            "process.stdout.write(Buffer.from(b).toString('base64'));"
+        )
+        b64 = subprocess.check_output(['node', '-e', js], text=True)
+        raw = base64.b64decode(b64)
+        with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+            self.assertIn('xl/styles.xml', zf.namelist())
+        wb = openpyxl.load_workbook(io.BytesIO(raw))
+        self.assertEqual(wb.sheetnames, ['Summary', 'Raw Data'])
+        ws = wb['Summary']
+        self.assertFalse(ws.views.sheetView[0].showGridLines)
+        self.assertEqual(ws.sheet_properties.tabColor.rgb, 'FFF4B400')
+        self.assertGreaterEqual(len(ws.merged_cells.ranges), 15)
+        self.assertGreaterEqual(len(ws.conditional_formatting), 3)
+        self.assertEqual(ws['B2'].fill.start_color.rgb, 'FF1B2A4A')
+        self.assertEqual(wb['Raw Data'].freeze_panes, 'B1')
 
     def test_gh_pages_model_export_equivalence(self):
         import numpy as np

@@ -22,6 +22,21 @@ if hasattr(sys.stdout, 'reconfigure'):
 _BOOT_T0 = time.perf_counter()
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
+
+@app.after_request
+def _add_api_cors_headers(resp):
+    if request.path.startswith('/api/'):
+        resp.headers.setdefault('Access-Control-Allow-Origin', '*')
+        resp.headers.setdefault('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        resp.headers.setdefault('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    return resp
+
+
+@app.before_request
+def _api_preflight():
+    if request.method == 'OPTIONS' and request.path.startswith('/api/'):
+        return ('', 204)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.abspath(os.path.join(BASE_DIR, '.'))
 ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
@@ -103,15 +118,16 @@ _models_ready = threading.Event()
 _pd_mod = None
 _np_mod = None
 _sync_lock = threading.Lock()
+_init_local_sync = get_local_sync_state() or {}
 _sync_state = {
     'enabled': os.environ.get('AUTO_SYNC_ENABLED', '1').strip() not in ('0', 'false', 'no'),
     'interval_sec': int(os.environ.get('AUTO_SYNC_INTERVAL_SEC', '21600') or 21600),
     'running': False,
-    'last_sync': None,
+    'last_sync': _init_local_sync.get('last_sync'),
     'last_error': None,
-    'matches_synced': 0,
+    'matches_synced': len(_init_local_sync.get('finished_matches') or []),
     'players_updated': 0,
-    'last_result': None,
+    'last_result': _init_local_sync.get('last_result'),
 }
 _keep_alive_state = {
     'enabled': os.environ.get('KEEP_ALIVE_ENABLED', '1').strip() not in ('0', 'false', 'no'),
@@ -366,7 +382,12 @@ def reload_supabase_data():
     except Exception as e:
         print(f"Warning: Supabase load_all_presets failed, falling back to local JSON: {e}")
 
-    local_players = _load_local_json('players_lite.json', [])
+    with _data_lock:
+        snapshot_players = [dict(p) for p in players_lite]
+        snapshot_presets = dict(presets)
+        snapshot_cats = {k: list(v) for k, v in categories.items()}
+
+    local_players = _load_local_json('players_lite.json', []) or snapshot_players
     prev_extra = {
         pid: (
             p.get('image_url', ''),
@@ -448,8 +469,8 @@ def reload_supabase_data():
                 norms.append(nrm)
         new_blobs.append((p, ' | '.join(norms)))
 
-    local_presets = _load_local_json('preset_lineups.json', {})
-    local_cats = _load_local_json('preset_categories.json', {})
+    local_presets = _load_local_json('preset_lineups.json', {}) or snapshot_presets
+    local_cats = _load_local_json('preset_categories.json', {}) or snapshot_cats
     if sb_presets:
         merged_presets = dict(sb_presets)
         for k, v in local_presets.items():
@@ -601,24 +622,52 @@ def _bg_supabase_delta_sync():
         pass
 
 
+def _apply_local_player_deltas():
+    deltas = (get_local_sync_state() or {}).get('player_deltas') or {}
+    if not deltas:
+        return
+    club_norm_to_id = explorer_bundle.get('club_norm_to_id') or {}
+    with _data_lock:
+        for pid, d in deltas.items():
+            p = player_by_id.get(pid)
+            if p is None:
+                continue
+            for dk in ('club', 'pos', 'sub_pos', 'role', 'age', 'height', 'val'):
+                if d.get(dk) is not None:
+                    p[dk] = d[dk]
+            if d.get('club'):
+                cid = club_norm_to_id.get(normalize_text(d['club']))
+                if cid is not None:
+                    p['club_id'] = cid
+
+
 def _run_sync_once():
     if not _sync_lock.acquire(blocking=False):
         return {'status': 'busy', 'message': 'Sync already running'}
     _sync_state['running'] = True
     try:
-        res = sync_all()
+        res = sync_all(allow_local=True, include_squads=False)
         now_iso = datetime.now(timezone.utc).isoformat()
-        if 'error' in res or not res:
-            msg = res.get('error') or 'Set SUPABASE_URL and SUPABASE_KEY env vars to sync live finished matches.'
+        if not res or 'error' in res:
+            msg = (res or {}).get('error') or 'Sync unavailable.'
             _sync_state['last_error'] = msg
             return {'status': 'skipped', 'message': msg, 'synced': {}}
+        tm_matches = int(res.get('tmapi_matches') or 0)
+        local_matches = len((get_local_sync_state() or {}).get('finished_matches') or [])
         _sync_state['last_sync'] = now_iso
-        _sync_state['last_error'] = res.get('tmapi_error') or res.get('api_football_error') or res.get('football_data_error')
-        _sync_state['matches_synced'] = int(res.get('tmapi_matches') or 0) + int(res.get('api_football') or 0) + int(res.get('football_data') or 0)
+        err_msg = res.get('tmapi_error') or res.get('api_football_error') or res.get('football_data_error')
+        _sync_state['last_error'] = None if tm_matches > 0 else err_msg
+        _sync_state['matches_synced'] = max(
+            tm_matches + int(res.get('api_football') or 0) + int(res.get('football_data') or 0),
+            local_matches,
+        )
         _sync_state['players_updated'] = int(res.get('tmapi_players_updated') or 0) + int(res.get('players_updated') or 0)
         _sync_state['last_result'] = res
-        reload_supabase_data()
-        return {'status': 'success', 'synced': res}
+        if _sb_cfg()[0]:
+            reload_supabase_data()
+        else:
+            _apply_local_player_deltas()
+        return {'status': 'success', 'synced': res, 'matches_synced': _sync_state['matches_synced'], 'last_sync': now_iso}
     except Exception as e:
         _sync_state['last_error'] = str(e)
         return {'status': 'error', 'message': str(e)}
@@ -633,7 +682,7 @@ def _auto_sync_loop():
     interval = max(300, int(_sync_state.get('interval_sec') or 21600))
     while True:
         try:
-            if _sync_state.get('enabled') and _sb_cfg()[0]:
+            if _sync_state.get('enabled'):
                 _run_sync_once()
         except Exception as e:
             _sync_state['last_error'] = str(e)
@@ -1799,6 +1848,7 @@ def sync_status():
     sb_url, _ = _sb_cfg()
     local_st = get_local_sync_state() or {}
     last_s = _sync_state.get('last_sync') or local_st.get('last_sync')
+    cached_cnt = len(local_st.get('finished_matches') or [])
     return jsonify({
         'status': 'ok',
         'enabled': bool(_sync_state.get('enabled', True)),
@@ -1809,7 +1859,7 @@ def sync_status():
         'last_sync': last_s,
         'last_run': last_s,
         'last_error': _sync_state.get('last_error'),
-        'matches_synced': int(_sync_state.get('matches_synced') or 0),
+        'matches_synced': max(int(_sync_state.get('matches_synced') or 0), cached_cnt),
         'players_updated': int(_sync_state.get('players_updated') or 0),
         'last_result': _sync_state.get('last_result') or local_st.get('last_result'),
         'keep_alive': _keep_alive_state,

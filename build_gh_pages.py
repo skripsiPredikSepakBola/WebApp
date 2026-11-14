@@ -161,6 +161,12 @@ def build_site():
     }
     _write_json(os.path.join(DATA_OUT, 'models.json'), models_payload)
 
+    # Pre-seed live finished matches before exporting sync status & recent matches snapshots
+    try:
+        m._run_sync_once()
+    except Exception as e:
+        print(f'Warning: initial live match sync failed during static build: {e}')
+
     client = m.app.test_client()
 
     # Sync status & recent matches snapshot at build time

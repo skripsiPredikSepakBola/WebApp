@@ -81,6 +81,11 @@
   };
   const EXPLORE_REGIONS = ['All', 'Top 5 European', 'Southeast Asia (ASEAN)', 'European Domestic & Cups', 'Americas & Global', 'International'];
 
+  const AZURE_BACKEND_BASE = String(
+    g.__AZURE_BACKEND__ || 'https://skripsiwebapp-cehte7bwece0daad.indonesiacentral-01.azurewebsites.net'
+  ).replace(/\/+$/, '');
+  const SYNC_CACHE_KEY = 'pitchpulse_sync_cache_v1';
+
   const nativeFetch = typeof g.fetch === 'function' ? g.fetch.bind(g) : null;
   const scriptSrc = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : '';
   const assetRoot = scriptSrc
@@ -88,6 +93,42 @@
     : (g.location ? g.location.href.replace(/[^/]*$/, '') : 'http://localhost/');
   const cache = new Map();
   let fullIndexPromise = null;
+
+  function readSyncCache() {
+    try {
+      const raw = typeof g.localStorage !== 'undefined' ? g.localStorage.getItem(SYNC_CACHE_KEY) : null;
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeSyncCache(payload) {
+    try {
+      if (typeof g.localStorage !== 'undefined') {
+        g.localStorage.setItem(SYNC_CACHE_KEY, JSON.stringify(payload));
+      }
+    } catch (_) {
+      // Ignore storage quota or private mode restrictions
+    }
+  }
+
+  async function fetchBackendWithTimeout(path, init = {}, timeoutMs = 8000) {
+    if (typeof window === 'undefined' || !nativeFetch) return null;
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : null;
+    try {
+      return await nativeFetch(`${AZURE_BACKEND_BASE}${path}`, {
+        ...init,
+        cache: 'no-store',
+        signal: ctrl ? ctrl.signal : undefined,
+      });
+    } catch (_) {
+      return null;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
 
   function normalizeText(text) {
     if (!text) return '';
@@ -600,19 +641,231 @@
     return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  function sheetXml(rows) {
-    const rXml = rows.map((row, rIdx) => {
-      const cells = row.map((val, cIdx) => {
-        const col = String.fromCharCode(65 + (cIdx % 26));
-        const ref = `${cIdx >= 26 ? String.fromCharCode(64 + Math.floor(cIdx / 26)) : ''}${col}${rIdx + 1}`;
-        if (typeof val === 'number' && Number.isFinite(val)) {
-          return `<c r="${ref}"><v>${val}</v></c>`;
-        }
-        return `<c r="${ref}" t="inlineStr"><is><t>${xmlEsc(val)}</t></is></c>`;
-      }).join('');
-      return `<row r="${rIdx + 1}">${cells}</row>`;
+  function colLetter(cIdx) {
+    let n = cIdx + 1;
+    let out = '';
+    while (n > 0) {
+      const rem = (n - 1) % 26;
+      out = String.fromCharCode(65 + rem) + out;
+      n = Math.floor((n - 1) / 26);
+    }
+    return out;
+  }
+
+  function buildStylesXml() {
+    const fonts = [
+      { sz: 10, color: 'FF13201C' },
+      { sz: 11, color: 'FFC9D3E0' },
+      { sz: 24, color: 'FFFFFFFF', b: true },
+      { sz: 10, color: 'FFC9D3E0' },
+      { sz: 20, color: 'FF13201C', b: true },
+      { sz: 11, color: 'FF13201C', b: true },
+      { sz: 11, color: 'FF13201C' },
+      { sz: 11, color: 'FF5A6A65' },
+      { sz: 13, color: 'FF1B2A4A', b: true },
+      { sz: 12, color: 'FF13201C', b: true },
+      { sz: 1, color: 'FFFFFFFF' },
+      { sz: 9, color: 'FF5A6A65', i: true },
+      { sz: 26, color: 'FF1B2A4A', b: true },
+      { sz: 10, color: 'FF5A6A65' },
+      { sz: 10, color: 'FFFFFFFF', b: true },
+      { sz: 11, color: 'FF1B2A4A', b: true },
+      { sz: 9, color: 'FF5A6A65' },
+    ];
+    const fontXml = fonts.map(f =>
+      `<font>${f.b ? '<b/>' : ''}${f.i ? '<i/>' : ''}<sz val="${f.sz}"/><color rgb="${f.color}"/><name val="Arial"/></font>`
+    ).join('');
+
+    const fillsXml = [
+      '<fill><patternFill patternType="none"/></fill>',
+      '<fill><patternFill patternType="gray125"/></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FF1B2A4A"/><bgColor indexed="64"/></patternFill></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFF4B400"/><bgColor indexed="64"/></patternFill></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFEEF2F0"/><bgColor indexed="64"/></patternFill></fill>',
+    ].join('');
+
+    const bordersXml = [
+      '<border><left/><right/><top/><bottom/><diagonal/></border>',
+      '<border><left/><right/><top/><bottom style="medium"><color rgb="FF1B2A4A"/></bottom><diagonal/></border>',
+      '<border><left/><right/><top/><bottom style="thin"><color rgb="FFC5D0CC"/></bottom><diagonal/></border>',
+    ].join('');
+
+    const xfs = [
+      // 0: default
+      { numFmtId: 0, fontId: 0, fillId: 0, borderId: 0, v: 'center' },
+      // 1: Navy empty filler
+      { numFmtId: 0, fontId: 0, fillId: 2, borderId: 0, v: 'center' },
+      // 2: Banner kicker
+      { numFmtId: 0, fontId: 1, fillId: 2, borderId: 0, v: 'center' },
+      // 3: Banner title 24pt bold white
+      { numFmtId: 0, fontId: 2, fillId: 2, borderId: 0, v: 'center' },
+      // 4: Banner subtitle
+      { numFmtId: 0, fontId: 3, fillId: 2, borderId: 0, v: 'center' },
+      // 5: Headline 20pt wrapped
+      { numFmtId: 0, fontId: 4, fillId: 0, borderId: 0, v: 'center', wrap: true },
+      // 6: Amber confidence badge centered
+      { numFmtId: 0, fontId: 5, fillId: 3, borderId: 0, h: 'center', v: 'center' },
+      // 7: Confidence note indented
+      { numFmtId: 0, fontId: 7, fillId: 0, borderId: 0, v: 'center', indent: 1 },
+      // 8: Section title + medium navy bottom border
+      { numFmtId: 0, fontId: 8, fillId: 0, borderId: 1, v: 'center' },
+      // 9: Section empty filler + medium navy bottom border
+      { numFmtId: 0, fontId: 0, fillId: 0, borderId: 1, v: 'center' },
+      // 10: Prob label 11pt bold
+      { numFmtId: 0, fontId: 5, fillId: 0, borderId: 0, v: 'center' },
+      // 11: Prob pct 12pt bold 0.0% right
+      { numFmtId: 164, fontId: 9, fillId: 0, borderId: 0, h: 'right', v: 'center' },
+      // 12: DataBar hidden value
+      { numFmtId: 167, fontId: 10, fillId: 0, borderId: 0, v: 'center' },
+      // 13: Muted bold label
+      { numFmtId: 0, fontId: 7, fillId: 0, borderId: 0, v: 'center' },
+      // 14: Knockout italic note
+      { numFmtId: 0, fontId: 11, fillId: 0, borderId: 0, v: 'center' },
+      // 15: Scoreline hero 26pt bold navy centered
+      { numFmtId: 0, fontId: 12, fillId: 0, borderId: 0, h: 'center', v: 'center' },
+      // 16: xG subtitle centered
+      { numFmtId: 0, fontId: 13, fillId: 0, borderId: 0, h: 'center', v: 'center' },
+      // 17: Key point wrapped indented top
+      { numFmtId: 0, fontId: 6, fillId: 0, borderId: 0, v: 'top', wrap: true, indent: 1 },
+      // 18: Navy table header left
+      { numFmtId: 0, fontId: 14, fillId: 2, borderId: 0, h: 'left', v: 'center', wrap: true },
+      // 19: Navy table header right
+      { numFmtId: 0, fontId: 14, fillId: 2, borderId: 0, h: 'right', v: 'center' },
+      // 20: Navy table header left + indent 1
+      { numFmtId: 0, fontId: 14, fillId: 2, borderId: 0, h: 'left', v: 'center', indent: 1 },
+      // 21: Scorer / Comparison text 11pt + thin border
+      { numFmtId: 0, fontId: 6, fillId: 0, borderId: 2, v: 'center' },
+      // 22: Scorer team muted + thin border
+      { numFmtId: 0, fontId: 13, fillId: 0, borderId: 2, v: 'center' },
+      // 23: Scorer chance 11pt bold 0.0% right + thin border
+      { numFmtId: 164, fontId: 5, fillId: 0, borderId: 2, h: 'right', v: 'center' },
+      // 24: DataBar hidden + thin border
+      { numFmtId: 167, fontId: 10, fillId: 0, borderId: 2, v: 'center' },
+      // 25: Empty thin border
+      { numFmtId: 0, fontId: 0, fillId: 0, borderId: 2, v: 'center' },
+      // 26: Comparison 0.0 normal right + thin border
+      { numFmtId: 165, fontId: 6, fillId: 0, borderId: 2, h: 'right', v: 'center' },
+      // 27: Comparison 0.0 bold right + thin border
+      { numFmtId: 165, fontId: 5, fillId: 0, borderId: 2, h: 'right', v: 'center' },
+      // 28: Advantage navy bold indented + thin border
+      { numFmtId: 0, fontId: 15, fillId: 0, borderId: 2, v: 'center', indent: 1 },
+      // 29: Footer note 9pt muted wrapped
+      { numFmtId: 0, fontId: 16, fillId: 0, borderId: 0, v: 'top', wrap: true },
+      // 30: Raw italic note
+      { numFmtId: 0, fontId: 11, fillId: 0, borderId: 0, v: 'center' },
+      // 31: Raw Navy header center wrapped
+      { numFmtId: 0, fontId: 14, fillId: 2, borderId: 0, h: 'center', v: 'center', wrap: true },
+      // 32: Raw cell left even
+      { numFmtId: 0, fontId: 0, fillId: 0, borderId: 0, h: 'left', v: 'center' },
+      // 33: Raw cell center even
+      { numFmtId: 0, fontId: 0, fillId: 0, borderId: 0, h: 'center', v: 'center' },
+      // 34: Raw cell center odd (paper fill)
+      { numFmtId: 0, fontId: 0, fillId: 4, borderId: 0, h: 'center', v: 'center' },
+      // 35: Raw cell left odd (paper fill)
+      { numFmtId: 0, fontId: 0, fillId: 4, borderId: 0, h: 'left', v: 'center' },
+      // 36: Raw val #,##0 center even
+      { numFmtId: 166, fontId: 0, fillId: 0, borderId: 0, h: 'center', v: 'center' },
+      // 37: Raw val #,##0 center odd (paper fill)
+      { numFmtId: 166, fontId: 0, fillId: 4, borderId: 0, h: 'center', v: 'center' },
+    ];
+
+    const xfXml = xfs.map(x => {
+      const attrs = [
+        `numFmtId="${x.numFmtId}"`,
+        `fontId="${x.fontId}"`,
+        `fillId="${x.fillId}"`,
+        `borderId="${x.borderId}"`,
+        'xfId="0"',
+        x.numFmtId ? 'applyNumberFormat="1"' : '',
+        'applyFont="1"',
+        x.fillId ? 'applyFill="1"' : '',
+        x.borderId ? 'applyBorder="1"' : '',
+        'applyAlignment="1"',
+      ].filter(Boolean).join(' ');
+      const al = [
+        x.h ? `horizontal="${x.h}"` : '',
+        x.v ? `vertical="${x.v}"` : '',
+        x.wrap ? 'wrapText="1"' : '',
+        x.indent ? `indent="${x.indent}"` : '',
+      ].filter(Boolean).join(' ');
+      return `<xf ${attrs}><alignment ${al}/></xf>`;
     }).join('');
-    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${rXml}</sheetData></worksheet>`;
+
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+      + `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+      + `<numFmts count="4">`
+      + `<numFmt numFmtId="164" formatCode="0.0%"/>`
+      + `<numFmt numFmtId="165" formatCode="0.0"/>`
+      + `<numFmt numFmtId="166" formatCode="#,##0"/>`
+      + `<numFmt numFmtId="167" formatCode=";;;"/>`
+      + `</numFmts>`
+      + `<fonts count="${fonts.length}">${fontXml}</fonts>`
+      + `<fills count="5">${fillsXml}</fills>`
+      + `<borders count="3">${bordersXml}</borders>`
+      + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>`
+      + `<cellXfs count="${xfs.length}">${xfXml}</cellXfs>`
+      + `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>`
+      + `</styleSheet>`;
+  }
+
+  function sheetXml(spec) {
+    if (Array.isArray(spec)) spec = { rows: spec };
+    const {
+      rows = [],
+      colWidths = [],
+      rowHeights = {},
+      merges = [],
+      showGridLines = true,
+      tabColor = '',
+      freezeB1 = false,
+      dataBars = [],
+      orientation = 'portrait',
+    } = spec;
+
+    const sheetPr = `<sheetPr>${tabColor ? `<tabColor rgb="FF${tabColor}"/>` : ''}<pageSetUpPr fitToPage="1"/></sheetPr>`;
+    const paneXml = freezeB1 ? '<pane xSplit="1" topLeftCell="B1" activePane="topRight" state="frozen"/>' : '';
+    const sheetViews = `<sheetViews><sheetView workbookViewId="0" showGridLines="${showGridLines ? '1' : '0'}">${paneXml}</sheetView></sheetViews>`;
+    const colsXml = colWidths.length
+      ? `<cols>${colWidths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols>`
+      : '';
+
+    const rXml = rows.map((row, rIdx) => {
+      const rNum = rIdx + 1;
+      const ht = rowHeights[rNum];
+      const htAttr = ht ? ` ht="${ht}" customHeight="1"` : '';
+      const cells = (row || []).map((cell, cIdx) => {
+        if (cell === undefined || cell === null) return '';
+        const ref = `${colLetter(cIdx)}${rNum}`;
+        const obj = (typeof cell === 'object' && cell !== null && ('v' in cell || 's' in cell)) ? cell : { v: cell };
+        const sAttr = obj.s ? ` s="${obj.s}"` : '';
+        const val = obj.v;
+        if (val === '' || val === undefined || val === null) {
+          return obj.s ? `<c r="${ref}"${sAttr}/>` : '';
+        }
+        if (typeof val === 'number' && Number.isFinite(val)) {
+          return `<c r="${ref}"${sAttr}><v>${val}</v></c>`;
+        }
+        return `<c r="${ref}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${xmlEsc(val)}</t></is></c>`;
+      }).filter(Boolean).join('');
+      if (!cells && !ht) return '';
+      return `<row r="${rNum}"${htAttr}>${cells}</row>`;
+    }).filter(Boolean).join('');
+
+    const mergesXml = merges.length
+      ? `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>`
+      : '';
+
+    const cfXml = dataBars.map((db, idx) =>
+      `<conditionalFormatting sqref="${db.sqref}"><cfRule type="dataBar" priority="${idx + 1}"><dataBar showValue="0"><cfvo type="num" val="0"/><cfvo type="num" val="1"/><color rgb="FF${db.color}"/></dataBar></cfRule></conditionalFormatting>`
+    ).join('');
+
+    const pageSetup = `<pageMargins left="0.5" right="0.5" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="${orientation}" fitToWidth="1" fitToHeight="0"/>`;
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+      + `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+      + sheetPr + sheetViews + colsXml
+      + `<sheetData>${rXml}</sheetData>`
+      + mergesXml + cfXml + pageSetup
+      + `</worksheet>`;
   }
 
   function buildZip(entries) {
@@ -683,41 +936,323 @@
     return out;
   }
 
-  function buildXlsxBytes(d) {
-    const h = String(d.home_name || 'Home').replaceAll(' (National Team)', '');
-    const a = String(d.away_name || 'Away').replaceAll(' (National Team)', '');
+  function buildXlsxBytes(d, thesisMetrics = null) {
+    const NAVY = '1B2A4A';
+    const AMBER = 'F4B400';
+    const GREY = 'A9B6B1';
+    const nm = t => String(t ?? '').replaceAll(' (National Team)', '');
+    const h = nm(d.home_name || 'Home');
+    const a = nm(d.away_name || 'Away');
+    const sm = d.summary || {};
     const pr = d.probabilities || {};
     const sp = d.score_prediction || {};
-    const sm = d.summary || {};
+    const ko = d.knockout || null;
+    const repDt = (d.inputs || {}).report_date || '2026-11-01';
 
-    const sumRows = [
-      [`${h} vs ${a}`],
-      [sm.headline || '', '', '', `Confidence: ${sm.confidence || '-'}`],
-      [],
-      ['Outcome', 'Win Probability (%)', 'Projected xG'],
-      [`${h} Win`, pr.home ?? 0, sp.projected_home_xg ?? 0],
-      ['Draw', pr.draw ?? 0, ''],
-      [`${a} Win`, pr.away ?? 0, sp.projected_away_xg ?? 0],
-      [],
-      ['Most Likely Score', sp.most_likely_score || '-', 'Over 2.5 Goals (%)', sp.over_2_5_prob ?? 0],
-      [],
-      ['Category', h, a, 'Edge'],
-      ...(d.tactical_metrics || []).map(m => [m.label, m.home, m.away, Math.round((m.home - m.away) * 10) / 10]),
-    ];
+    // ---- Sheet 1: Summary (mirrors app.py openpyxl layout) ----
+    const sRows = [];
+    const sHeights = { 1: 20, 2: 40, 3: 22, 5: 34, 6: 22 };
+    const sMerges = [];
+    const sBars = [];
 
-    const rawRows = [
-      ['Team', 'Role', 'Slot', 'Player', 'Pos', 'Nat Role', 'Base Rating', 'Effective Rating', 'OOP Penalty', 'Goals/90'],
-      ...(d.lineups?.home || []).map(p => [h, p.role, p.slot_pos, p.name, p.pos, p.pos_role, p.rating, p.effective_rating, p.oop_penalty, p.goals_per_90 ?? 0]),
-      ...(d.lineups?.away || []).map(p => [a, p.role, p.slot_pos, p.name, p.pos, p.pos_role, p.rating, p.effective_rating, p.oop_penalty, p.goals_per_90 ?? 0]),
-    ];
+    const ensureRow = rNum => {
+      while (sRows.length < rNum) sRows.push([]);
+      return sRows[rNum - 1];
+    };
+    const put = (rowNum, colNum, v, styleId = 0, mergeTo = null) => {
+      const row = ensureRow(rowNum);
+      row[colNum - 1] = { v, s: styleId };
+      if (mergeTo && mergeTo > colNum) {
+        for (let c = colNum + 1; c <= mergeTo; c++) row[c - 1] = { v: '', s: styleId };
+        sMerges.push(`${colLetter(colNum - 1)}${rowNum}:${colLetter(mergeTo - 1)}${rowNum}`);
+      }
+    };
+
+    // Banner (rows 1..3, cols 1..8 Navy)
+    for (const rNum of [1, 2, 3]) {
+      for (let c = 1; c <= 8; c++) put(rNum, c, '', 1);
+    }
+    const fmtDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    put(1, 2, 'Match prediction report', 2);
+    put(2, 2, `${h}  v  ${a}`, 3, 8);
+    put(3, 2, `Prepared ${fmtDate}  |  As-of Date: ${repDt}  |  Format: ${ko ? 'Knockout (penalties if level)' : 'Single match, 90 minutes'}`, 4, 8);
+
+    // Headline + Confidence badge
+    let r = 5;
+    put(r, 2, nm(sm.headline || `${h} vs ${a}`), 5, 8);
+    r += 1;
+    const confNote = {
+      High: 'One side is clearly stronger.',
+      Medium: 'One side has an edge, but upsets are common.',
+      Low: 'The sides are close. Read this as a lean, not a call.',
+    };
+    put(r, 2, `${sm.confidence || 'Medium'} confidence`, 6);
+    put(r, 3, confNote[sm.confidence] || '', 7, 8);
+
+    const addSection = title => {
+      r += 1;
+      for (let c = 2; c <= 8; c++) put(r, c, '', 9);
+      put(r, 2, title, 8);
+      sHeights[r] = 24;
+      r += 1;
+    };
+
+    // 1. Probabilities
+    addSection('Chance of each result after 90 minutes');
+    for (const [label, v, col] of [[`${h} win`, Number(pr.home || 0), AMBER], ['Draw', Number(pr.draw || 0), GREY], [`${a} win`, Number(pr.away || 0), NAVY]]) {
+      put(r, 2, label, 10);
+      put(r, 3, v / 100, 11);
+      put(r, 4, v / 100, 12, 8);
+      sBars.push({ sqref: `D${r}`, color: col });
+      sHeights[r] = 24;
+      r += 1;
+    }
+    if (ko) {
+      r += 1;
+      put(r, 2, 'Chance to go through (includes penalties)', 13, 8);
+      r += 1;
+      for (const [label, v, col] of [[h, Number(ko.advance_home || 0), AMBER], [a, Number(ko.advance_away || 0), NAVY]]) {
+        put(r, 2, label, 10);
+        put(r, 3, v / 100, 11);
+        put(r, 4, v / 100, 12, 8);
+        sBars.push({ sqref: `D${r}`, color: col });
+        sHeights[r] = 24;
+        r += 1;
+      }
+      put(r, 2, `Chance the match goes to a shootout: ${ko.shootout_prob}%. Shootout odds are an estimate, not trained on shootout data.`, 14, 8);
+      r += 1;
+    }
+
+    // 2. Most likely score
+    addSection('Most likely score');
+    const [ga, gb] = String(sp.most_likely_score || '1 - 1').split(' - ');
+    put(r, 2, `${h}   ${ga}  -  ${gb}   ${a}`, 15, 8);
+    sHeights[r] = 46;
+    r += 1;
+    put(r, 2, `Expected goals: ${h} ${sp.projected_home_xg ?? '-'}, ${a} ${sp.projected_away_xg ?? '-'}   |   More than 2.5 total goals: ${sp.over_2_5_prob ?? '-'}%`, 16, 8);
+    r += 1;
+
+    // 3. Key points
+    addSection('Key points');
+    for (const pt of (sm.points || [])) {
+      const txt = nm(pt);
+      put(r, 2, `-  ${txt}`, 17, 8);
+      sHeights[r] = 18 * Math.max(1, Math.ceil(txt.length / 100)) + 4;
+      r += 1;
+    }
+
+    // 4. Goalscorers
+    addSection('Most likely goalscorers (chance to score at any time)');
+    put(r, 2, 'Player', 18);
+    put(r, 3, 'Team', 18);
+    put(r, 4, 'Chance', 19);
+    for (let c = 5; c <= 8; c++) put(r, c, '', 18);
+    r += 1;
+    for (const [side, nme, col] of [['home', h, AMBER], ['away', a, NAVY]]) {
+      for (const p of ((d.goalscorers || {})[side] || []).slice(0, 4)) {
+        const pct = Number(p.anytime_prob || 0) / 100;
+        put(r, 2, p.name || '', 21);
+        put(r, 3, nme, 22);
+        put(r, 4, pct, 23);
+        put(r, 5, pct, 24, 8);
+        sBars.push({ sqref: `E${r}`, color: col });
+        r += 1;
+      }
+    }
+
+    // 5. Team comparison
+    addSection('Team comparison');
+    put(r, 2, 'Area', 18);
+    put(r, 3, h, 19);
+    put(r, 4, a, 19);
+    put(r, 5, 'Advantage', 20);
+    for (let c = 6; c <= 8; c++) put(r, c, '', 18);
+    r += 1;
+    for (const m of (d.tactical_metrics || [])) {
+      const hv = Number(m.home || 0), av = Number(m.away || 0);
+      const win = hv > av ? h : av > hv ? a : 'Even';
+      put(r, 2, nm(m.label || ''), 21);
+      put(r, 3, hv, hv > av ? 27 : 26);
+      put(r, 4, av, av > hv ? 27 : 26);
+      put(r, 5, win, 28);
+      for (let c = 6; c <= 8; c++) put(r, c, '', 25);
+      r += 1;
+    }
+
+    // 6. How to read this
+    addSection('How to read this');
+    let accNote = 'Figures are model probabilities, not certainties.';
+    const tm = thesisMetrics || cache.get('thesis_metrics.json');
+    if (tm && !(tm instanceof Promise)) {
+      const acc = tm?.model_3class_metrics?.accuracy;
+      const tp = tm?.methodology?.test_period;
+      if (acc != null && tp) accNote = `Figures are model probabilities, not certainties. Reference accuracy on unseen matches (${tp}): ${acc}% for win/draw/loss.`;
+    }
+    for (const noteTxt of [
+      accNote,
+      'Inputs: starting lineups and bench, player ratings from Transfermarkt data, recent form, and formation. Players outside their natural position are rated lower.',
+      'Full lineups, team statistics and every scoreline are on the Raw Data sheet.',
+    ]) {
+      put(r, 2, noteTxt, 29, 8);
+      sHeights[r] = 26;
+      r += 1;
+    }
+
+    // ---- Sheet 2: Raw Data (mirrors app.py multi-block layout) ----
+    const prettyMap = {
+      val: 'Market value',
+      pos: 'Natural position',
+      slot_pos: 'Played as',
+      goals_per_90: 'Goals per 90',
+      total_goals: 'Career goals',
+      effective_rating: 'Effective rating',
+      oop_penalty: 'Out-of-position penalty',
+      anytime_prob: 'Chance to score %',
+      career_goals: 'Career goals',
+      expected_goals: 'Expected goals',
+    };
+    const pretty = k => prettyMap[k] || String(k).replaceAll('_', ' ').replace(/^./, c => c.toUpperCase());
+    const STAT_LABELS = {
+      depth_gap: 'Starter-to-bench rating gap',
+      has_outfield_in_gk: 'Outfield player in goal',
+      height_mean_ATT: 'Average attacker height (cm)',
+      height_mean_DEF: 'Average defender height (cm)',
+      overall_mean_ATT: 'Attack rating',
+      overall_mean_DEF: 'Defence rating',
+      overall_mean_GK: 'Goalkeeper rating',
+      overall_mean_MID: 'Midfield rating',
+      starter_age_mean: 'Average starter age',
+      starter_count: 'Starters',
+      starter_height_mean: 'Average starter height (cm)',
+      starter_market_val_sum: 'Starting XI market value',
+      starter_overall_max: 'Best starter rating',
+      starter_overall_mean: 'Average starter rating',
+      starter_overall_min: 'Weakest starter rating',
+      starter_prime_mean: 'Age-prime factor (0 to 1)',
+      sub_count: 'Substitutes',
+      sub_overall_max: 'Best substitute rating',
+      sub_overall_mean: 'Average substitute rating',
+    };
+
+    const rRows = [];
+    const rHeights = {};
+    const widths = {};
+    let rr = 0;
+
+    const addRawBlock = (title, rowList, note = null, order = null) => {
+      if (!rowList || !rowList.length) return;
+      const cols = order ? order.filter(c => c in rowList[0]) : Object.keys(rowList[0]);
+      if (!cols.length) return;
+      const titleRow = cols.map((_, cIdx) => ({ v: cIdx === 0 ? title : '', s: cIdx === 0 ? 8 : 9 }));
+      rRows[rr] = titleRow;
+      rHeights[rr + 1] = 24;
+      rr += 1;
+      if (note) {
+        rRows[rr] = [{ v: note, s: 30 }];
+        rr += 1;
+      }
+      rRows[rr] = cols.map((c, j) => {
+        const hdr = pretty(c);
+        widths[j] = Math.max(widths[j] || 0, hdr.length + 2);
+        return { v: hdr, s: j === 0 ? 18 : 31 };
+      });
+      rHeights[rr + 1] = 30;
+      rr += 1;
+      rowList.forEach((rowObj, n) => {
+        const odd = n % 2 === 1;
+        rRows[rr] = cols.map((c, j) => {
+          let v = rowObj[c];
+          if (typeof v === 'boolean') v = v ? 'Yes' : 'No';
+          else if (typeof v === 'number' && !Number.isInteger(v)) v = Math.round(v * 100) / 100;
+          else if (typeof v === 'string') v = nm(v);
+          const isBigNum = c === 'val' || (typeof v === 'number' && Math.abs(v) >= 100000);
+          let stId;
+          if (isBigNum) stId = odd ? 37 : 36;
+          else if (j === 0) stId = odd ? 35 : 32;
+          else stId = odd ? 34 : 33;
+          widths[j] = Math.max(widths[j] || 0, String(v ?? '').length + 2);
+          return { v: v ?? '', s: stId };
+        });
+        rr += 1;
+      });
+      rr += 1;
+    };
+
+    const inp = d.inputs || {};
+    addRawBlock('Match inputs', [{
+      'Home team': h,
+      'Away team': a,
+      'As-of Date': repDt,
+      'Home form (points per game)': inp.home_form_pts ?? 2.0,
+      'Away form (points per game)': inp.away_form_pts ?? 2.0,
+      Knockout: Boolean(inp.knockout),
+    }]);
+    if (d.home_stats && d.away_stats) {
+      addRawBlock('Team statistics', Object.keys(d.home_stats).map(k => ({
+        Statistic: STAT_LABELS[k] || pretty(k),
+        [h]: d.home_stats[k],
+        [a]: d.away_stats[k],
+      })));
+    }
+    addRawBlock('Team comparison', (d.tactical_metrics || []).map(m => ({ Area: m.label, [h]: m.home, [a]: m.away })));
+    for (const [side, nme] of [['home', h], ['away', a]]) {
+      addRawBlock(
+        `Lineup: ${nme}`,
+        (d.lineups || {})[side] || [],
+        'Effective rating includes any out-of-position penalty.',
+        ['name', 'role', 'slot_pos', 'pos', 'rating', 'effective_rating', 'oop_penalty', 'club', 'age', 'height', 'val', 'goals_per_90', 'total_goals']
+      );
+    }
+    for (const [side, nme] of [['home', h], ['away', a]]) {
+      addRawBlock(
+        `Goalscorer chances: ${nme}`,
+        (d.goalscorers || {})[side] || [],
+        null,
+        ['name', 'pos', 'slot_pos', 'rating', 'effective_rating', 'oop_penalty', 'club', 'age', 'height', 'career_goals', 'goals_per_90', 'anytime_prob', 'expected_goals']
+      );
+    }
+    addRawBlock('Top scorelines', (sp.top_scores || []).map(s => ({ Score: s.score, 'Probability %': s.prob })));
+    addRawBlock(
+      'All scorelines (probability %)',
+      (sp.score_grid || []).map((row, i) => {
+        const o = { [`${h} goals`]: i };
+        row.forEach((v, j) => { o[`${a} ${j}`] = v; });
+        return o;
+      }),
+      `Rows: ${h} goals. Columns: ${a} goals.`
+    );
+
+    const maxCols = Math.max(1, ...Object.keys(widths).map(Number).map(k => k + 1));
+    const rawColWidths = Array.from({ length: maxCols }, (_, j) => {
+      const w = widths[j] || 11;
+      return j === 0 ? Math.min(Math.max(w, 24), 34) : Math.min(Math.max(w, 11), 34);
+    });
 
     return buildZip([
-      ['[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
+      ['[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
       ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
       ['xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Summary" sheetId="1" r:id="rId1"/><sheet name="Raw Data" sheetId="2" r:id="rId2"/></sheets></workbook>'],
-      ['xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>'],
-      ['xl/worksheets/sheet1.xml', sheetXml(sumRows)],
-      ['xl/worksheets/sheet2.xml', sheetXml(rawRows)],
+      ['xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+      ['xl/styles.xml', buildStylesXml()],
+      ['xl/worksheets/sheet1.xml', sheetXml({
+        rows: sRows,
+        colWidths: [2, 40, 14, 14, 14, 14, 14, 14],
+        rowHeights: sHeights,
+        merges: sMerges,
+        showGridLines: false,
+        tabColor: AMBER,
+        dataBars: sBars,
+        orientation: 'portrait',
+      })],
+      ['xl/worksheets/sheet2.xml', sheetXml({
+        rows: rRows,
+        colWidths: rawColWidths,
+        rowHeights: rHeights,
+        showGridLines: false,
+        tabColor: NAVY,
+        freezeB1: true,
+        orientation: 'landscape',
+      })],
     ]);
   }
 
@@ -1046,11 +1581,101 @@
     if (path === '/api/categories') return { body: await loadData('categories.json') };
     if (path === '/api/preset-meta') return { body: await loadData('preset_meta.json') };
     if (path === '/api/thesis-metrics') return { body: await loadData('thesis_metrics.json') };
-    if (path === '/api/sync/status') return { body: await loadData('sync_status.json') };
-    if (path === '/api/matches/recent') return { body: await loadData('recent_matches.json') };
+    if (path === '/api/sync/status') {
+      const staticSt = await loadData('sync_status.json').catch(() => ({}));
+      const liveResp = await fetchBackendWithTimeout('/api/sync/status', {}, 5000);
+      if (liveResp && liveResp.ok) {
+        try {
+          const liveSt = await liveResp.json();
+          const merged = { ...staticSt, ...liveSt, deployment_mode: 'github_pages_live_backend' };
+          return { body: merged };
+        } catch (_) {}
+      }
+      const cached = readSyncCache();
+      if (cached) {
+        return {
+          body: {
+            ...staticSt,
+            last_sync: cached.last_sync || staticSt.last_sync,
+            last_run: cached.last_sync || staticSt.last_run,
+            matches_synced: cached.matches_synced ?? staticSt.matches_synced ?? (cached.finished_matches || []).length,
+            last_result: cached.last_result || staticSt.last_result,
+          },
+        };
+      }
+      return { body: staticSt };
+    }
+
+    if (path === '/api/matches/recent') {
+      const liveResp = await fetchBackendWithTimeout('/api/matches/recent', {}, 5000);
+      if (liveResp && liveResp.ok) {
+        try {
+          const liveRec = await liveResp.json();
+          if (Array.isArray(liveRec?.finished_matches) && liveRec.finished_matches.length > 0) {
+            const prev = readSyncCache() || {};
+            writeSyncCache({
+              ...prev,
+              finished_matches: liveRec.finished_matches,
+              matches_synced: liveRec.finished_matches.length,
+            });
+            return { body: liveRec };
+          }
+        } catch (_) {}
+      }
+      const cached = readSyncCache();
+      const staticRec = await loadData('recent_matches.json').catch(() => ({ finished_matches: [], recent_predictions: [] }));
+      if (cached?.finished_matches?.length) {
+        return { body: { ...staticRec, finished_matches: cached.finished_matches } };
+      }
+      return { body: staticRec };
+    }
+
     if (path === '/api/sync' && method === 'POST') {
-      const st = await loadData('sync_status.json').catch(() => ({}));
-      return { body: { status: 'success', synced: st.last_result || { mode: 'github_actions', message: 'Matches & players sync automatically every 6h via GitHub Actions.' } } };
+      const liveResp = await fetchBackendWithTimeout('/api/sync', { method: 'POST' }, 15000);
+      if (liveResp && liveResp.ok) {
+        try {
+          const syncJson = await liveResp.json();
+          if (syncJson && syncJson.status === 'success') {
+            const [recResp, stResp] = await Promise.all([
+              fetchBackendWithTimeout('/api/matches/recent', {}, 5000),
+              fetchBackendWithTimeout('/api/sync/status', {}, 5000),
+            ]);
+            const recData = recResp && recResp.ok ? await recResp.json().catch(() => null) : null;
+            const stData = stResp && stResp.ok ? await stResp.json().catch(() => null) : null;
+            const matches = recData?.finished_matches || [];
+            writeSyncCache({
+              last_sync: syncJson.last_sync || stData?.last_sync || new Date().toISOString(),
+              matches_synced: syncJson.matches_synced || stData?.matches_synced || matches.length,
+              last_result: syncJson.synced || stData?.last_result || null,
+              finished_matches: matches,
+            });
+            return { body: syncJson };
+          }
+        } catch (_) {}
+      }
+      const staticRec = await loadData('recent_matches.json').catch(() => ({ finished_matches: [] }));
+      const staticSt = await loadData('sync_status.json').catch(() => ({}));
+      const matches = staticRec.finished_matches || [];
+      const nowIso = new Date().toISOString();
+      const result = {
+        mode: 'static_snapshot',
+        tmapi_matches: matches.length,
+        ...(staticSt.last_result || {}),
+      };
+      writeSyncCache({
+        last_sync: nowIso,
+        matches_synced: matches.length,
+        last_result: result,
+        finished_matches: matches,
+      });
+      return {
+        body: {
+          status: 'success',
+          synced: result,
+          matches_synced: matches.length,
+          last_sync: nowIso,
+        },
+      };
     }
 
     if (path === '/api/snapshot') {
@@ -1082,7 +1707,24 @@
     }
 
     if (path === '/api/export' && method === 'POST') {
-      const bytes = buildXlsxBytes(body);
+      const liveResp = await fetchBackendWithTimeout('/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }, 10000);
+      if (liveResp && liveResp.ok) {
+        try {
+          const buf = await liveResp.arrayBuffer();
+          if (buf && buf.byteLength > 200) {
+            return {
+              rawBytes: new Uint8Array(buf),
+              contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            };
+          }
+        } catch (_) {}
+      }
+      const tm = await loadData('thesis_metrics.json').catch(() => null);
+      const bytes = buildXlsxBytes(body, tm);
       return { rawBytes: bytes, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
     }
 

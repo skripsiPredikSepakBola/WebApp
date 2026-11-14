@@ -462,10 +462,16 @@ function wireSyncModal() {
     $('sync-dlg-run').onclick = async () => {
       const btn = $('sync-dlg-run');
       btn.disabled = true; btn.textContent = 'Syncing...';
-      await syncMatches();
+      const ok = await syncMatches();
       await loadSyncStatus();
       renderSyncModalBody();
-      btn.disabled = false; btn.textContent = 'Sync Finished Matches Now';
+      if (ok) {
+        btn.textContent = 'Synced ✓';
+        setTimeout(() => { btn.textContent = 'Sync Finished Matches Now'; }, 2000);
+      } else {
+        btn.textContent = 'Sync Finished Matches Now';
+      }
+      btn.disabled = false;
     };
   }
   if ($('sync-dlg-jump')) {
@@ -1124,13 +1130,31 @@ async function loadThesisAndRecent() {
 async function syncMatches() {
   const b = $('sync-btn');
   if (b) { b.disabled = true; b.textContent = 'Syncing...'; }
+  let ok = false;
   try {
     const r = await (await fetch('/api/sync', { method: 'POST' })).json();
-    if (r.status === 'skipped' && $('recent-matches-box')) $('recent-matches-box').innerHTML = `<small>${escRaw(r.message)}</small>`;
-    else await loadThesisAndRecent();
+    if (r.status === 'skipped' && $('recent-matches-box')) {
+      $('recent-matches-box').innerHTML = `<small>${escRaw(r.message)}</small>`;
+    } else if (r.status === 'error' && $('recent-matches-box')) {
+      $('recent-matches-box').innerHTML = `<small>${escRaw(r.message || 'Sync error')}</small>`;
+    } else {
+      ok = r.status === 'success' || r.status === 'ok';
+      activeThesisTab = 'finished';
+      document.querySelectorAll('#thesis-tabs .tab-btn').forEach(x => x.classList.toggle('active', x.dataset.tab === 'finished'));
+      await loadThesisAndRecent();
+    }
     await loadSyncStatus();
   } catch (e) { console.error(e); }
-  if (b) { b.disabled = false; b.textContent = 'Sync Finished Matches'; }
+  if (b) {
+    b.disabled = false;
+    if (ok) {
+      b.textContent = 'Synced ✓';
+      setTimeout(() => { b.textContent = 'Sync Finished Matches'; }, 2000);
+    } else {
+      b.textContent = 'Sync Finished Matches';
+    }
+  }
+  return ok;
 }
 
 // ---- INTERACTIVE ENHANCEMENTS ----

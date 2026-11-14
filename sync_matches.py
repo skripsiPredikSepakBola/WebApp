@@ -39,6 +39,20 @@ _SHORT_POS_TO_ROLE = {
     'SS': 'CF', 'CF': 'CF', 'ST': 'ST',
 }
 _POS_FALLBACK = {'GK': 'GK', 'DEF': 'CB', 'MID': 'CM', 'ATT': 'ST'}
+COMP_NAMES = {
+    'GB1': 'Premier League',
+    'ES1': 'LaLiga',
+    'L1': 'Bundesliga',
+    'IT1': 'Serie A',
+    'FR1': 'Ligue 1',
+    'CL': 'UEFA Champions League',
+    'IN1L': 'Liga 1 Indonesia',
+    'MYS1': 'Malaysia Super League',
+    'THA1': 'Thai League 1',
+    'VIE1': 'V.League 1',
+    'SIN1': 'Singapore Premier League',
+}
+LOCAL_SYNC_CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'local_sync_cache.json')
 
 _LOCAL_SYNC_STATE = {
     'finished_matches': [],
@@ -46,6 +60,43 @@ _LOCAL_SYNC_STATE = {
     'last_sync': None,
     'last_result': None,
 }
+
+
+def _load_local_sync_state():
+    if not os.path.exists(LOCAL_SYNC_CACHE_PATH):
+        return
+    try:
+        with open(LOCAL_SYNC_CACHE_PATH, 'r', encoding='utf-8') as f:
+            cached = json.load(f) or {}
+        if isinstance(cached.get('finished_matches'), list):
+            _LOCAL_SYNC_STATE['finished_matches'] = cached['finished_matches']
+        if cached.get('last_sync'):
+            _LOCAL_SYNC_STATE['last_sync'] = cached['last_sync']
+        if isinstance(cached.get('last_result'), dict):
+            _LOCAL_SYNC_STATE['last_result'] = cached['last_result']
+    except Exception:
+        pass
+
+
+def _save_local_sync_state():
+    try:
+        os.makedirs(os.path.dirname(LOCAL_SYNC_CACHE_PATH), exist_ok=True)
+        slim_matches = [
+            {k: v for k, v in m.items() if k != 'raw_json'}
+            for m in (_LOCAL_SYNC_STATE.get('finished_matches') or [])[:50]
+        ]
+        payload = {
+            'finished_matches': slim_matches,
+            'last_sync': _LOCAL_SYNC_STATE.get('last_sync'),
+            'last_result': _LOCAL_SYNC_STATE.get('last_result'),
+        }
+        with open(LOCAL_SYNC_CACHE_PATH, 'w', encoding='utf-8') as f:
+            json.dump(payload, f, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+_load_local_sync_state()
 
 
 def get_local_sync_state():
@@ -284,8 +335,9 @@ def sync_tmapi_recent(
     competitions=('GB1', 'ES1', 'L1', 'IT1', 'FR1', 'CL', 'IN1L', 'MYS1', 'THA1', 'VIE1', 'SIN1'),
     days_back=7,
     allow_local=False,
+    include_squads=False,
 ):
-    """Sync recent finished matches (with lineups) and squad club/valuation/role updates via Transfermarkt JSON API."""
+    """Sync recent finished matches and optional squad club/valuation/role updates via Transfermarkt JSON API."""
     has_sb = bool(_sb_cfg()[0])
     if not has_sb and not allow_local:
         return {'matches': 0, 'players_updated': 0, 'roles_mapped': 0}
@@ -295,34 +347,73 @@ def sync_tmapi_recent(
     season = now_utc.year if now_utc.month >= 7 else now_utc.year - 1
     cutoff = now_utc - timedelta(days=days_back)
 
-    recent_game_ids, table_club_ids = [], []
+    def _fetch_comp(code):
+        fx = _tmapi_get(f'competition/{code}/fixtures?season={season}')
+        fin_games = [
+            g
+            for grp in ((fx.get('data') or {}).get('fixtures') or [])
+            for g in (grp.get('games') or [])
+            if g.get('isFinished')
+        ]
+        if not fin_games:
+            fx_prev = _tmapi_get(f'competition/{code}/fixtures?season={season - 1}')
+            fin_games = [
+                g
+                for grp in ((fx_prev.get('data') or {}).get('fixtures') or [])
+                for g in (grp.get('games') or [])
+                if g.get('isFinished')
+            ]
+        cids = []
+        if include_squads:
+            tbl = _tmapi_get(f'competition/{code}/table?season={season}')
+            for t in (tbl.get('data') or {}).get('tables') or []:
+                for c in t.get('clubs') or []:
+                    cid = c.get('clubId')
+                    if cid:
+                        cids.append(str(cid))
+        return code, fin_games, cids
+
+    in_window, comp_latest, table_club_ids = [], [], []
     seen_games, seen_clubs = set(), set()
 
-    for code in competitions:
-        fx = _tmapi_get(f'competition/{code}/fixtures?season={season}')
-        for grp in (fx.get('data') or {}).get('fixtures') or []:
-            for g in grp.get('games') or []:
-                if not g.get('isFinished'):
-                    continue
-                dt = _parse_utc(((g.get('baseDetails') or {}).get('date') or {}).get('dateTimeUTC'))
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        for code, fin_games, cids in pool.map(_fetch_comp, competitions):
+            comp_rows = []
+            for g in fin_games:
                 gid = g.get('id')
-                if gid and dt and dt >= cutoff and str(gid) not in seen_games:
-                    seen_games.add(str(gid))
-                    recent_game_ids.append(str(gid))
+                if not gid or str(gid) in seen_games:
+                    continue
+                base = g.get('baseDetails') or {}
+                dt_str = (base.get('date') or {}).get('dateTimeUTC')
+                dt = _parse_utc(dt_str)
+                if not dt or dt > now_utc:
+                    continue
+                seen_games.add(str(gid))
+                item = (dt, code, g)
+                comp_rows.append(item)
+                if dt >= cutoff:
+                    in_window.append(item)
+            comp_rows.sort(key=lambda x: x[0], reverse=True)
+            comp_latest.extend(comp_rows[:4])
+            for cid in cids:
+                if cid not in seen_clubs:
+                    seen_clubs.add(cid)
+                    table_club_ids.append(cid)
 
-        tbl = _tmapi_get(f'competition/{code}/table?season={season}')
-        for t in (tbl.get('data') or {}).get('tables') or []:
-            for c in t.get('clubs') or []:
-                cid = c.get('clubId')
-                if cid and str(cid) not in seen_clubs:
-                    seen_clubs.add(str(cid))
-                    table_club_ids.append(str(cid))
+    chosen = list(in_window)
+    if len(chosen) < 15:
+        chosen_ids = {str(g.get('id')) for _, _, g in chosen}
+        for item in comp_latest:
+            if str(item[2].get('id')) not in chosen_ids:
+                chosen.append(item)
+                chosen_ids.add(str(item[2].get('id')))
+    chosen.sort(key=lambda x: x[0], reverse=True)
+    chosen = chosen[:50]
 
-    games = _tmapi_batches('games', recent_game_ids)
     all_club_ids = list(dict.fromkeys(
         table_club_ids
-        + [str((g.get('homeClub') or {}).get('clubId') or '') for g in games]
-        + [str((g.get('awayClub') or {}).get('clubId') or '') for g in games]
+        + [str((g.get('homeClub') or {}).get('clubId') or '') for _, _, g in chosen]
+        + [str((g.get('awayClub') or {}).get('clubId') or '') for _, _, g in chosen]
     ))
     club_names = {
         str(c['id']): c.get('name', '')
@@ -331,7 +422,7 @@ def sync_tmapi_recent(
     }
 
     match_rows = []
-    for g in games:
+    for _, code, g in chosen:
         gid = g.get('id')
         if not gid:
             continue
@@ -339,10 +430,12 @@ def sync_tmapi_recent(
         score = g.get('score') or {}
         hc_id = str((g.get('homeClub') or {}).get('clubId') or '')
         ac_id = str((g.get('awayClub') or {}).get('clubId') or '')
+        comp_id = base.get('competitionId') or code
+        league_name = (base.get('competition') or {}).get('name') or COMP_NAMES.get(comp_id, comp_id)
         match_rows.append({
             'match_id': f'tmapi:{gid}',
             'source': 'tmapi-alpha',
-            'league': (base.get('competition') or {}).get('name') or base.get('competitionId') or '',
+            'league': league_name,
             'match_date': (base.get('date') or {}).get('dateTimeUTC') or None,
             'home_team': club_names.get(hc_id, hc_id),
             'away_team': club_names.get(ac_id, ac_id),
@@ -352,87 +445,91 @@ def sync_tmapi_recent(
             'raw_json': g,
             'synced_at': now_iso,
         })
-    _LOCAL_SYNC_STATE['finished_matches'] = match_rows[:50]
+
+    if match_rows:
+        _LOCAL_SYNC_STATE['finished_matches'] = match_rows[:50]
     matches_synced = upsert_finished_matches(match_rows) if has_sb else len(match_rows)
-
-    player_club = {}
-    def _fetch_squad(cid):
-        time.sleep(0.05)
-        sq = _tmapi_get(f'club/{cid}/squad?season={season}')
-        return cid, (sq.get('data') or {}).get('squad') or []
-
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        for cid, squad in pool.map(_fetch_squad, table_club_ids):
-            cname = club_names.get(cid, '')
-            if not cname:
-                continue
-            for sp in squad:
-                pid = sp.get('playerId')
-                if pid is not None and str(pid).isdigit():
-                    player_club[int(pid)] = cname
 
     players_updated = 0
     roles_mapped = 0
-    if player_club:
-        all_p = load_all_players() if has_sb else []
-        by_id = {p['id']: p for p in all_p}
-        tm_players = _tmapi_batches('players', list(player_club.keys()))
-        updates = {}
-        for pl in tm_players:
-            pid_raw = pl.get('id')
-            if pid_raw is None or not str(pid_raw).isdigit():
-                continue
-            pid = int(pid_raw)
-            base = by_id.get(pid) or {'id': pid, 'name': pl.get('name') or str(pid)}
-            attrs = pl.get('attributes') or {}
-            mv = ((pl.get('marketValueDetails') or {}).get('current') or {}).get('value')
-            age = (pl.get('lifeDates') or {}).get('age')
-            h_m = attrs.get('height')
-            new_club = player_club.get(pid) or base.get('club')
-            new_val = float(mv) if mv is not None else base.get('val')
-            new_pos = _map_tmapi_pos(attrs) or base.get('pos')
-            new_sub_pos, new_role = _map_tmapi_role(attrs, new_pos)
-            if new_role:
-                roles_mapped += 1
-            new_age = float(age) if age is not None else base.get('age')
-            new_height = round(float(h_m) * 100) if h_m else base.get('height')
-            _LOCAL_SYNC_STATE['player_deltas'][pid] = {
-                'id': pid,
-                'club': new_club,
-                'pos': new_pos,
-                'sub_pos': new_sub_pos,
-                'role': new_role,
-                'age': new_age,
-                'height': new_height,
-                'val': new_val,
-                'is_former': False,
-                'last_season': season,
-            }
-            if not has_sb or pid not in by_id:
-                continue
-            if (
-                new_club == base.get('club')
-                and float(new_val or 0) == float(base.get('val') or 0)
-                and new_pos == base.get('pos')
-            ):
-                continue
-            updates[pid] = {
-                'id': pid,
-                'name': base['name'],
-                'full_name': base.get('full_name'),
-                'tm_name': base.get('tm_name'),
-                'club': new_club,
-                'nat': base.get('nat'),
-                'pos': new_pos,
-                'rating': base.get('rating'),
-                'age': new_age,
-                'height': new_height,
-                'val': new_val,
-                'goals_per_90': base.get('goals_per_90'),
-                'total_goals': base.get('total_goals'),
-                'updated_at': now_iso,
-            }
-        players_updated = upsert_players(list(updates.values())) if has_sb else len(_LOCAL_SYNC_STATE['player_deltas'])
+    if include_squads and table_club_ids:
+        player_club = {}
+
+        def _fetch_squad(cid):
+            time.sleep(0.05)
+            sq = _tmapi_get(f'club/{cid}/squad?season={season}')
+            return cid, (sq.get('data') or {}).get('squad') or []
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            for cid, squad in pool.map(_fetch_squad, table_club_ids):
+                cname = club_names.get(cid, '')
+                if not cname:
+                    continue
+                for sp in squad:
+                    pid = sp.get('playerId')
+                    if pid is not None and str(pid).isdigit():
+                        player_club[int(pid)] = cname
+
+        if player_club:
+            all_p = load_all_players() if has_sb else []
+            by_id = {p['id']: p for p in all_p}
+            tm_players = _tmapi_batches('players', list(player_club.keys()))
+            updates = {}
+            for pl in tm_players:
+                pid_raw = pl.get('id')
+                if pid_raw is None or not str(pid_raw).isdigit():
+                    continue
+                pid = int(pid_raw)
+                base = by_id.get(pid) or {'id': pid, 'name': pl.get('name') or str(pid)}
+                attrs = pl.get('attributes') or {}
+                mv = ((pl.get('marketValueDetails') or {}).get('current') or {}).get('value')
+                age = (pl.get('lifeDates') or {}).get('age')
+                h_m = attrs.get('height')
+                new_club = player_club.get(pid) or base.get('club')
+                new_val = float(mv) if mv is not None else base.get('val')
+                new_pos = _map_tmapi_pos(attrs) or base.get('pos')
+                new_sub_pos, new_role = _map_tmapi_role(attrs, new_pos)
+                if new_role:
+                    roles_mapped += 1
+                new_age = float(age) if age is not None else base.get('age')
+                new_height = round(float(h_m) * 100) if h_m else base.get('height')
+                _LOCAL_SYNC_STATE['player_deltas'][pid] = {
+                    'id': pid,
+                    'club': new_club,
+                    'pos': new_pos,
+                    'sub_pos': new_sub_pos,
+                    'role': new_role,
+                    'age': new_age,
+                    'height': new_height,
+                    'val': new_val,
+                    'is_former': False,
+                    'last_season': season,
+                }
+                if not has_sb or pid not in by_id:
+                    continue
+                if (
+                    new_club == base.get('club')
+                    and float(new_val or 0) == float(base.get('val') or 0)
+                    and new_pos == base.get('pos')
+                ):
+                    continue
+                updates[pid] = {
+                    'id': pid,
+                    'name': base['name'],
+                    'full_name': base.get('full_name'),
+                    'tm_name': base.get('tm_name'),
+                    'club': new_club,
+                    'nat': base.get('nat'),
+                    'pos': new_pos,
+                    'rating': base.get('rating'),
+                    'age': new_age,
+                    'height': new_height,
+                    'val': new_val,
+                    'goals_per_90': base.get('goals_per_90'),
+                    'total_goals': base.get('total_goals'),
+                    'updated_at': now_iso,
+                }
+            players_updated = upsert_players(list(updates.values())) if has_sb else len(_LOCAL_SYNC_STATE['player_deltas'])
 
     return {'matches': matches_synced, 'players_updated': players_updated, 'roles_mapped': roles_mapped}
 
@@ -526,13 +623,13 @@ def sync_football_data(api_key, days_back=1):
     return upsert_finished_matches(rows)
 
 
-def sync_all(allow_local=False):
+def sync_all(allow_local=True, include_squads=False):
     url, _ = _sb_cfg()
     if not url and not allow_local:
         return {'error': 'Set SUPABASE_URL and SUPABASE_KEY env vars', 'configured': False}
-    synced = {'configured': bool(url)}
+    synced = {'configured': bool(url), 'mode': 'supabase' if url else 'local_cache'}
     try:
-        tm = sync_tmapi_recent(allow_local=allow_local)
+        tm = sync_tmapi_recent(allow_local=allow_local, include_squads=include_squads)
         synced['tmapi_matches'] = tm.get('matches', 0)
         synced['tmapi_players_updated'] = tm.get('players_updated', 0)
         synced['tmapi_roles_mapped'] = tm.get('roles_mapped', 0)
@@ -540,12 +637,12 @@ def sync_all(allow_local=False):
         synced['tmapi_error'] = str(e)
     af_key = os.environ.get('API_FOOTBALL_KEY', '').strip()
     fd_key = os.environ.get('FOOTBALL_DATA_KEY', '').strip()
-    if url and af_key:
+    if url and include_squads and af_key:
         try:
             synced['api_football'] = sync_api_football(af_key)
         except Exception as e:
             synced['api_football_error'] = str(e)
-    if url and fd_key:
+    if url and include_squads and fd_key:
         try:
             synced['football_data'] = sync_football_data(fd_key)
             synced['players_updated'] = sync_squad_players_fd(fd_key)
@@ -553,6 +650,7 @@ def sync_all(allow_local=False):
             synced['football_data_error'] = str(e)
     _LOCAL_SYNC_STATE['last_sync'] = datetime.now(timezone.utc).isoformat()
     _LOCAL_SYNC_STATE['last_result'] = synced
+    _save_local_sync_state()
     return synced
 
 
