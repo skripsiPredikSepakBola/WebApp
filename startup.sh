@@ -20,4 +20,4 @@ fi
     done
 ) &
 
-exec /tmp/antenv/bin/gunicorn --bind=0.0.0.0:${PORT:-8000} --timeout 180 --workers 1 app:app
+exec /tmp/antenv/bin/gunicorn --bind=0.0.0.0:${PORT:-8000} --timeout 180 --workers 1 --threads 4 app:app
