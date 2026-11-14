@@ -1,0 +1,33 @@
+name: Sync Finished Football Matches
+
+# Runs post-match sync (Transfermarkt JSON API -> Supabase) every 6 hours or on manual trigger.
+# Note: `sync_tmapi_recent` works with ONLY `SUPABASE_URL` and `SUPABASE_KEY` (no paid API keys required).
+# Optional `API_FOOTBALL_KEY` and `FOOTBALL_DATA_KEY` are only used if configured.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; elif [ -f web_app_new_v2/requirements.txt ]; then pip install -r web_app_new_v2/requirements.txt; fi
+      - name: Run post-match sync to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
+        run: |
+          if [ -f sync_matches.py ]; then python sync_matches.py; else python web_app_new_v2/sync_matches.py; fi

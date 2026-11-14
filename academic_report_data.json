@@ -1,0 +1,957 @@
+{
+  "title": "Academic Research Thesis Evaluation Report (Skripsi Defense)",
+  "methodology": {
+    "split_type": "Strict Time-Aware Chronological Split (Zero Future Data Leakage)",
+    "pre_kickoff_only": true,
+    "dataset_size_total_matches": 79060,
+    "symmetrical_samples_total": 158120,
+    "train_samples": 86400,
+    "val_samples": 11826,
+    "test_samples": 59894,
+    "train_period": "Historical Matches <= 2021",
+    "val_period": "Season 2022",
+    "test_period": "Seasons 2023 - 2026 (Unseen Future Hold-out)"
+  },
+  "model_3class_metrics": {
+    "model_name": "HistGradientBoosting (depth=6, l2=1)",
+    "accuracy": 52.74,
+    "log_loss": 0.9845,
+    "macro_f1": 0.3979,
+    "macro_precision": 0.5183,
+    "macro_recall": 0.4579,
+    "roc_auc_ovr_macro": 0.6636,
+    "symmetry_error": 0.01548418,
+    "tuned_tau_draw": 0.27,
+    "tuned_accuracy": 48.52,
+    "tuned_macro_f1": 0.4666,
+    "confusion_matrix": [
+      [
+        15832,
+        1,
+        7165
+      ],
+      [
+        6969,
+        4,
+        6925
+      ],
+      [
+        7243,
+        3,
+        15752
+      ]
+    ],
+    "classification_report": {
+      "Squad B Win (0)": {
+        "precision": 0.5269604579949407,
+        "recall": 0.6884076876250109,
+        "f1-score": 0.5969608989102975,
+        "support": 22998.0
+      },
+      "Draw (1)": {
+        "precision": 0.5,
+        "recall": 0.0002878111958555188,
+        "f1-score": 0.0005752912411908529,
+        "support": 13898.0
+      },
+      "Squad A Win (2)": {
+        "precision": 0.5278466590711078,
+        "recall": 0.6849291242716758,
+        "f1-score": 0.5962149886449659,
+        "support": 22998.0
+      },
+      "accuracy": 0.527398403846796,
+      "macro avg": {
+        "precision": 0.5182690390220163,
+        "recall": 0.4578748743641808,
+        "f1-score": 0.3979170595988181,
+        "support": 59894.0
+      },
+      "weighted avg": {
+        "precision": 0.5210447470244931,
+        "recall": 0.527398403846796,
+        "f1-score": 0.4582872150743984,
+        "support": 59894.0
+      }
+    }
+  },
+  "model_binary_metrics": {
+    "accuracy": 67.97,
+    "roc_auc": 0.7133,
+    "f1_score": 0.5012,
+    "macro_f1": 0.6326,
+    "log_loss": 0.5952,
+    "confusion_matrix": [
+      [
+        31072,
+        5824
+      ],
+      [
+        13361,
+        9637
+      ]
+    ],
+    "classification_report": {
+      "No Win / Draw (0)": {
+        "precision": 0.6993000697679652,
+        "recall": 0.8421509106678231,
+        "f1-score": 0.7641062843512154,
+        "support": 36896.0
+      },
+      "Squad A Win (1)": {
+        "precision": 0.6233102645365759,
+        "recall": 0.41903643795112616,
+        "f1-score": 0.5011570763670402,
+        "support": 22998.0
+      },
+      "accuracy": 0.6796841085918456,
+      "macro avg": {
+        "precision": 0.6613051671522705,
+        "recall": 0.6305936743094747,
+        "f1-score": 0.6326316803591279,
+        "support": 59894.0
+      },
+      "weighted avg": {
+        "precision": 0.6701216288438077,
+        "recall": 0.6796841085918456,
+        "f1-score": 0.6631394782400848,
+        "support": 59894.0
+      }
+    },
+    "roc_sample_curve": [
+      {
+        "fpr": 0.0,
+        "tpr": 0.0
+      },
+      {
+        "fpr": 0.0027,
+        "tpr": 0.0235
+      },
+      {
+        "fpr": 0.0054,
+        "tpr": 0.0412
+      },
+      {
+        "fpr": 0.0083,
+        "tpr": 0.0608
+      },
+      {
+        "fpr": 0.0109,
+        "tpr": 0.0742
+      },
+      {
+        "fpr": 0.0139,
+        "tpr": 0.0888
+      },
+      {
+        "fpr": 0.017,
+        "tpr": 0.1028
+      },
+      {
+        "fpr": 0.02,
+        "tpr": 0.1141
+      },
+      {
+        "fpr": 0.0225,
+        "tpr": 0.1245
+      },
+      {
+        "fpr": 0.0255,
+        "tpr": 0.1353
+      },
+      {
+        "fpr": 0.0287,
+        "tpr": 0.1448
+      },
+      {
+        "fpr": 0.032,
+        "tpr": 0.1569
+      },
+      {
+        "fpr": 0.0352,
+        "tpr": 0.1675
+      },
+      {
+        "fpr": 0.0381,
+        "tpr": 0.1766
+      },
+      {
+        "fpr": 0.0415,
+        "tpr": 0.1855
+      },
+      {
+        "fpr": 0.0447,
+        "tpr": 0.1946
+      },
+      {
+        "fpr": 0.048,
+        "tpr": 0.204
+      },
+      {
+        "fpr": 0.0515,
+        "tpr": 0.2129
+      },
+      {
+        "fpr": 0.0546,
+        "tpr": 0.2211
+      },
+      {
+        "fpr": 0.0579,
+        "tpr": 0.2295
+      },
+      {
+        "fpr": 0.0617,
+        "tpr": 0.238
+      },
+      {
+        "fpr": 0.0656,
+        "tpr": 0.2454
+      },
+      {
+        "fpr": 0.0695,
+        "tpr": 0.2532
+      },
+      {
+        "fpr": 0.0732,
+        "tpr": 0.2618
+      },
+      {
+        "fpr": 0.0773,
+        "tpr": 0.2693
+      },
+      {
+        "fpr": 0.0808,
+        "tpr": 0.2772
+      },
+      {
+        "fpr": 0.0844,
+        "tpr": 0.2852
+      },
+      {
+        "fpr": 0.0877,
+        "tpr": 0.2932
+      },
+      {
+        "fpr": 0.0913,
+        "tpr": 0.3003
+      },
+      {
+        "fpr": 0.0949,
+        "tpr": 0.3078
+      },
+      {
+        "fpr": 0.0987,
+        "tpr": 0.3159
+      },
+      {
+        "fpr": 0.1023,
+        "tpr": 0.3232
+      },
+      {
+        "fpr": 0.1058,
+        "tpr": 0.3292
+      },
+      {
+        "fpr": 0.1097,
+        "tpr": 0.3366
+      },
+      {
+        "fpr": 0.1131,
+        "tpr": 0.3447
+      },
+      {
+        "fpr": 0.1167,
+        "tpr": 0.3528
+      },
+      {
+        "fpr": 0.1204,
+        "tpr": 0.3605
+      },
+      {
+        "fpr": 0.1247,
+        "tpr": 0.3667
+      },
+      {
+        "fpr": 0.129,
+        "tpr": 0.3723
+      },
+      {
+        "fpr": 0.1332,
+        "tpr": 0.3805
+      },
+      {
+        "fpr": 0.1373,
+        "tpr": 0.3873
+      },
+      {
+        "fpr": 0.1418,
+        "tpr": 0.3948
+      },
+      {
+        "fpr": 0.1464,
+        "tpr": 0.4012
+      },
+      {
+        "fpr": 0.1503,
+        "tpr": 0.4073
+      },
+      {
+        "fpr": 0.1546,
+        "tpr": 0.414
+      },
+      {
+        "fpr": 0.1589,
+        "tpr": 0.4217
+      },
+      {
+        "fpr": 0.163,
+        "tpr": 0.4276
+      },
+      {
+        "fpr": 0.167,
+        "tpr": 0.4343
+      },
+      {
+        "fpr": 0.1709,
+        "tpr": 0.4406
+      },
+      {
+        "fpr": 0.175,
+        "tpr": 0.4473
+      },
+      {
+        "fpr": 0.1798,
+        "tpr": 0.4534
+      },
+      {
+        "fpr": 0.1837,
+        "tpr": 0.4596
+      },
+      {
+        "fpr": 0.1882,
+        "tpr": 0.4663
+      },
+      {
+        "fpr": 0.1925,
+        "tpr": 0.4726
+      },
+      {
+        "fpr": 0.1975,
+        "tpr": 0.4794
+      },
+      {
+        "fpr": 0.2019,
+        "tpr": 0.4864
+      },
+      {
+        "fpr": 0.2069,
+        "tpr": 0.4926
+      },
+      {
+        "fpr": 0.2108,
+        "tpr": 0.4987
+      },
+      {
+        "fpr": 0.2152,
+        "tpr": 0.505
+      },
+      {
+        "fpr": 0.2206,
+        "tpr": 0.5114
+      },
+      {
+        "fpr": 0.2258,
+        "tpr": 0.5179
+      },
+      {
+        "fpr": 0.2298,
+        "tpr": 0.5237
+      },
+      {
+        "fpr": 0.2348,
+        "tpr": 0.53
+      },
+      {
+        "fpr": 0.2397,
+        "tpr": 0.5367
+      },
+      {
+        "fpr": 0.2449,
+        "tpr": 0.5424
+      },
+      {
+        "fpr": 0.25,
+        "tpr": 0.5476
+      },
+      {
+        "fpr": 0.2557,
+        "tpr": 0.5541
+      },
+      {
+        "fpr": 0.2607,
+        "tpr": 0.5602
+      },
+      {
+        "fpr": 0.2667,
+        "tpr": 0.5664
+      },
+      {
+        "fpr": 0.2722,
+        "tpr": 0.5717
+      },
+      {
+        "fpr": 0.2772,
+        "tpr": 0.5778
+      },
+      {
+        "fpr": 0.2822,
+        "tpr": 0.5827
+      },
+      {
+        "fpr": 0.2868,
+        "tpr": 0.5884
+      },
+      {
+        "fpr": 0.2914,
+        "tpr": 0.5946
+      },
+      {
+        "fpr": 0.2966,
+        "tpr": 0.6007
+      },
+      {
+        "fpr": 0.3024,
+        "tpr": 0.6061
+      },
+      {
+        "fpr": 0.3076,
+        "tpr": 0.6115
+      },
+      {
+        "fpr": 0.3132,
+        "tpr": 0.6171
+      },
+      {
+        "fpr": 0.3188,
+        "tpr": 0.6221
+      },
+      {
+        "fpr": 0.3245,
+        "tpr": 0.6277
+      },
+      {
+        "fpr": 0.3303,
+        "tpr": 0.6333
+      },
+      {
+        "fpr": 0.3349,
+        "tpr": 0.6384
+      },
+      {
+        "fpr": 0.3395,
+        "tpr": 0.6434
+      },
+      {
+        "fpr": 0.3449,
+        "tpr": 0.6483
+      },
+      {
+        "fpr": 0.3499,
+        "tpr": 0.6534
+      },
+      {
+        "fpr": 0.3558,
+        "tpr": 0.659
+      },
+      {
+        "fpr": 0.3611,
+        "tpr": 0.6641
+      },
+      {
+        "fpr": 0.3666,
+        "tpr": 0.6694
+      },
+      {
+        "fpr": 0.3719,
+        "tpr": 0.6752
+      },
+      {
+        "fpr": 0.3778,
+        "tpr": 0.6806
+      },
+      {
+        "fpr": 0.3844,
+        "tpr": 0.6856
+      },
+      {
+        "fpr": 0.3906,
+        "tpr": 0.6907
+      },
+      {
+        "fpr": 0.3958,
+        "tpr": 0.6954
+      },
+      {
+        "fpr": 0.4004,
+        "tpr": 0.7012
+      },
+      {
+        "fpr": 0.4065,
+        "tpr": 0.7065
+      },
+      {
+        "fpr": 0.4127,
+        "tpr": 0.7117
+      },
+      {
+        "fpr": 0.4183,
+        "tpr": 0.7169
+      },
+      {
+        "fpr": 0.4247,
+        "tpr": 0.7221
+      },
+      {
+        "fpr": 0.4319,
+        "tpr": 0.7278
+      },
+      {
+        "fpr": 0.4378,
+        "tpr": 0.7325
+      },
+      {
+        "fpr": 0.4432,
+        "tpr": 0.7373
+      },
+      {
+        "fpr": 0.4498,
+        "tpr": 0.7424
+      },
+      {
+        "fpr": 0.4556,
+        "tpr": 0.7473
+      },
+      {
+        "fpr": 0.4628,
+        "tpr": 0.7522
+      },
+      {
+        "fpr": 0.4695,
+        "tpr": 0.7571
+      },
+      {
+        "fpr": 0.4764,
+        "tpr": 0.7619
+      },
+      {
+        "fpr": 0.4824,
+        "tpr": 0.7669
+      },
+      {
+        "fpr": 0.4885,
+        "tpr": 0.7722
+      },
+      {
+        "fpr": 0.4941,
+        "tpr": 0.7774
+      },
+      {
+        "fpr": 0.5013,
+        "tpr": 0.7824
+      },
+      {
+        "fpr": 0.5088,
+        "tpr": 0.7872
+      },
+      {
+        "fpr": 0.514,
+        "tpr": 0.7923
+      },
+      {
+        "fpr": 0.52,
+        "tpr": 0.7974
+      },
+      {
+        "fpr": 0.5264,
+        "tpr": 0.8022
+      },
+      {
+        "fpr": 0.5331,
+        "tpr": 0.8072
+      },
+      {
+        "fpr": 0.5383,
+        "tpr": 0.8119
+      },
+      {
+        "fpr": 0.5448,
+        "tpr": 0.8165
+      },
+      {
+        "fpr": 0.5531,
+        "tpr": 0.8209
+      },
+      {
+        "fpr": 0.5605,
+        "tpr": 0.8252
+      },
+      {
+        "fpr": 0.5684,
+        "tpr": 0.83
+      },
+      {
+        "fpr": 0.5757,
+        "tpr": 0.8349
+      },
+      {
+        "fpr": 0.5824,
+        "tpr": 0.8396
+      },
+      {
+        "fpr": 0.5896,
+        "tpr": 0.8442
+      },
+      {
+        "fpr": 0.5962,
+        "tpr": 0.8487
+      },
+      {
+        "fpr": 0.6036,
+        "tpr": 0.8534
+      },
+      {
+        "fpr": 0.6117,
+        "tpr": 0.8576
+      },
+      {
+        "fpr": 0.6185,
+        "tpr": 0.8619
+      },
+      {
+        "fpr": 0.6271,
+        "tpr": 0.867
+      },
+      {
+        "fpr": 0.6343,
+        "tpr": 0.8716
+      },
+      {
+        "fpr": 0.6422,
+        "tpr": 0.8763
+      },
+      {
+        "fpr": 0.6502,
+        "tpr": 0.8803
+      },
+      {
+        "fpr": 0.657,
+        "tpr": 0.8851
+      },
+      {
+        "fpr": 0.6647,
+        "tpr": 0.8896
+      },
+      {
+        "fpr": 0.6727,
+        "tpr": 0.8936
+      },
+      {
+        "fpr": 0.6799,
+        "tpr": 0.8979
+      },
+      {
+        "fpr": 0.6883,
+        "tpr": 0.9029
+      },
+      {
+        "fpr": 0.6975,
+        "tpr": 0.9073
+      },
+      {
+        "fpr": 0.7057,
+        "tpr": 0.9113
+      },
+      {
+        "fpr": 0.7142,
+        "tpr": 0.9155
+      },
+      {
+        "fpr": 0.7246,
+        "tpr": 0.9198
+      },
+      {
+        "fpr": 0.733,
+        "tpr": 0.9242
+      },
+      {
+        "fpr": 0.7437,
+        "tpr": 0.9289
+      },
+      {
+        "fpr": 0.7531,
+        "tpr": 0.9331
+      },
+      {
+        "fpr": 0.762,
+        "tpr": 0.9375
+      },
+      {
+        "fpr": 0.7737,
+        "tpr": 0.9416
+      },
+      {
+        "fpr": 0.7837,
+        "tpr": 0.9456
+      },
+      {
+        "fpr": 0.7964,
+        "tpr": 0.9498
+      },
+      {
+        "fpr": 0.8054,
+        "tpr": 0.9536
+      },
+      {
+        "fpr": 0.8155,
+        "tpr": 0.9578
+      },
+      {
+        "fpr": 0.8283,
+        "tpr": 0.9618
+      },
+      {
+        "fpr": 0.8381,
+        "tpr": 0.966
+      },
+      {
+        "fpr": 0.8498,
+        "tpr": 0.9701
+      },
+      {
+        "fpr": 0.864,
+        "tpr": 0.9739
+      },
+      {
+        "fpr": 0.8758,
+        "tpr": 0.9775
+      },
+      {
+        "fpr": 0.8907,
+        "tpr": 0.9812
+      },
+      {
+        "fpr": 0.9085,
+        "tpr": 0.9851
+      },
+      {
+        "fpr": 0.9283,
+        "tpr": 0.9889
+      },
+      {
+        "fpr": 0.9483,
+        "tpr": 0.9928
+      },
+      {
+        "fpr": 0.9723,
+        "tpr": 0.9966
+      },
+      {
+        "fpr": 1.0,
+        "tpr": 1.0
+      }
+    ]
+  },
+  "xg_metrics": {
+    "val_mae": 0.9643,
+    "test_mae": 0.9704,
+    "test_rmse": 1.2827
+  },
+  "sea_subset_metrics": {
+    "test_matches": 2966,
+    "test_samples": 5932,
+    "leagues": {
+      "IN1L": 998,
+      "THA1": 782,
+      "VIE1": 589,
+      "MYS1": 346,
+      "SIN1": 251
+    },
+    "accuracy_3class": 51.75,
+    "macro_f1_3class": 0.3959,
+    "tuned_macro_f1_3class": 0.4551,
+    "log_loss_3class": 0.9963,
+    "confusion_matrix_3class": [
+      [
+        1545,
+        0,
+        659
+      ],
+      [
+        779,
+        0,
+        745
+      ],
+      [
+        679,
+        0,
+        1525
+      ]
+    ],
+    "binary_accuracy": 68.37,
+    "binary_roc_auc": 0.7158,
+    "xg_mae": 0.9351,
+    "symmetry_error": 0.01748046
+  },
+  "model_comparison": [
+    {
+      "model": "LogisticRegression (balanced)",
+      "val_accuracy": 51.72,
+      "val_log_loss": 1.0033,
+      "val_macro_f1": 0.4726,
+      "test_accuracy": 50.79,
+      "test_macro_precision": 0.4634,
+      "test_macro_recall": 0.4684,
+      "test_macro_f1": 0.4638,
+      "test_roc_auc": 0.6641,
+      "test_log_loss": 1.0071,
+      "symmetry_error": 4.082e-05
+    },
+    {
+      "model": "RandomForestClassifier",
+      "val_accuracy": 49.4,
+      "val_log_loss": 1.0002,
+      "val_macro_f1": 0.4761,
+      "test_accuracy": 49.4,
+      "test_macro_precision": 0.4758,
+      "test_macro_recall": 0.4716,
+      "test_macro_f1": 0.4728,
+      "test_roc_auc": 0.664,
+      "test_log_loss": 1.0033,
+      "symmetry_error": 0.00945144
+    },
+    {
+      "model": "HistGradientBoosting (depth=6, l2=1)",
+      "val_accuracy": 53.93,
+      "val_log_loss": 0.9725,
+      "val_macro_f1": 0.4045,
+      "test_accuracy": 52.74,
+      "test_macro_precision": 0.5183,
+      "test_macro_recall": 0.4579,
+      "test_macro_f1": 0.3979,
+      "test_roc_auc": 0.6636,
+      "test_log_loss": 0.9845,
+      "symmetry_error": 0.01548418
+    },
+    {
+      "model": "HistGradientBoosting (depth=5, l2=3)",
+      "val_accuracy": 53.75,
+      "val_log_loss": 0.9729,
+      "val_macro_f1": 0.4032,
+      "test_accuracy": 52.83,
+      "test_macro_precision": 0.4548,
+      "test_macro_recall": 0.4586,
+      "test_macro_f1": 0.3986,
+      "test_roc_auc": 0.6642,
+      "test_log_loss": 0.984,
+      "symmetry_error": 0.01398479
+    }
+  ],
+  "feature_importance_ranking": [
+    {
+      "feature": "diff_overall_mean",
+      "label": "Starting XI Average Rating Advantage",
+      "importance_mean": 0.0437,
+      "importance_std": 0.00106
+    },
+    {
+      "feature": "diff_market_val_log",
+      "label": "Squad Economic Market Value Differential (Log)",
+      "importance_mean": 0.00848,
+      "importance_std": 0.0008
+    },
+    {
+      "feature": "diff_sub_mean",
+      "label": "Bench / Substitute Squad Quality",
+      "importance_mean": 0.00457,
+      "importance_std": 0.0007
+    },
+    {
+      "feature": "diff_form_gd_5",
+      "label": "Pre-Match Rolling Goal Difference (Last 5 Games)",
+      "importance_mean": 0.00368,
+      "importance_std": 0.00079
+    },
+    {
+      "feature": "diff_overall_min",
+      "label": "Starting XI Weakest Link Rating",
+      "importance_mean": 9e-05,
+      "importance_std": 0.00039
+    },
+    {
+      "feature": "league_tier_factor",
+      "label": "Competition / Domestic League Strength Tier",
+      "importance_mean": 9e-05,
+      "importance_std": 0.00017
+    },
+    {
+      "feature": "diff_form_pts_5",
+      "label": "Pre-Match Rolling Form Points (Last 5 Games)",
+      "importance_mean": 1e-05,
+      "importance_std": 0.00012
+    },
+    {
+      "feature": "diff_aerial_def_vs_att",
+      "label": "Aerial Duel: Defense Height vs Opp. Attack (cm)",
+      "importance_mean": 1e-05,
+      "importance_std": 0.00011
+    },
+    {
+      "feature": "diff_aerial_att_vs_def",
+      "label": "Aerial Duel: Attackers Height vs Opp. Defense (cm)",
+      "importance_mean": 0.0,
+      "importance_std": 0.00025
+    },
+    {
+      "feature": "diff_depth_gap",
+      "label": "Starter-to-Bench Drop-off Gap Differential",
+      "importance_mean": -2e-05,
+      "importance_std": 0.00012
+    },
+    {
+      "feature": "diff_prime_score",
+      "label": "Squad Physical Prime & Age Peak Factor",
+      "importance_mean": -5e-05,
+      "importance_std": 0.00015
+    },
+    {
+      "feature": "diff_cohesion",
+      "label": "Lineup Familiarity & Shared Chemistry Index",
+      "importance_mean": -6e-05,
+      "importance_std": 0.00019
+    },
+    {
+      "feature": "diff_overall_max",
+      "label": "Star Player Peak Rating Differential",
+      "importance_mean": -7e-05,
+      "importance_std": 0.00029
+    },
+    {
+      "feature": "diff_attack_vs_defense",
+      "label": "Attack Line vs Opponent Defense Quality",
+      "importance_mean": -0.00011,
+      "importance_std": 0.00012
+    },
+    {
+      "feature": "diff_defense_vs_attack",
+      "label": "Defense Line vs Opponent Attack Quality",
+      "importance_mean": -0.00015,
+      "importance_std": 0.00038
+    },
+    {
+      "feature": "diff_midfield",
+      "label": "Midfield Playmaking & Control Advantage",
+      "importance_mean": -0.00015,
+      "importance_std": 0.00029
+    }
+  ]
+}
