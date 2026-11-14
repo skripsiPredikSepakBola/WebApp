@@ -109,6 +109,14 @@ To run with Gunicorn on Linux/container environments:
 gunicorn app:app --bind 0.0.0.0:${PORT:-5000} --workers 2 --threads 4 --timeout 120
 ```
 
+#### Azure App Service Free Tier (`F1`) & 3-Layer Keep-Alive
+
+Azure App Service Linux Free (`F1`) disables the portal **Always On** toggle. To prevent container spin-down, PitchPulse AI ships a 3-layer keep-alive architecture:
+
+1. **In-App Daemon & On-Demand Endpoint (`app.py`)**: A background thread (`app-keep-alive`, every 600s) and `GET/POST /api/keep-alive/ping` hit the public `/api/health` URL (surfaced in `/api/health` and `/api/sync/status`).
+2. **Startup Self-Pinger (`startup.sh`)**: Pulls the latest `main` commit, provisions `/tmp/antenv` on the fast local container disk (`Python 3.11`), spawns a 540s curl loop targeting `/api/health`, and launches Gunicorn (`--workers 1 --timeout 180`).
+3. **External GitHub Actions Cron & GitHub Pages Beacon**: [`.github/workflows/keep-alive.yml`](.github/workflows/keep-alive.yml) (`*/14 * * * *`), [`.github/workflows/sync-matches.yml`](.github/workflows/sync-matches.yml), and active browser sessions on GitHub Pages ([`gh-pages-engine.js`](static/js/gh-pages-engine.js)) ping `/api/health` externally so cold-start idle timeouts do not reclaim the worker.
+
 ### 4. Rebuilding Binary Caches (After Data or Preset Updates)
 
 If you modify `players_lite.json`, `preset_lineups.json`, `preset_categories.json`, or raw Transfermarkt CSV files, regenerate the precomputed bundles from the repository root:

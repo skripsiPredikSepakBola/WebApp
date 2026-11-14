@@ -1329,8 +1329,20 @@
   }
 
   if (typeof window !== 'undefined' && nativeFetch) {
-    const forceStatic = Boolean(window.__STATIC_MODE__) || /\.github\.io$/i.test(window.location?.hostname || '') || window.location?.protocol === 'file:';
+    const isGhPages = () => /\.github\.io$/i.test(window.location?.hostname || '');
+    const forceStatic = Boolean(window.__STATIC_MODE__) || isGhPages() || window.location?.protocol === 'file:';
     let fallbackActivated = forceStatic;
+
+    if (isGhPages()) {
+      const pingAzureKeepAlive = () => {
+        nativeFetch('https://skripsiwebapp-cehte7bwece0daad.indonesiacentral-01.azurewebsites.net/api/health', {
+          mode: 'no-cors',
+          cache: 'no-store',
+        }).catch(() => {});
+      };
+      pingAzureKeepAlive();
+      setInterval(pingAzureKeepAlive, 600000);
+    }
 
     window.fetch = async (input, init) => {
       const urlStr = typeof input === 'string' ? input : (input?.url || '');

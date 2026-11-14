@@ -31,3 +31,8 @@ jobs:
           FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
         run: |
           if [ -f sync_matches.py ]; then python sync_matches.py; else python web_app_new_v2/sync_matches.py; fi
+      - name: Ping Azure App Service Keep-Alive
+        if: always()
+        run: |
+          curl --retry 3 --retry-delay 5 --max-time 60 -fsS "https://skripsiwebapp-cehte7bwece0daad.indonesiacentral-01.azurewebsites.net/api/health" || true
+          echo ""

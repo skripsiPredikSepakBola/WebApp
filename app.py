@@ -8,6 +8,7 @@ import threading
 import time
 import unicodedata
 import re
+import urllib.request
 import zlib
 from bisect import bisect_right
 from datetime import datetime, timezone
@@ -111,6 +112,18 @@ _sync_state = {
     'matches_synced': 0,
     'players_updated': 0,
     'last_result': None,
+}
+_keep_alive_state = {
+    'enabled': os.environ.get('KEEP_ALIVE_ENABLED', '1').strip() not in ('0', 'false', 'no'),
+    'interval_sec': int(os.environ.get('KEEP_ALIVE_INTERVAL_SEC', '600') or 600),
+    'target_url': (
+        os.environ.get('KEEP_ALIVE_URL')
+        or (f"https://{os.environ['WEBSITE_HOSTNAME']}/api/health" if os.environ.get('WEBSITE_HOSTNAME') else 'https://skripsiwebapp-cehte7bwece0daad.indonesiacentral-01.azurewebsites.net/api/health')
+    ).strip(),
+    'pings_sent': 0,
+    'last_ping': None,
+    'last_status': None,
+    'last_error': None,
 }
 
 
@@ -624,6 +637,39 @@ def _auto_sync_loop():
                 _run_sync_once()
         except Exception as e:
             _sync_state['last_error'] = str(e)
+        time.sleep(interval)
+
+
+def _ping_keep_alive_once():
+    url = _keep_alive_state.get('target_url')
+    if not url:
+        return {'status': 'skipped', 'reason': 'No target_url configured'}
+    now_iso = datetime.now(timezone.utc).isoformat()
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'PitchPulseAI-KeepAlive/1.0'})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            code = int(resp.getcode() or 200)
+        _keep_alive_state['pings_sent'] = int(_keep_alive_state.get('pings_sent') or 0) + 1
+        _keep_alive_state['last_ping'] = now_iso
+        _keep_alive_state['last_status'] = code
+        _keep_alive_state['last_error'] = None
+        return {'status': 'ok', 'http_status': code, 'last_ping': now_iso, 'pings_sent': _keep_alive_state['pings_sent'], 'target_url': url}
+    except Exception as e:
+        _keep_alive_state['last_ping'] = now_iso
+        _keep_alive_state['last_error'] = str(e)
+        return {'status': 'error', 'error': str(e), 'last_ping': now_iso, 'target_url': url}
+
+
+def _keep_alive_loop():
+    """Background daemon loop that pings the public Azure URL every 10 minutes to prevent LinuxFree idle spin-down."""
+    time.sleep(25.0)
+    interval = max(120, int(_keep_alive_state.get('interval_sec') or 600))
+    while True:
+        try:
+            if _keep_alive_state.get('enabled'):
+                _ping_keep_alive_once()
+        except Exception as e:
+            _keep_alive_state['last_error'] = str(e)
         time.sleep(interval)
 
 
@@ -1706,7 +1752,7 @@ def export_xlsx():
 
 @app.route('/api/health')
 def health():
-    return jsonify({'status': 'ok', 'players': len(players_lite)})
+    return jsonify({'status': 'ok', 'players': len(players_lite), 'keep_alive': _keep_alive_state})
 
 @app.route('/api/players/search')
 def search_players():
@@ -1766,7 +1812,14 @@ def sync_status():
         'matches_synced': int(_sync_state.get('matches_synced') or 0),
         'players_updated': int(_sync_state.get('players_updated') or 0),
         'last_result': _sync_state.get('last_result') or local_st.get('last_result'),
+        'keep_alive': _keep_alive_state,
     })
+
+
+@app.route('/api/keep-alive/ping', methods=['GET', 'POST'])
+def trigger_keep_alive_ping():
+    res = _ping_keep_alive_once()
+    return jsonify({'keep_alive': _keep_alive_state, 'result': res})
 
 
 @app.route('/api/sync', methods=['POST'])
@@ -2233,6 +2286,8 @@ def explore_league_detail():
 threading.Thread(target=_bg_warmup, daemon=True, name='app-bg-warmup').start()
 if _sync_state.get('enabled'):
     threading.Thread(target=_auto_sync_loop, daemon=True, name='app-auto-sync').start()
+if _keep_alive_state.get('enabled'):
+    threading.Thread(target=_keep_alive_loop, daemon=True, name='app-keep-alive').start()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
