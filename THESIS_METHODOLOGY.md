@@ -448,3 +448,19 @@ Each of the $71,161$ players is tagged with `last_season` and `is_former` from T
 ### Q8: *"Does a model trained predominantly on global and European data generalize to Southeast Asian (ASEAN) leagues like Indonesia Liga 1 (`IN1L`)?"*
 **Defense:**
 Yes. We evaluated the model on an unseen regional hold-out subset of **$2,966$ ASEAN matches ($5,932$ symmetrical samples)** across Indonesia Liga 1 (`IN1L`, $998$ matches), Thai League 1 (`THA1`, $782$), V.League 1 (`VIE1`, $589$), Malaysia Super League (`MYS1`, $346$), and Singapore Premier League (`SIN1`, $251$). Because our features are formulated as **within-fixture relative differentials** (`diff_overall_mean`, `diff_market_val_log`, `diff_form_gd_5`) paired with `league_tier_factor`, the model achieves **$51.75\%$ 3-class accuracy**, **$0.4551$ tuned Macro-F1**, **$68.37\%$ binary accuracy** (exceeding the $67.97\%$ global mark), **$0.7158$ binary ROC-AUC** (exceeding $0.7133$ global), and **$0.9351$ $\text{xG}$ MAE** (outperforming $0.9704$ global).
+
+---
+
+## 8. Deterministic Browser-Based Static Deployment Architecture (`GitHub Pages`)
+
+To enable permanent, zero-cost, serverless public reproducibility on **GitHub Pages** without altering trained weights or introducing approximation error:
+
+1. **Exact Tree Predictor Serialization (`build_gh_pages.py`)**:
+   Each `HistGradientBoosting` ensemble is an additive expansion over $M$ boosting iterations and $K$ target channels ($K = 3$ logits for Win/Draw/Loss classification, $K = 1$ scalar for $\text{xG}$ regression):
+   $$F_c(\mathbf{x}) = b_c + \sum_{m=1}^{M} T_{m,c}(\mathbf{x})$$
+   where each fitted decision tree $T_{m,c}$ consists strictly of finite-depth binary split arrays $(f_j, \theta_j, l_j, r_j, v_j, \text{leaf}_j, \text{mg}_j)$. Serializing these exact arrays into JSON allows any ECMAScript runtime (`static/js/gh-pages-engine.js`) to traverse trees deterministically without quantization or surrogate distillation:
+   $$\hat{\mathbf{p}}(\mathbf{x}) = \text{softmax}\big(F_0(\mathbf{x}), F_1(\mathbf{x}), F_2(\mathbf{x})\big), \qquad \hat{\lambda}_{\text{base}}(\mathbf{x}) = \max\big(0.40, F_{\text{xG}}(\mathbf{x})\big)$$
+2. **Numerical Equivalence Guarantee ($< 10^{-6}$)**:
+   Automated verification in `test_dual_deck_e2e.py` asserts that traversing the exported JSON trees matches `scikit-learn` `HistGradientBoostingClassifier.predict_proba` and `HistGradientBoostingRegressor.predict` within $< 10^{-6}$ maximum absolute tolerance across random and fixture feature vectors, preserving identical symmetry, probability calibration, Bivariate Poisson score distributions, and $\tau_{\text{draw}} = 0.27$ verdicts.
+3. **Continuous Static Synchronization**:
+   GitHub Actions workflows rebuild and republish the static `_site/` artifact automatically after every code push (`deploy-pages.yml`), after each 6-hour Transfermarkt/Supabase match sync (`sync-matches.yml`), and after each daily validation-gated retraining cycle (`retrain.yml`).

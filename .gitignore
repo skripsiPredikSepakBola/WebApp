@@ -4,3 +4,4 @@ __pycache__/
 *.tmp
 match_tracker.db
 player_monthly_snapshots.csv
+_site/

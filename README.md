@@ -76,9 +76,28 @@ cp .env.example .env
 python app.py
 ```
 
-### 2. Production Gunicorn Deployment (`Procfile`)
+### 2. Zero-Provider GitHub Pages Deployment (`GitHub Pages + Actions + Supabase`)
 
-The repository includes a Heroku/Render/Railway-compatible `Procfile`:
+PitchPulse AI runs 100% natively on **GitHub Pages** (`https://skripsiprediksepakbola.github.io/WebApp/`) without requiring any external Python hosting provider:
+
+1. **Deterministic ML Tree Export (`build_gh_pages.py`)**:
+   - Exports the trained `HistGradientBoostingClassifier` (`model_advanced_3class.joblib`) and `HistGradientBoostingRegressor` (`model_advanced_xg.joblib`) `TreePredictor` decision arrays into `_site/data/models.json`.
+   - Exports sharded scouting/explorer bundles (`clubs_extras_shard_{0..15}.json`, `player_details_shard_{0..15}.json`, per-league JSONs, `boot_players.json`, `players_full.json`, `presets.json`) into `_site/data/`.
+2. **In-Browser Inference Shim (`static/js/gh-pages-engine.js`)**:
+   - When served from `*.github.io` (or static preview), intercepts `/api/*` requests and runs identical 16-feature symmetrical tree traversal, 13-role OOP penalties, Bivariate Poisson `6×6` scoring, client-side OOXML `.xlsx` generation, and sharded Scouting lookups directly in the browser (`<1e-6` numerical parity with Python `scikit-learn`).
+   - When running locally via `python app.py` or Gunicorn, passes all `/api/*` traffic straight through to Flask untouched.
+3. **Automated GitHub Actions CI/CD (`.github/workflows/deploy-pages.yml`)**:
+   - Triggers automatically on every push to `main` and after scheduled runs of `sync-matches.yml` (every 6h) and `retrain.yml` (daily at `02:00 UTC`), rebuilding `_site/` with fresh Supabase data and publishing directly to GitHub Pages.
+   - Ensure **Repository Settings → Pages → Build and deployment → Source** is set to **`GitHub Actions`**.
+
+```bash
+# Build static _site/ bundle locally for testing
+python build_gh_pages.py
+```
+
+### 3. Production Gunicorn Deployment (`Procfile`)
+
+The repository also includes a Heroku/Render/Railway-compatible `Procfile` for traditional Python server hosting:
 
 ```procfile
 web: gunicorn app:app --bind 0.0.0.0:$PORT
@@ -90,7 +109,7 @@ To run with Gunicorn on Linux/container environments:
 gunicorn app:app --bind 0.0.0.0:${PORT:-5000} --workers 2 --threads 4 --timeout 120
 ```
 
-### 3. Rebuilding Binary Caches (After Data or Preset Updates)
+### 4. Rebuilding Binary Caches (After Data or Preset Updates)
 
 If you modify `players_lite.json`, `preset_lineups.json`, `preset_categories.json`, or raw Transfermarkt CSV files, regenerate the precomputed bundles from the repository root:
 
@@ -102,7 +121,7 @@ python build_explorer_data.py
 python web_app_new_v2/build_startup_cache.py
 ```
 
-### 4. Running Verification & Anti-Leakage Test Suites
+### 5. Running Verification & Anti-Leakage Test Suites
 
 ```bash
 # End-to-end Predictor, 13-Role OOP, Legends segregation, Explorer & Sync API tests
@@ -252,6 +271,7 @@ web_app_new_v2/
 ├── sync_matches.py                 # Transfermarkt (tmapi-alpha), API-Football & football-data.org -> Supabase sync
 ├── retrain.py                      # Chronological retraining pipeline with validation log-loss gating
 ├── build_startup_cache.py          # Builder for startup_cache.joblib (players, 13 roles, Legends split, snapshots)
+├── build_gh_pages.py               # Static GitHub Pages generator (exports HGBT trees + sharded explorer bundles into _site/)
 ├── apply_supabase_schema.py        # Supabase schema verifier & DDL helper
 ├── schema.sql                      # PostgreSQL / Supabase table definitions (5 tables)
 ├── academic_report_data.json       # Ground-truth evaluation metrics for thesis defense & /api/thesis-metrics
@@ -269,12 +289,14 @@ web_app_new_v2/
 ├── Procfile                        # Production Gunicorn entrypoint
 ├── .env.example                    # Environment variable template
 ├── .github/workflows/
+│   ├── deploy-pages.yml            # Builds _site/ and publishes to GitHub Pages on push & post-sync/retrain
 │   ├── sync-matches.yml            # 6-hour scheduled GitHub Action for match & squad sync
 │   └── retrain.yml                 # Daily 02:00 UTC scheduled GitHub Action for chronological model retraining
 ├── templates/
 │   └── index.html                  # PitchPulse AI single-page application template
 ├── static/
 │   ├── css/style.css               # Dark Broadcast Pro stylesheet
+│   ├── js/gh-pages-engine.js       # Zero-server browser ML inference & API shim for GitHub Pages
 │   └── js/app.js                   # Frontend tactical pitch, 13-role drag-and-drop, Bivariate Poisson heatmap & Explorer UI
 ├── README.md                       # Production engineering, architecture & API documentation
 └── THESIS_METHODOLOGY.md           # Independent academic thesis methodology & sidang defense reference

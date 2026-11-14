@@ -263,6 +263,31 @@ class TestDualDeckE2E(unittest.TestCase):
         for k in ('enabled', 'running', 'supabase_configured', 'interval_sec', 'matches_synced'):
             self.assertIn(k, data)
 
+    def test_gh_pages_model_export_equivalence(self):
+        import numpy as np
+        import pandas as pd
+        import app as m
+        from build_gh_pages import export_hgbt, eval_hgbt_row
+
+        m._ensure_models()
+        exp3 = export_hgbt(m.model_advanced_3class)
+        expxg = export_hgbt(m.model_advanced_xg)
+
+        rng = np.random.default_rng(42)
+        X = pd.DataFrame(rng.normal(0.0, 2.0, size=(8, len(m.advanced_features))), columns=m.advanced_features)
+        sk_probs = m.model_advanced_3class.predict_proba(X)
+        sk_xg = m.model_advanced_xg.predict(X)
+
+        for i in range(len(X)):
+            row = X.iloc[i].tolist()
+            raw = np.array(eval_hgbt_row(exp3, row), dtype=float)
+            ex = np.exp(raw - np.max(raw))
+            p_exp = ex / ex.sum()
+            self.assertTrue(np.allclose(sk_probs[i], p_exp, atol=1e-6))
+
+            xg_exp = eval_hgbt_row(expxg, row)[0]
+            self.assertAlmostEqual(float(sk_xg[i]), float(xg_exp), delta=1e-6)
+
 
 if __name__ == '__main__':
     unittest.main()
