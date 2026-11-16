@@ -600,8 +600,13 @@ function invertPrediction(d) {
   const invTuned = d.verdict_tuned === 'home' ? 'away' : (d.verdict_tuned === 'away' ? 'home' : 'draw');
   const invHeadArgmax = invArgmax === 'draw' ? `Even contest: draw most likely (${invProb.draw}%)` :
     (invArgmax === 'home' ? `${a} favoured to win (${invProb.home}%)` : `${h} favoured to win (${invProb.away}%)`);
-  const invHeadTuned = invTuned === 'draw' ? `Balanced model: draw identified (${invProb.draw}% >= 27% threshold)` :
-    (invTuned === 'home' ? `${a} favoured to win (${invProb.home}%)` : `${h} favoured to win (${invProb.away}%)`);
+  const invEdgeTeam = invProb.home >= invProb.away ? a : h;
+  const invEdgePct = Math.max(invProb.home, invProb.away);
+  const invHeadTuned = invTuned === 'draw'
+    ? (invProb.draw >= invProb.home && invProb.draw >= invProb.away
+        ? `Even contest: draw most likely (${invProb.draw}%)`
+        : `Tight contest — Draw risk flagged (${invProb.draw}% >= 27% threshold; ${invEdgeTeam} ${invEdgePct}% edge)`)
+    : (invTuned === 'home' ? `${a} favoured to win (${invProb.home}%)` : `${h} favoured to win (${invProb.away}%)`);
 
   let invKo = null;
   let invHeadline = invHeadTuned;

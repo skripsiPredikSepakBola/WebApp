@@ -1536,7 +1536,12 @@ def predict():
         # 2. Tuned Threshold Formulation (tau_draw = 0.27)
         if pdr >= 27.0:
             verdict_tuned = 'draw'
-            headline_tuned = f"Balanced model: draw identified ({pdr}% >= 27% threshold)"
+            if pdr >= pa and pdr >= pb:
+                headline_tuned = f"Even contest: draw most likely ({pdr}%)"
+            else:
+                edge_team = team_a_name if pa >= pb else team_b_name
+                edge_pct = max(pa, pb)
+                headline_tuned = f"Tight contest — Draw risk flagged ({pdr}% >= 27% threshold; {edge_team} {edge_pct}% edge)"
         elif pa > pb:
             verdict_tuned = 'home'
             headline_tuned = f"{team_a_name} favoured to win ({pa}%)"
@@ -1548,6 +1553,15 @@ def predict():
         active_verdict = verdict_tuned if active_mode == 'tuned' else verdict_argmax
         active_headline = headline_tuned if active_mode == 'tuned' else headline_argmax
 
+        # Align projected scoreline with the active verdict so headline & scoreline never contradict
+        overall_top_score = score_matrix[0]
+        if active_verdict == 'home':
+            top_score = next((s for s in score_matrix if s['team_a_goals'] > s['team_b_goals']), overall_top_score)
+        elif active_verdict == 'away':
+            top_score = next((s for s in score_matrix if s['team_b_goals'] > s['team_a_goals']), overall_top_score)
+        else:
+            top_score = next((s for s in score_matrix if s['team_a_goals'] == s['team_b_goals']), overall_top_score)
+
         if ko:
             fav = team_a_name if ko['advance_home'] >= 50 else team_b_name
             headline = f"{fav} favoured to advance ({max(ko['advance_home'], ko['advance_away'])}%)"
@@ -1555,9 +1569,15 @@ def predict():
             headline = active_headline
 
         big = max(tactical, key=lambda m: abs(m['home'] - m['away']) / max(m['home'], m['away'], 1))
+        score_note = (
+            f"Projected score {top_score['score']} ({top_score['prob']}% | xG {xg_a:.2f} - {xg_b:.2f}; "
+            f"overall single mode {overall_top_score['score']} at {overall_top_score['prob']}%); over 2.5 goals {over25}%."
+            if top_score['score'] != overall_top_score['score']
+            else f"Most likely score {top_score['score']} ({top_score['prob']}% | xG {xg_a:.2f} - {xg_b:.2f}); over 2.5 goals {over25}%."
+        )
         points = [
             f"Win probability: {team_a_name} {pa}% | Draw {pdr}% | {team_b_name} {pb}%.",
-            f"Most likely score {top_score['score']} (xG {xg_a:.2f} - {xg_b:.2f}); over 2.5 goals {over25}%.",
+            score_note,
             f"Biggest edge: {big['label']} favours {team_a_name if big['home'] > big['away'] else team_b_name} ({big['home']} vs {big['away']}).",
             f"Top scoring threats: {scorers_a[0]['name']} ({team_a_name}, {scorers_a[0]['anytime_prob']}%), {scorers_b[0]['name']} ({team_b_name}, {scorers_b[0]['anytime_prob']}%)."]
         if ko:
