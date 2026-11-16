@@ -577,32 +577,42 @@ def sync_squad_players_fd(api_key, competitions=('PL', 'PD', 'BL1', 'SA', 'FL1',
     return upsert_players(list(updates.values()))
 
 def sync_api_football(api_key, date_str=None, include_lineups=False):
-    date_str = date_str or datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    data = _fetch_json(f'https://v3.football.api-sports.io/fixtures?date={date_str}&status=FT', {'x-apisports-key': api_key})
-    now = datetime.now(timezone.utc).isoformat()
+    now_dt = datetime.now(timezone.utc)
+    dates = [date_str] if date_str else [
+        now_dt.strftime('%Y-%m-%d'),
+        (now_dt - timedelta(days=1)).strftime('%Y-%m-%d'),
+    ]
+    now = now_dt.isoformat()
     rows = []
-    for idx, m in enumerate(data.get('response', [])):
-        fx_id = m.get('fixture', {}).get('id')
-        # ponytail: cap lineup calls to 20/run so 100 req/day free tier lasts
-        if include_lineups and fx_id and idx < 20:
-            try:
-                lu = _fetch_json(f'https://v3.football.api-sports.io/fixtures/lineups?fixture={fx_id}', {'x-apisports-key': api_key})
-                m['lineups'] = lu.get('response', [])
-            except Exception:
-                pass
-        rows.append({
-            'match_id': f"apifootball:{fx_id}",
-            'source': 'api-football',
-            'league': m.get('league', {}).get('name', ''),
-            'match_date': m.get('fixture', {}).get('date') or None,
-            'home_team': m.get('teams', {}).get('home', {}).get('name', ''),
-            'away_team': m.get('teams', {}).get('away', {}).get('name', ''),
-            'home_goals': m.get('goals', {}).get('home'),
-            'away_goals': m.get('goals', {}).get('away'),
-            'status': m.get('fixture', {}).get('status', {}).get('short', 'FT'),
-            'raw_json': m,
-            'synced_at': now,
-        })
+    for ds in dates:
+        data = _fetch_json(f'https://v3.football.api-sports.io/fixtures?date={ds}&status=FT', {'x-apisports-key': api_key})
+        resp_list = sorted(
+            data.get('response', []),
+            key=lambda m: (m.get('fixture', {}).get('date') or ''),
+            reverse=True,
+        )[:60]
+        for idx, m in enumerate(resp_list):
+            fx_id = m.get('fixture', {}).get('id')
+            # ponytail: cap lineup calls to 20/run so 100 req/day free tier lasts
+            if include_lineups and fx_id and idx < 20:
+                try:
+                    lu = _fetch_json(f'https://v3.football.api-sports.io/fixtures/lineups?fixture={fx_id}', {'x-apisports-key': api_key})
+                    m['lineups'] = lu.get('response', [])
+                except Exception:
+                    pass
+            rows.append({
+                'match_id': f"apifootball:{fx_id}",
+                'source': 'api-football',
+                'league': m.get('league', {}).get('name', ''),
+                'match_date': m.get('fixture', {}).get('date') or None,
+                'home_team': m.get('teams', {}).get('home', {}).get('name', ''),
+                'away_team': m.get('teams', {}).get('away', {}).get('name', ''),
+                'home_goals': m.get('goals', {}).get('home'),
+                'away_goals': m.get('goals', {}).get('away'),
+                'status': m.get('fixture', {}).get('status', {}).get('short', 'FT'),
+                'raw_json': m,
+                'synced_at': now,
+            })
     return upsert_finished_matches(rows)
 
 
