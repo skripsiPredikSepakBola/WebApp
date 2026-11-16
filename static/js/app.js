@@ -242,12 +242,21 @@ function crestHtml(url, name, cls = 'crest-sm') {
   return `<span class="${cls} crest-fb" aria-hidden="true">${shieldSvg()}</span>`;
 }
 
-function avatarHtml(url, name, cls = 'av-sm') {
+function ratingTier(rating) {
+  const n = Number(rating);
+  if (!n || Number.isNaN(n)) return 'tier-bronze';
+  if (n >= 83) return 'tier-gold';
+  if (n >= 72) return 'tier-silver';
+  return 'tier-bronze';
+}
+
+function avatarHtml(url, name, cls = 'av-sm', rating = null) {
   const ini = escRaw(initialsOf(name));
+  const tier = rating !== null && rating !== undefined ? ` ${ratingTier(rating)}` : '';
   if (url) {
-    return `<img class="${cls}" src="${escRaw(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;if(this.nextElementSibling)this.nextElementSibling.hidden=false"><span class="${cls} av-fb" hidden aria-hidden="true">${ini}</span>`;
+    return `<img class="${cls}${tier}" src="${escRaw(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;if(this.nextElementSibling)this.nextElementSibling.hidden=false"><span class="${cls}${tier} av-fb" hidden aria-hidden="true">${ini}</span>`;
   }
-  return `<span class="${cls} av-fb" aria-hidden="true">${ini}</span>`;
+  return `<span class="${cls}${tier} av-fb" aria-hidden="true">${ini}</span>`;
 }
 
 function indexPlayers(list) {
@@ -821,10 +830,11 @@ function renderPitch() {
         : '';
       if (p) {
         const imgUrl = p.image_url || byId.get(p.id)?.image_url || '';
-        h += `<button draggable="true" type="button" class="tok ${t} ${cardCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
+        const tierCls = ratingTier(e);
+        h += `<button draggable="true" type="button" class="tok ${t} ${tierCls} ${cardCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
           ${deltaBadge}
           <span class="fut-top"><span class="fut-rtg">${Math.round(e)}</span><span class="fut-pos ${posCls}">${escRaw(posLabel)}</span></span>
-          <span class="fut-pic">${avatarHtml(imgUrl, p.name, 'av-sm')}</span>
+          <span class="fut-pic ${tierCls}">${avatarHtml(imgUrl, p.name, 'av-sm', e)}</span>
           <em>${esc(short(p.name))}</em>
         </button>`;
       } else {
@@ -843,7 +853,7 @@ function renderBench() {
     T[t].subs.map((p, i) => {
       const imgUrl = p.image_url || byId.get(p.id)?.image_url || '';
       const r = playerRole(p);
-      return `<span class="bn"><button type="button" draggable="true" data-i="${i}">${avatarHtml(imgUrl, p.name, 'av-xs')}<span class="pos-mini">${escRaw(r)}</span><span>${esc(short(p.name))} ${p.rating}</span></button><button type="button" data-inspect="${p.id}" title="Inspect ${escRaw(p.name)}" aria-label="Inspect ${escRaw(p.name)}">Info</button><button type="button" data-rm="${i}" aria-label="Remove ${escRaw(p.name)}">&times;</button></span>`;
+      return `<span class="bn ${ratingTier(p.rating)}"><button type="button" draggable="true" data-i="${i}">${avatarHtml(imgUrl, p.name, 'av-xs', p.rating)}<span class="pos-mini">${escRaw(r)}</span><span>${esc(short(p.name))} ${p.rating}</span></button><button type="button" data-inspect="${p.id}" title="Inspect ${escRaw(p.name)}" aria-label="Inspect ${escRaw(p.name)}">Info</button><button type="button" data-rm="${i}" aria-label="Remove ${escRaw(p.name)}">&times;</button></span>`;
     }).join('') +
     `<button type="button" class="add">+ Add substitute</button></div>`);
 }
@@ -924,7 +934,7 @@ function fillDlg() {
       : `${escRaw(p.club)} · ${escRaw(p.nat)}`;
     return `<li><button type="button" data-id="${p.id}">
       <span class="pos">${escRaw(nr)}</span>
-      ${avatarHtml(p.image_url, p.name, 'av-sm')}
+      ${avatarHtml(p.image_url, p.name, 'av-sm', p.rating)}
       <span>${escRaw(p.full_name || p.name)}${legTag}<br><small>${subMeta}</small></span>
       <b class="r">${p.rating}${pen > 0 ? ` <small class="${penCls}">&rarr; ${Math.round(e)}</small>` : ''}</b>
     </button></li>`;
@@ -1531,7 +1541,7 @@ async function searchExplorerPlayers() {
         : escRaw(p.club || 'Free Agent');
       return `
       <button type="button" class="entity-card ${currentPlayerDetail?.player?.id === p.id ? 'active' : ''}" data-pid="${p.id}">
-        ${avatarHtml(p.image_url, p.name, 'av-md')}
+        ${avatarHtml(p.image_url, p.name, 'av-md', p.rating)}
         <div>
           <div class="entity-title"><span>${escRaw(p.name)}</span>${legBadge}</div>
           <div class="entity-sub"><span class="pos-mini">${escRaw(role)}</span><span>${clubLine}${p.nat ? ` · ${escRaw(p.nat)}` : ''}</span></div>
@@ -1620,7 +1630,7 @@ function renderPlayerDetail(d) {
   panel.innerHTML = `
     <div class="detail-head">
       <div class="hero-ident">
-        ${avatarHtml(p.image_url, fullName, 'av-lg')}
+        ${avatarHtml(p.image_url, fullName, 'av-lg', p.rating)}
         <div>
           <span class="pos">${escRaw(role)}</span>${p.pos && p.pos !== role ? ` <span class="pos-mini">${escRaw(p.pos)}</span>` : ''}${legendBanner}
           <h3 style="margin-top:6px">${escRaw(fullName)}</h3>
@@ -1850,7 +1860,7 @@ function renderClubDetail(d) {
         <tbody>
           ${roster.length ? roster.map(p => `
             <tr class="clickable" data-pid="${p.id}">
-              <td><button type="button" class="row-link-btn">${avatarHtml(p.image_url, p.name, 'av-xs')}<span>${escRaw(p.name)}</span></button></td>
+              <td><button type="button" class="row-link-btn">${avatarHtml(p.image_url, p.name, 'av-xs', p.rating)}<span>${escRaw(p.name)}</span></button></td>
               <td><span class="pos" style="padding:2px 6px">${escRaw(playerRole(p))}</span></td>
               <td class="num">${p.age ?? '-'}</td>
               <td class="num"><b>${p.rating ?? '-'}</b></td>
@@ -1869,7 +1879,7 @@ function renderClubDetail(d) {
           <tbody>
             ${former.length ? former.map(p => `
               <tr class="clickable" data-pid="${p.id}">
-                <td><button type="button" class="row-link-btn">${avatarHtml(p.image_url, p.name, 'av-xs')}<span>${escRaw(p.name)}</span><span class="legend-tag">LEGEND</span></button></td>
+                <td><button type="button" class="row-link-btn">${avatarHtml(p.image_url, p.name, 'av-xs', p.rating)}<span>${escRaw(p.name)}</span><span class="legend-tag">LEGEND</span></button></td>
                 <td><span class="pos" style="padding:2px 6px">${escRaw(playerRole(p))}</span></td>
                 <td class="num">${escRaw(p.last_season ?? '-')}</td>
                 <td class="num"><b>${p.rating ?? '-'}</b></td>
@@ -1989,7 +1999,7 @@ function renderCountryDetail(d) {
         <tbody>
           ${topP.length ? topP.map(p => `
             <tr class="clickable" data-pid="${p.id}">
-              <td><button type="button" class="row-link-btn">${avatarHtml(p.image_url, p.name, 'av-xs')}<span>${escRaw(p.name)}</span></button></td>
+              <td><button type="button" class="row-link-btn">${avatarHtml(p.image_url, p.name, 'av-xs', p.rating)}<span>${escRaw(p.name)}</span></button></td>
               <td><span class="pos" style="padding:2px 6px">${escRaw(playerRole(p))}</span></td>
               <td>${escRaw(p.club || '-')}</td>
               <td class="num">${p.age ?? '-'}</td>

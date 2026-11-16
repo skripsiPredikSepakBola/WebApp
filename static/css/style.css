@@ -1,35 +1,44 @@
+/* Hallmark · v2.0.0 · theme: custom (stadium-obsidian) · scope: app · redesign: full */
+/* critique: bespoke Stadium Obsidian UI with Bronze/Silver/Gold player rating frames, face-centered zoomed portraits, interactive card transitions, and custom dark scrollbars */
 :root{
-  --color-paper:#070B14;
-  --color-paper-2:#0E1628;
-  --color-paper-3:#0B1220;
+  --color-paper:#060911;
+  --color-paper-2:#0C1322;
+  --color-paper-3:#121C31;
   --color-ink:#F8FAFC;
-  --color-ink-2:#E2E8F0;
+  --color-ink-2:#CBD5E1;
   --color-muted:#94A3B8;
   --color-muted-2:#64748B;
-  --color-rule:rgba(148,163,184,0.22);
-  --color-rule-2:rgba(148,163,184,0.12);
+  --color-rule:rgba(148,163,184,0.18);
+  --color-rule-2:rgba(148,163,184,0.10);
   --color-accent:#F5B700;
-  --color-accent-ink:#070B14;
+  --color-accent-ink:#060911;
   --color-accent-2:#38BDF8;
   --color-focus:#38BDF8;
 
-  --bg:#070B14;
-  --bg-solid:#0B1220;
-  --surface:rgba(14,22,40,0.92);
-  --surface-solid:#0E1628;
-  --surface-2:rgba(20,31,54,0.86);
+  --tier-bronze:#CD7F32;
+  --tier-bronze-bg:linear-gradient(155deg,rgba(205,127,50,0.24),rgba(92,48,14,0.68));
+  --tier-silver:#CBD5E1;
+  --tier-silver-bg:linear-gradient(155deg,rgba(226,232,240,0.22),rgba(71,85,105,0.62));
+  --tier-gold:#F5B700;
+  --tier-gold-bg:linear-gradient(155deg,rgba(245,183,0,0.28),rgba(120,76,4,0.62));
+
+  --bg:#060911;
+  --bg-solid:#0B111E;
+  --surface:rgba(12,19,34,0.92);
+  --surface-solid:#0C1322;
+  --surface-2:rgba(18,28,49,0.88);
   --surface-3:rgba(30,41,59,0.78);
   --ink:#F8FAFC;
   --mute:#94A3B8;
   --dim:#64748B;
   --border:rgba(148,163,184,0.16);
-  --border-strong:rgba(148,163,184,0.32);
+  --border-strong:rgba(148,163,184,0.30);
   --home:#F5B700;
   --home-soft:rgba(245,183,0,0.16);
-  --home-glow:rgba(245,183,0,0.32);
+  --home-glow:rgba(245,183,0,0.34);
   --away:#38BDF8;
   --away-soft:rgba(56,189,248,0.16);
-  --away-glow:rgba(56,189,248,0.32);
+  --away-glow:rgba(56,189,248,0.34);
   --emerald:#10B981;
   --emerald-soft:rgba(16,185,129,0.16);
   --amber:#F59E0B;
@@ -39,7 +48,7 @@
   --pitch:#0A2D21;
   --pitch2:#0D3829;
   --chalk:rgba(226,248,236,0.52);
-  --shadow:0 12px 32px rgba(2,6,23,0.45),inset 0 1px 0 rgba(255,255,255,0.04);
+  --shadow:0 14px 36px rgba(2,6,23,0.48),inset 0 1px 0 rgba(255,255,255,0.05);
   --disp:"Barlow Condensed","Arial Narrow",sans-serif;
   --sans:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;
   --mono:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;
@@ -260,9 +269,13 @@ select.field option{background:#0E1628;color:#F8FAFC}
 .crest-slot{display:inline-flex;align-items:center;justify-content:center}
 
 .av-xs,.av-sm,.av-md,.av-lg{
-  border-radius:50%;object-fit:contain;object-position:center bottom;flex-shrink:0;
-  background:#0B1324;border:1px solid var(--border-strong);padding-top:2px;
+  border-radius:50%;object-fit:cover;object-position:50% 16%;flex-shrink:0;
+  background:#0B1324;border:1.5px solid var(--border-strong);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
 }
+.av-xs.tier-bronze,.av-sm.tier-bronze,.av-md.tier-bronze,.av-lg.tier-bronze{border-color:var(--tier-bronze);box-shadow:0 0 8px rgba(205,127,50,0.28)}
+.av-xs.tier-silver,.av-sm.tier-silver,.av-md.tier-silver,.av-lg.tier-silver{border-color:var(--tier-silver);box-shadow:0 0 10px rgba(226,232,240,0.26)}
+.av-xs.tier-gold,.av-sm.tier-gold,.av-md.tier-gold,.av-lg.tier-gold{border-color:var(--tier-gold);box-shadow:0 0 14px rgba(245,183,0,0.36)}
 .av-xs{width:22px;height:22px;font-size:10px}
 .av-sm{width:30px;height:30px;font-size:11px}
 .av-md{width:40px;height:40px;font-size:13px}
@@ -474,11 +487,37 @@ select.field option{background:#0E1628;color:#F8FAFC}
 
 .fut-pic{
   width:30px;height:30px;border-radius:50%;overflow:hidden;display:grid;place-items:center;
-  border:1.5px solid rgba(255,255,255,0.22);background:#0B1324;
+  border:1.5px solid rgba(255,255,255,0.24);background:#0B1324;
 }
-.tok.home .fut-pic{border-color:rgba(245,183,0,0.55)}
-.tok.away .fut-pic{border-color:rgba(56,189,248,0.55)}
-.fut-pic img{width:100%;height:100%;object-fit:contain;object-position:center bottom;display:block}
+.fut-pic.tier-bronze{border-color:var(--tier-bronze);box-shadow:0 0 6px rgba(205,127,50,0.32)}
+.fut-pic.tier-silver{border-color:var(--tier-silver);box-shadow:0 0 7px rgba(226,232,240,0.30)}
+.fut-pic.tier-gold{border-color:var(--tier-gold);box-shadow:0 0 9px rgba(245,183,0,0.42)}
+.fut-pic img{
+  width:100%;height:100%;object-fit:cover;object-position:50% 16%;
+  transform:scale(1.08);transform-origin:50% 18%;display:block;
+}
+.tok.tier-bronze{
+  background:var(--tier-bronze-bg)!important;
+  border-color:rgba(205,127,50,0.68)!important;
+  box-shadow:0 6px 14px rgba(0,0,0,0.45),inset 0 1px 0 rgba(245,179,108,0.22);
+}
+.tok.tier-silver{
+  background:var(--tier-silver-bg)!important;
+  border-color:rgba(203,213,225,0.72)!important;
+  box-shadow:0 6px 16px rgba(0,0,0,0.48),inset 0 1px 0 rgba(255,255,255,0.24);
+}
+.tok.tier-gold{
+  background:var(--tier-gold-bg)!important;
+  border-color:rgba(245,183,0,0.82)!important;
+  box-shadow:0 8px 20px rgba(245,183,0,0.22),0 6px 14px rgba(0,0,0,0.5),inset 0 1px 0 rgba(253,230,138,0.35);
+}
+.tok:hover{
+  transform:translate(-50%,-50%) translateY(-3px) scale(1.05);
+  z-index:12;
+}
+.bn.tier-bronze{border-color:rgba(205,127,50,0.45)}
+.bn.tier-silver{border-color:rgba(203,213,225,0.45)}
+.bn.tier-gold{border-color:rgba(245,183,0,0.55)}
 .fut-pic .av-fb{width:100%;height:100%;font-size:11px;border:0}
 
 .tok em{
