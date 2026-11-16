@@ -359,6 +359,10 @@ async function init() {
   };
   $('knockout').onchange = () => { if (last) predict(); };
   $('exp').onclick = exportXlsx;
+  if ($('imp-xlsx') && $('imp-xlsx-file')) {
+    $('imp-xlsx').onclick = () => $('imp-xlsx-file').click();
+    $('imp-xlsx-file').onchange = importXlsx;
+  }
   if ($('sync-btn')) $('sync-btn').onclick = syncMatches;
   wireSyncModal();
   loadThesisAndRecent();
@@ -1207,11 +1211,107 @@ function updateAnalystView(d) {
 
 async function exportXlsx() {
   if (!last) return;
-  const r = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(last) });
+  const payload = {
+    ...last,
+    preset_meta: {
+      home_name: T.home.name,
+      away_name: T.away.name,
+      home_formation: T.home.formation,
+      away_formation: T.away.formation,
+      home_form_pts: T.home.form,
+      away_form_pts: T.away.form,
+      knockout: !!$('knockout')?.checked,
+      league_tier_factor: +($('wi-tier')?.value || 0.95),
+      report_date: $('wi-date')?.value || '2026-11',
+      home_slots: T.home.slots.map(p => p ? { id: p.id, name: p.name } : null),
+      away_slots: T.away.slots.map(p => p ? { id: p.id, name: p.name } : null),
+      home_subs: T.home.subs.map(p => ({ id: p.id, name: p.name })),
+      away_subs: T.away.subs.map(p => ({ id: p.id, name: p.name })),
+    }
+  };
+  const r = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   const url = URL.createObjectURL(await r.blob());
   const fn = `PitchPulse AI - ${last.home_name} v ${last.away_name}.xlsx`.replaceAll(' (National Team)', '');
   Object.assign(document.createElement('a'), { href: url, download: fn }).click();
   URL.revokeObjectURL(url);
+}
+
+function resolveImportedPlayer(entry) {
+  if (!entry) return null;
+  if (entry.id != null && byId.has(entry.id)) return byId.get(entry.id);
+  const nm = String(entry.name || '').trim().toLowerCase();
+  const cl = String(entry.club || '').trim().toLowerCase();
+  if (!nm) return null;
+  if (cl) {
+    const exactClub = players.find(p => p.name.toLowerCase() === nm && (p.club || '').toLowerCase() === cl);
+    if (exactClub) return exactClub;
+  }
+  return players.find(p => p.name.toLowerCase() === nm) || null;
+}
+
+async function importXlsx(e) {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  const btn = $('imp-xlsx');
+  if (btn) { btn.disabled = true; btn.textContent = 'Importing...'; }
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    const d = await (await fetch('/api/import-xlsx', { method: 'POST', body: fd })).json();
+    if (d.status !== 'success' || !d.preset) throw new Error(d.message || 'Invalid Excel preset');
+    const p = d.preset;
+
+    // Load base team names (helps populate fallback if a slot is null)
+    const resolveTeamName = rawName => {
+      const s = String(rawName || '').trim();
+      if (flat.some(x => x.n === s)) return s;
+      const nt = `${s} (National Team)`;
+      if (flat.some(x => x.n === nt)) return nt;
+      return s;
+    };
+
+    const hName = resolveTeamName(p.home_name);
+    const aName = resolveTeamName(p.away_name);
+    if (flat.some(x => x.n === hName)) loadPreset('home', hName); else T.home.name = hName;
+    if (flat.some(x => x.n === aName)) loadPreset('away', aName); else T.away.name = aName;
+
+    if (p.home_formation && FORMATIONS.includes(p.home_formation)) T.home.formation = p.home_formation;
+    if (p.away_formation && FORMATIONS.includes(p.away_formation)) T.away.formation = p.away_formation;
+    if ($('home-f')) $('home-f').value = T.home.formation;
+    if ($('away-f')) $('away-f').value = T.away.formation;
+
+    if (Array.isArray(p.home_slots) && p.home_slots.length) {
+      T.home.slots = Array.from({ length: 11 }, (_, i) => resolveImportedPlayer(p.home_slots[i]));
+    }
+    if (Array.isArray(p.away_slots) && p.away_slots.length) {
+      T.away.slots = Array.from({ length: 11 }, (_, i) => resolveImportedPlayer(p.away_slots[i]));
+    }
+    if (Array.isArray(p.home_subs)) T.home.subs = p.home_subs.map(resolveImportedPlayer).filter(Boolean);
+    if (Array.isArray(p.away_subs)) T.away.subs = p.away_subs.map(resolveImportedPlayer).filter(Boolean);
+
+    if (p.home_form_pts != null) T.home.form = +p.home_form_pts;
+    if (p.away_form_pts != null) T.away.form = +p.away_form_pts;
+    if ($('home-form')) $('home-form').value = String(T.home.form);
+    if ($('away-form')) $('away-form').value = String(T.away.form);
+    if ($('wi-hf')) { $('wi-hf').value = T.home.form; $('wi-hf-val').textContent = T.home.form.toFixed(1); }
+    if ($('wi-af')) { $('wi-af').value = T.away.form; $('wi-af-val').textContent = T.away.form.toFixed(1); }
+
+    if ($('knockout')) $('knockout').checked = !!p.knockout;
+    if (p.league_tier_factor != null && $('wi-tier')) {
+      $('wi-tier').value = String(p.league_tier_factor);
+      $('wi-tier-val').textContent = (+p.league_tier_factor).toFixed(2);
+    }
+    if (p.report_date && $('wi-date')) $('wi-date').value = String(p.report_date).slice(0, 7);
+
+    render();
+    if (($('wi-date')?.value || '2026-11') !== '2026-11') await applySnapshot();
+    await predict();
+  } catch (err) {
+    $('status').textContent = `Could not import Excel: ${err.message}`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Import Excel Preset'; }
+  }
 }
 
 async function loadThesisAndRecent() {

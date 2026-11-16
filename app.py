@@ -1812,11 +1812,106 @@ def export_xlsx():
     raw.page_setup.orientation = 'landscape'; raw.page_setup.paperSize = 9; raw.page_setup.fitToWidth = 1; raw.page_setup.fitToHeight = 0
     raw.sheet_properties.pageSetUpPr.fitToPage = True
 
+    # Hidden machine-readable preset sheet for exact 1-click re-import
+    pm = d.get('preset_meta') or {}
+    if not pm:
+        pm = {
+            'home_name': d.get('home_name'),
+            'away_name': d.get('away_name'),
+            'home_formation': '4-3-3',
+            'away_formation': '4-3-3',
+            'home_form_pts': inp.get('home_form_pts', 2.0),
+            'away_form_pts': inp.get('away_form_pts', 2.0),
+            'knockout': bool(inp.get('knockout')),
+            'league_tier_factor': 0.95,
+            'report_date': rep_dt,
+            'home_slots': [{'id': p.get('id'), 'name': p.get('name')} for p in (d.get('lineups') or {}).get('home', []) if p.get('slot_pos') != 'SUB'][:11],
+            'away_slots': [{'id': p.get('id'), 'name': p.get('name')} for p in (d.get('lineups') or {}).get('away', []) if p.get('slot_pos') != 'SUB'][:11],
+            'home_subs': [{'id': p.get('id'), 'name': p.get('name')} for p in (d.get('lineups') or {}).get('home', []) if p.get('slot_pos') == 'SUB'],
+            'away_subs': [{'id': p.get('id'), 'name': p.get('name')} for p in (d.get('lineups') or {}).get('away', []) if p.get('slot_pos') == 'SUB'],
+        }
+    ps = wb.create_sheet('_PitchPulsePreset')
+    ps.sheet_state = 'hidden'
+    ps['A1'] = 'pitchpulse_preset_v1'
+    ps['B1'] = json.dumps(pm, ensure_ascii=False)
+
     wb.properties.title = f'{h} v {a} - match prediction'
     wb.properties.creator = 'PitchPulse AI'
     buf = io.BytesIO(); wb.save(buf); buf.seek(0)
     return send_file(buf, as_attachment=True, download_name='match_report.xlsx',
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+@app.route('/api/import-xlsx', methods=['POST'])
+def import_xlsx():
+    import io
+    from openpyxl import load_workbook
+
+    f = request.files.get('file')
+    if not f:
+        return jsonify({'status': 'error', 'message': 'No .xlsx file uploaded'}), 400
+    try:
+        wb = load_workbook(io.BytesIO(f.read()), data_only=True)
+        if '_PitchPulsePreset' in wb.sheetnames:
+            ps = wb['_PitchPulsePreset']
+            if ps['A1'].value == 'pitchpulse_preset_v1' and ps['B1'].value:
+                return jsonify({'status': 'success', 'preset': json.loads(ps['B1'].value)})
+
+        if 'Raw Data' not in wb.sheetnames:
+            return jsonify({'status': 'error', 'message': 'This Excel file is not a PitchPulse AI export.'}), 400
+
+        raw = wb['Raw Data']
+        rows = list(raw.iter_rows(values_only=True))
+        preset = {
+            'home_name': '', 'away_name': '', 'home_formation': '4-3-3', 'away_formation': '4-3-3',
+            'home_form_pts': 2.0, 'away_form_pts': 2.0, 'knockout': False,
+            'league_tier_factor': 0.95, 'report_date': '2026-11',
+            'home_slots': [], 'away_slots': [], 'home_subs': [], 'away_subs': [],
+        }
+
+        i = 0
+        while i < len(rows):
+            title = str(rows[i][0] or '').strip()
+            if title == 'Match inputs' and i + 2 < len(rows):
+                hdr = [str(c or '').strip() for c in rows[i + 1]]
+                vals = rows[i + 2]
+                m = dict(zip(hdr, vals))
+                preset['home_name'] = str(m.get('Home team') or '').strip()
+                preset['away_name'] = str(m.get('Away team') or '').strip()
+                preset['report_date'] = str(m.get('As-of Date') or '2026-11').strip()[:7] or '2026-11'
+                if m.get('Home form (points per game)') is not None:
+                    preset['home_form_pts'] = float(m['Home form (points per game)'])
+                if m.get('Away form (points per game)') is not None:
+                    preset['away_form_pts'] = float(m['Away form (points per game)'])
+                ko_val = str(m.get('Knockout') or '').strip().lower()
+                preset['knockout'] = ko_val in ('yes', 'true', '1')
+            elif title.startswith('Lineup: '):
+                team_lbl = title[8:].strip()
+                side = 'home' if team_lbl == preset['home_name'] else ('away' if team_lbl == preset['away_name'] else None)
+                if side:
+                    j = i + 1
+                    while j < len(rows) and str(rows[j][0] or '').strip() != 'Name':
+                        j += 1
+                    if j < len(rows):
+                        hdr = [str(c or '').strip() for c in rows[j]]
+                        k = j + 1
+                        while k < len(rows) and rows[k][0]:
+                            rmap = dict(zip(hdr, rows[k]))
+                            pname = str(rmap.get('Name') or '').strip()
+                            slot_pos = str(rmap.get('Played as') or rmap.get('slot_pos') or '').strip()
+                            entry = {'name': pname, 'club': str(rmap.get('Club') or '').strip()}
+                            if slot_pos.upper() == 'SUB':
+                                preset[f'{side}_subs'].append(entry)
+                            else:
+                                preset[f'{side}_slots'].append(entry)
+                            k += 1
+            i += 1
+
+        if not preset['home_name'] or not preset['away_name']:
+            return jsonify({'status': 'error', 'message': 'Could not read match inputs from Excel file.'}), 400
+        return jsonify({'status': 'success', 'preset': preset})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Import failed: {e}'}), 400
 
 
 @app.route('/api/health')
