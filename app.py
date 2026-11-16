@@ -1899,13 +1899,43 @@ def import_xlsx():
                             rmap = dict(zip(hdr, rows[k]))
                             pname = str(rmap.get('Name') or '').strip()
                             slot_pos = str(rmap.get('Played as') or rmap.get('slot_pos') or '').strip()
-                            entry = {'name': pname, 'club': str(rmap.get('Club') or '').strip()}
+                            entry = {'name': pname, 'club': str(rmap.get('Club') or '').strip(), 'slot_pos': slot_pos}
                             if slot_pos.upper() == 'SUB':
                                 preset[f'{side}_subs'].append(entry)
                             else:
                                 preset[f'{side}_slots'].append(entry)
                             k += 1
             i += 1
+
+        FORMATION_ROLES = {
+            '4-3-3': ['GK', 'LB', 'CB', 'CB', 'RB', 'CM', 'CDM', 'CM', 'LW', 'ST', 'RW'],
+            '4-2-3-1': ['GK', 'LB', 'CB', 'CB', 'RB', 'CDM', 'CDM', 'LW', 'CAM', 'RW', 'ST'],
+            '4-4-2': ['GK', 'LB', 'CB', 'CB', 'RB', 'LM', 'CM', 'CM', 'RM', 'ST', 'CF'],
+            '3-5-2': ['GK', 'CB', 'CB', 'CB', 'LM', 'CDM', 'CAM', 'CM', 'RM', 'ST', 'CF'],
+            '3-4-3': ['GK', 'CB', 'CB', 'CB', 'LM', 'CM', 'CM', 'RM', 'LW', 'ST', 'RW'],
+            '5-3-2': ['GK', 'LB', 'CB', 'CB', 'CB', 'RB', 'CM', 'CDM', 'CM', 'ST', 'CF'],
+            '5-4-1': ['GK', 'LB', 'CB', 'CB', 'CB', 'RB', 'LM', 'CM', 'CM', 'RM', 'ST'],
+            '4-1-4-1': ['GK', 'LB', 'CB', 'CB', 'RB', 'CDM', 'LM', 'CM', 'CM', 'RM', 'ST'],
+        }
+        from collections import Counter
+        def _infer_formation(slots):
+            roles = [str(s.get('slot_pos') or '').upper() for s in slots if s.get('slot_pos')]
+            if not roles:
+                return '4-3-3'
+            for fname, f_roles in FORMATION_ROLES.items():
+                if roles == f_roles:
+                    return fname
+            rc = Counter(roles)
+            best_f, best_score = '4-3-3', -1
+            for fname, f_roles in FORMATION_ROLES.items():
+                fc = Counter(f_roles)
+                overlap = sum(min(rc[r], fc[r]) for r in rc)
+                if overlap > best_score:
+                    best_f, best_score = fname, overlap
+            return best_f
+
+        preset['home_formation'] = _infer_formation(preset['home_slots'])
+        preset['away_formation'] = _infer_formation(preset['away_slots'])
 
         if not preset['home_name'] or not preset['away_name']:
             return jsonify({'status': 'error', 'message': 'Could not read match inputs from Excel file.'}), 400
