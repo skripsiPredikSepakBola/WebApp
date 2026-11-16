@@ -8,21 +8,15 @@ Designed for both production sports analytics and rigorous academic thesis (*skr
 
 ## Key Features
 
-### 1. 13-Role Granular Tactical Engine & Out-of-Position (OOP) Penalties
+### 1. 13-Role Granular Tactical Engine, Optimal Formation & Tiered Cards
 - **13 Granular Tactical Roles**: Every player in the database (`71,161` players) is mapped from Transfermarkt sub-positions to one of 13 granular tactical roles across 4 line groups:
   - **Goalkeeper (`GK`)**: `GK` (Goalkeeper)
   - **Defense (`DEF`)**: `LB` (Left-Back), `CB` (Centre-Back), `RB` (Right-Back)
   - **Midfield (`MID`)**: `CDM` (Defensive Midfield), `CM` (Central Midfield), `CAM` (Attacking Midfield), `LM` (Left Midfield), `RM` (Right Midfield)
   - **Attack (`ATT`)**: `LW` (Left Winger), `RW` (Right Winger), `CF` (Second Striker / Centre-Forward), `ST` (Striker)
-- **8 Supported Tactical Formations**:
-  - `4-3-3`: `['GK', 'LB', 'CB', 'CB', 'RB', 'CM', 'CDM', 'CM', 'LW', 'ST', 'RW']`
-  - `4-2-3-1`: `['GK', 'LB', 'CB', 'CB', 'RB', 'CDM', 'CDM', 'LW', 'CAM', 'RW', 'ST']`
-  - `4-4-2`: `['GK', 'LB', 'CB', 'CB', 'RB', 'LM', 'CM', 'CM', 'RM', 'ST', 'CF']`
-  - `3-5-2`: `['GK', 'CB', 'CB', 'CB', 'LM', 'CDM', 'CAM', 'CM', 'RM', 'ST', 'CF']`
-  - `3-4-3`: `['GK', 'CB', 'CB', 'CB', 'LM', 'CM', 'CM', 'RM', 'LW', 'ST', 'RW']`
-  - `5-3-2`: `['GK', 'LB', 'CB', 'CB', 'CB', 'RB', 'CM', 'CDM', 'CM', 'ST', 'CF']`
-  - `5-4-1`: `['GK', 'LB', 'CB', 'CB', 'CB', 'RB', 'LM', 'CM', 'CM', 'RM', 'ST']`
-  - `4-1-4-1`: `['GK', 'LB', 'CB', 'CB', 'RB', 'CDM', 'LM', 'CM', 'CM', 'RM', 'ST']`
+- **8 Supported Tactical Formations & Auto-Rearrangement**: `4-3-3`, `4-2-3-1`, `4-4-2`, `3-5-2`, `3-4-3`, `5-3-2`, `5-4-1`, `4-1-4-1`. Changing formation automatically runs `rearrangeLineupForFormation` (`fitScore`), pooling all starters and substitutes to compute the highest-rated, line-aligned Starting XI and bench.
+- **Bronze / Silver / Gold Player Rating Tiers**: Pitch cards and player avatars render **Bronze (`< 72`)**, **Silver (`72–82.9`)**, and **Gold (`>= 83`)** metallic frames with face-centered portrait framing (`object-position: 50% 16%`).
+- **Gameplay-Stats Player Ratings (`[52.0, 97.0]`)**: Computed in [`build_gameplay_ratings.py`](../build_gameplay_ratings.py) from real Transfermarkt match appearances (`appearances.csv` + `games.csv`) using position-specific weighted metrics (goals/90, assists/90, goals conceded/90, clean-sheet rate, competition-weighted minutes, win contribution, cards/90 penalty, Bayesian shrinkage, and `0.52 ** (2025 - season)` recency decay for active players).
 - **Granular Effective Rating & OOP Penalty Matrix**: Deploying a player outside their natural role applies a calibrated rating deduction before team aggregation ($R_{\text{eff}} = \max(35.0, R_{\text{base}} - \text{Penalty})$), ranging from `-1` (`ST <-> CF`) and `-2` (`LW <-> RW`, `CAM <-> CM`, `CM <-> CDM`) to `-18` (`DEF <-> ATT`) and `-40` / `-45` (`GK <-> Outfield`).
 
 ### 2. Active Squads vs. Legends & Former Icons Split
@@ -48,12 +42,34 @@ Designed for both production sports analytics and rigorous academic thesis (*skr
   - Phase 1 (`GET /api/players?mode=boot`): Instantly serves `boot_players` (all preset starters/substitutes plus top 2,500 players by rating) for `<300ms` interactive pitch rendering.
   - Phase 2 (`GET /api/players`): Hydrates the complete `71,161`-player database asynchronously in the background.
 
-### 5. Online Automatic Match & Player Sync + Daily Retraining
-- **Zero-Key Transfermarkt JSON API Sync (`tmapi-alpha`)**: `sync_matches.py` queries `https://tmapi-alpha.transfermarkt.technology` across top European and ASEAN competitions (`GB1`, `ES1`, `L1`, `IT1`, `FR1`, `CL`, `IN1L`, `MYS1`, `THA1`, `VIE1`, `SIN1`) to ingest finished fixtures (with starting lineups) and live squad transfers, market values, ages, and positions directly into Supabase (`finished_matches` and `players`). Optional `API_FOOTBALL_KEY` (`v3.football.api-sports.io`) and `FOOTBALL_DATA_KEY` (`api.football-data.org/v4`) feeds are also supported.
-- **In-Process Auto-Sync Daemon**: Background thread (`_auto_sync_loop`) runs automatically on startup (configurable via `AUTO_SYNC_ENABLED` and `AUTO_SYNC_INTERVAL_SEC`, default every 6 hours) and exposes real-time health at `GET /api/sync/status`.
-- **GitHub Actions CI/CD Pipelines**:
-  - `.github/workflows/sync-matches.yml`: Runs `python sync_matches.py` on a 6-hour cron (`0 */6 * * *`).
+### 5. Match Calendar & Online Automatic Sync + Retraining
+- **Interactive Match Calendar (`GET /api/calendar?month=YYYY-MM`)**: Tracks **Previous (`FT`)**, **Today (`LIVE` / scheduled)**, and **Upcoming** fixtures across European Top-5 leagues, UEFA Champions League, **UEFA Nations League A/B/C/D**, ASEAN leagues, and global API-Football fixtures, with one-click **Predict** simulation.
+- **Zero-Key Transfermarkt JSON API Sync (`tmapi-alpha`)**: `sync_matches.py` queries `https://tmapi-alpha.transfermarkt.technology` across `GB1`, `ES1`, `L1`, `IT1`, `FR1`, `CL`, `UNLA`, `UNLB`, `UNLC`, `UNLD`, `IN1L`, `MYS1`, `THA1`, `VIE1`, `SIN1`, plus optional `API_FOOTBALL_KEY` (yesterday + today UTC fixtures) and `FOOTBALL_DATA_KEY` feeds into Supabase (`finished_matches`, `players`) or local/serverless cache (`local_sync_cache.json` / `/tmp/local_sync_cache.json` on Vercel).
+- **GitHub Actions Automation**:
+  - `.github/workflows/sync-matches.yml`: Runs `python sync_matches.py` every 6 hours (`0 */6 * * *`) to update Supabase.
   - `.github/workflows/retrain.yml`: Runs `python retrain.py` daily at `02:00 UTC` (`0 2 * * *`), rebuilding chronological lineup features from `finished_matches` and promoting `model_advanced_3class.joblib` and `model_advanced_xg.joblib` only when validation multi-class log-loss improves (`new_ll <= old_ll`).
+
+---
+
+## End-to-End Data-to-Prediction Pipeline
+
+1. **Raw Data Ingestion**:
+   - Historical corpus from Transfermarkt CSVs (`games.csv`, `appearances.csv`, `game_lineups.csv`, `players.csv`, `competitions.csv`, `clubs.csv`) covering **79,060** matches and **71,161** players.
+   - Live incremental updates via `sync_matches.py` (`tmapi-alpha`, API-Football, football-data.org) into Supabase.
+2. **Player Rating Computation (`build_gameplay_ratings.py`)**:
+   - Aggregates per-player appearances with competition-tier weights (`1.00` Big-5/UCL, `0.86` Major, `0.74` ASEAN) and exponential recency decay (`0.52 ** (2025 - season)` for active players; `1.0` for Legends).
+   - Computes Bayesian-shrunk per-90 gameplay metrics per position (`GK`, `DEF`, `MID`, `ATT`): goals/90, assists/90, goals conceded/90, clean-sheet rate, competition-weighted minutes, win contribution, and cards/90 penalty, mapped onto `[52.0, 97.0]`.
+   - Outputs `players_lite.json` and precomputed binary caches (`startup_cache.joblib`, `explorer_bundle.joblib`).
+3. **Zero-Leakage Feature Engineering (`build_features_from_value_ratings.py`)**:
+   - Builds **16 pre-kickoff differential features** (`diff_overall_mean`, `diff_overall_max`, `diff_overall_min`, `diff_attack_vs_defense`, `diff_defense_vs_attack`, `diff_midfield`, `diff_sub_mean`, `diff_depth_gap`, `diff_market_val_log`, `diff_form_pts_5`, `diff_form_gd_5`, `diff_aerial_att_vs_def`, `diff_aerial_def_vs_att`, `diff_prime_score`, `diff_cohesion`, `league_tier_factor`).
+   - Enforces causal `shift(1)` on rolling 5-match form (`Win=3`, `Draw=1`, `Loss=0`) and symmetrical mirroring (`158,120` samples).
+4. **Chronological Model Training (`retrain_full_thesis_pipeline.py`)**:
+   - **Train (`<= 2021`)**: `86,400` samples | **Validation (`2022`)**: `11,826` samples (`tau_draw = 0.27` tuning) | **Unseen Hold-Out Test (`2023–2026`)**: `59,894` samples.
+   - Trains `HistGradientBoostingClassifier` (3-class Win/Draw/Loss: Test Acc `52.74%`, Tuned Macro-F1 `0.4666`, LogLoss `0.9845`; Binary ROC-AUC `0.7133`) and `HistGradientBoostingRegressor` (xG MAE `0.9704`).
+5. **Real-Time Inference (`POST /api/predict` in `app.py`)**:
+   - Resolves starters/subs (with optional historical `bisect_right` time-travel snapshot) and applies 13-role OOP penalties (`R_eff = max(35, R_base - Penalty)`).
+   - Evaluates both `X_ab` and `X_ba` and averages complementary probabilities for exact `0.0%` Home/Away symmetry.
+   - Computes dual-team `xG`, generates the `6×6` Bivariate Poisson scoreline matrix, and disaggregates team `xG` into player anytime goalscorer probabilities.
 
 ---
 
@@ -68,74 +84,46 @@ Designed for both production sports analytics and rigorous academic thesis (*skr
 ```bash
 cd "web_app_new_v2"
 pip install -r requirements.txt
-
-# Optional: copy environment template and configure Supabase credentials
 cp .env.example .env
-
-# Start the Flask server (defaults to http://127.0.0.1:5000)
 python app.py
 ```
 
-### 2. Zero-Provider GitHub Pages Deployment (`GitHub Pages + Actions + Supabase`)
+### 2. Production Vercel Deployment (`https://pitch.murfidya.app`)
 
-PitchPulse AI runs 100% natively on **GitHub Pages** (`https://skripsiprediksepakbola.github.io/WebApp/`) without requiring any external Python hosting provider:
+The Flask backend (`app.py`) and frontend (`templates/` + `static/`) run as a single unified service on **Vercel**:
 
-1. **Deterministic ML Tree Export (`build_gh_pages.py`)**:
-   - Exports the trained `HistGradientBoostingClassifier` (`model_advanced_3class.joblib`) and `HistGradientBoostingRegressor` (`model_advanced_xg.joblib`) `TreePredictor` decision arrays into `_site/data/models.json`.
-   - Exports sharded scouting/explorer bundles (`clubs_extras_shard_{0..15}.json`, `player_details_shard_{0..15}.json`, per-league JSONs, `boot_players.json`, `players_full.json`, `presets.json`) into `_site/data/`.
-2. **In-Browser Inference Shim (`static/js/gh-pages-engine.js`)**:
-   - When served from `*.github.io` (or static preview), intercepts `/api/*` requests and runs identical 16-feature symmetrical tree traversal, 13-role OOP penalties, Bivariate Poisson `6×6` scoring, client-side OOXML `.xlsx` generation, and sharded Scouting lookups directly in the browser (`<1e-6` numerical parity with Python `scikit-learn`).
-   - When running locally via `python app.py` or Gunicorn, passes all `/api/*` traffic straight through to Flask untouched.
-3. **Automated GitHub Actions CI/CD (`.github/workflows/deploy-pages.yml`)**:
-   - Triggers automatically on every push to `main` and after scheduled runs of `sync-matches.yml` (every 6h) and `retrain.yml` (daily at `02:00 UTC`), rebuilding `_site/` with fresh Supabase data and publishing directly to GitHub Pages.
-   - Ensure **Repository Settings → Pages → Build and deployment → Source** is set to **`GitHub Actions`**.
+- [`vercel.json`](vercel.json): Configures `app.py` as the Flask service entrypoint.
+- [`.vercelignore`](.vercelignore): Excludes raw CSVs (`player_monthly_snapshots.csv`), duplicate JSONs (`players_lite.json`, `historical_presets.json`), `_site/`, and `.env` so the bundle stays well under Vercel's 500 MB Python limit.
+- Serverless-aware behavior: When `VERCEL` is set in the environment, background daemon threads are skipped and local sync caches write to `/tmp/local_sync_cache.json`.
 
 ```bash
-# Build static _site/ bundle locally for testing
-python build_gh_pages.py
+# Deploy to Vercel production from web_app_new_v2/
+vercel deploy --prod --yes
 ```
 
 ### 3. Production Gunicorn Deployment (`Procfile`)
-
-The repository also includes a Heroku/Render/Railway-compatible `Procfile` for traditional Python server hosting:
-
-```procfile
-web: gunicorn app:app --bind 0.0.0.0:$PORT
-```
-
-To run with Gunicorn on Linux/container environments:
 
 ```bash
 gunicorn app:app --bind 0.0.0.0:${PORT:-5000} --workers 2 --threads 4 --timeout 120
 ```
 
-#### Azure App Service Free Tier (`F1`) & 3-Layer Keep-Alive
-
-Azure App Service Linux Free (`F1`) disables the portal **Always On** toggle. To prevent container spin-down, PitchPulse AI ships a 3-layer keep-alive architecture:
-
-1. **In-App Daemon & On-Demand Endpoint (`app.py`)**: A background thread (`app-keep-alive`, every 600s) and `GET/POST /api/keep-alive/ping` hit the public `/api/health` URL (surfaced in `/api/health` and `/api/sync/status`).
-2. **Startup Self-Pinger (`startup.sh`)**: Pulls the latest `main` commit, provisions `/tmp/antenv` on the fast local container disk (`Python 3.11`), spawns a 540s curl loop targeting `/api/health`, and launches Gunicorn (`--workers 1 --timeout 180`).
-3. **External GitHub Actions Cron & GitHub Pages Beacon**: [`.github/workflows/keep-alive.yml`](.github/workflows/keep-alive.yml) (`*/14 * * * *`), [`.github/workflows/sync-matches.yml`](.github/workflows/sync-matches.yml), and active browser sessions on GitHub Pages ([`gh-pages-engine.js`](static/js/gh-pages-engine.js)) ping `/api/health` externally so cold-start idle timeouts do not reclaim the worker.
-
-### 4. Rebuilding Binary Caches (After Data or Preset Updates)
-
-If you modify `players_lite.json`, `preset_lineups.json`, `preset_categories.json`, or raw Transfermarkt CSV files, regenerate the precomputed bundles from the repository root:
+### 4. Rebuilding Binary Caches & Ratings
 
 ```bash
-# 1. Rebuild explorer_bundle.joblib (leagues, standings, clubs, countries, player seasons)
+# 1. Recompute real gameplay-stats player ratings
+python build_gameplay_ratings.py
+
+# 2. Rebuild explorer_bundle.joblib (leagues, standings, clubs, countries, player seasons)
 python build_explorer_data.py
 
-# 2. Rebuild startup_cache.joblib (players, boot_players, presets, compressed snapshots)
+# 3. Rebuild startup_cache.joblib (players, boot_players, presets, compressed snapshots)
 python web_app_new_v2/build_startup_cache.py
 ```
 
 ### 5. Running Verification & Anti-Leakage Test Suites
 
 ```bash
-# End-to-end Predictor, 13-Role OOP, Legends segregation, Explorer & Sync API tests
 python web_app_new_v2/test_dual_deck_e2e.py
-
-# Methodological anti-leakage & rating scaling verification (from dataset root)
 python test_no_leakage.py
 python test_value_ratings.py
 ```
@@ -265,9 +253,10 @@ Health check endpoint returning `{"status": "ok", "players": 71161}`.
 
 | Endpoint | Method | Description |
 | :--- | :---: | :--- |
-| `/api/sync` | `POST` | Triggers an immediate online sync (`sync_all()`) fetching recent finished matches and squad updates from Transfermarkt (`tmapi-alpha`) and configured API keys, then hot-reloads in-memory player/preset data. |
-| `/api/sync/status` | `GET` | Returns real-time status of the background auto-sync daemon (`enabled`, `interval_sec`, `running`, `last_sync_at`, `last_result`, `last_error`, `supabase_configured`). |
-| `/api/matches/recent` | `GET` | Returns the 20 most recent finished matches (`finished_matches`) and 10 most recent logged predictions (`recent_predictions`) from Supabase. |
+| `/api/calendar` | `GET` | Returns finished, live, and upcoming fixtures for a `month=YYYY-MM` (Transfermarkt + UEFA Nations League A–D + API-Football + Supabase). |
+| `/api/sync` | `POST` | Triggers an immediate online sync (`sync_all()`) fetching recent finished matches from Transfermarkt (`tmapi-alpha`), API-Football (today + yesterday), and football-data.org. |
+| `/api/sync/status` | `GET` | Returns real-time status of sync (`enabled`, `interval_sec`, `running`, `last_sync`, `matches_synced`, `last_result`, `last_error`, `supabase_configured`). |
+| `/api/matches/recent` | `GET` | Returns the 20 most recent finished matches (`finished_matches`) and 10 most recent logged predictions (`recent_predictions`). |
 
 ---
 
@@ -275,20 +264,21 @@ Health check endpoint returning `{"status": "ok", "players": 71161}`.
 
 ```text
 web_app_new_v2/
-├── app.py                          # Flask application, 13-role tactical engine, REST API routes & auto-sync daemon
-├── sync_matches.py                 # Transfermarkt (tmapi-alpha), API-Football & football-data.org -> Supabase sync
+├── app.py                          # Flask application, 13-role tactical engine, CORS & REST API routes
+├── sync_matches.py                 # Transfermarkt (tmapi-alpha), API-Football, football-data.org & Calendar sync
 ├── retrain.py                      # Chronological retraining pipeline with validation log-loss gating
 ├── build_startup_cache.py          # Builder for startup_cache.joblib (players, 13 roles, Legends split, snapshots)
-├── build_gh_pages.py               # Static GitHub Pages generator (exports HGBT trees + sharded explorer bundles into _site/)
+├── vercel.json                     # Vercel Flask service configuration
+├── .vercelignore                   # Excludes large raw CSVs & duplicate JSONs from Vercel bundle
 ├── apply_supabase_schema.py        # Supabase schema verifier & DDL helper
 ├── schema.sql                      # PostgreSQL / Supabase table definitions (5 tables)
 ├── academic_report_data.json       # Ground-truth evaluation metrics for thesis defense & /api/thesis-metrics
 ├── model_advanced_3class.joblib    # Trained HistGradientBoostingClassifier (3-class Win/Draw/Loss)
 ├── model_advanced_xg.joblib        # Trained HistGradientBoostingRegressor (Expected Goals xG)
 ├── advanced_feature_cols.joblib    # Ordered list of the 16 pre-kickoff differential features
-├── startup_cache.joblib            # Binary startup cache (~0.7s cold boot)
+├── startup_cache.joblib            # Binary startup cache (~0.2s–0.7s cold boot)
 ├── explorer_bundle.joblib          # Precomputed leagues, standings, clubs, countries & player career logs
-├── players_lite.json               # Local fallback player catalog (71,161 players with role & is_former flags)
+├── players_lite.json               # Local fallback player catalog (71,161 players with gameplay ratings)
 ├── preset_lineups.json             # Active club/national presets + All-Time Legends & Icons lineups
 ├── preset_categories.json          # Categorized preset index
 ├── historical_presets.json         # Monthly historical club & national team lineups (2020-01 to 2026-11)
@@ -297,15 +287,13 @@ web_app_new_v2/
 ├── Procfile                        # Production Gunicorn entrypoint
 ├── .env.example                    # Environment variable template
 ├── .github/workflows/
-│   ├── deploy-pages.yml            # Builds _site/ and publishes to GitHub Pages on push & post-sync/retrain
-│   ├── sync-matches.yml            # 6-hour scheduled GitHub Action for match & squad sync
+│   ├── sync-matches.yml            # 6-hour scheduled GitHub Action for match sync to Supabase
 │   └── retrain.yml                 # Daily 02:00 UTC scheduled GitHub Action for chronological model retraining
 ├── templates/
 │   └── index.html                  # PitchPulse AI single-page application template
 ├── static/
-│   ├── css/style.css               # Dark Broadcast Pro stylesheet
-│   ├── js/gh-pages-engine.js       # Zero-server browser ML inference & API shim for GitHub Pages
-│   └── js/app.js                   # Frontend tactical pitch, 13-role drag-and-drop, Bivariate Poisson heatmap & Explorer UI
-├── README.md                       # Production engineering, architecture & API documentation
-└── THESIS_METHODOLOGY.md           # Independent academic thesis methodology & sidang defense reference
+│   ├── css/style.css               # Stadium Obsidian UI stylesheet, Bronze/Silver/Gold tier frames & dark scrollbars
+│   └── js/app.js                   # Frontend tactical pitch, optimal formation rearrangement, Match Calendar & Explorer UI
+├── README.md                       # Production engineering, pipeline & API documentation
+└── THESIS_METHODOLOGY.md           # Academic thesis methodology & sidang defense reference
 ```
