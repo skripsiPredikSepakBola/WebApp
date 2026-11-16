@@ -576,7 +576,7 @@ def sync_squad_players_fd(api_key, competitions=('PL', 'PD', 'BL1', 'SA', 'FL1',
                 }
     return upsert_players(list(updates.values()))
 
-def sync_api_football(api_key, date_str=None):
+def sync_api_football(api_key, date_str=None, include_lineups=False):
     date_str = date_str or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     data = _fetch_json(f'https://v3.football.api-sports.io/fixtures?date={date_str}&status=FT', {'x-apisports-key': api_key})
     now = datetime.now(timezone.utc).isoformat()
@@ -584,7 +584,7 @@ def sync_api_football(api_key, date_str=None):
     for idx, m in enumerate(data.get('response', [])):
         fx_id = m.get('fixture', {}).get('id')
         # ponytail: cap lineup calls to 20/run so 100 req/day free tier lasts
-        if fx_id and idx < 20:
+        if include_lineups and fx_id and idx < 20:
             try:
                 lu = _fetch_json(f'https://v3.football.api-sports.io/fixtures/lineups?fixture={fx_id}', {'x-apisports-key': api_key})
                 m['lineups'] = lu.get('response', [])
@@ -641,15 +641,16 @@ def sync_all(allow_local=True, include_squads=False):
         synced['tmapi_error'] = str(e)
     af_key = os.environ.get('API_FOOTBALL_KEY', '').strip()
     fd_key = os.environ.get('FOOTBALL_DATA_KEY', '').strip()
-    if url and include_squads and af_key:
+    if url and af_key:
         try:
-            synced['api_football'] = sync_api_football(af_key)
+            synced['api_football'] = sync_api_football(af_key, include_lineups=include_squads)
         except Exception as e:
             synced['api_football_error'] = str(e)
-    if url and include_squads and fd_key:
+    if url and fd_key:
         try:
             synced['football_data'] = sync_football_data(fd_key)
-            synced['players_updated'] = sync_squad_players_fd(fd_key)
+            if include_squads:
+                synced['players_updated'] = sync_squad_players_fd(fd_key)
         except Exception as e:
             synced['football_data_error'] = str(e)
     _LOCAL_SYNC_STATE['last_sync'] = datetime.now(timezone.utc).isoformat()
