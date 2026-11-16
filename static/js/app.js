@@ -162,6 +162,11 @@ let activeChartMetric = 'rating';
 let dlgFilterMode = 'exact';
 let dlgUserPickedFilter = false;
 let syncStatusData = null;
+let calCache = new Map();
+let calActiveMonth = new Date().toISOString().slice(0, 7);
+let calSelectedDate = new Date().toISOString().slice(0, 10);
+let calScope = 'day';
+let calData = null;
 
 const clean = t => (t || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
 const short = n => { const w = (n || '').split(' '); return w.length > 1 ? w.slice(1).join(' ') : (n || ''); };
@@ -355,6 +360,7 @@ async function init() {
   wireWorkspaceNav();
   wireGlobalSearch();
   wireLeaguesView();
+  wireCalendarView();
   wireExplorerView();
 
   if ($('thesis-tabs')) $('thesis-tabs').onclick = e => {
@@ -488,7 +494,7 @@ function wireSyncModal() {
 
 function switchView(view) {
   activeView = view;
-  ['predictor', 'leagues', 'explorer'].forEach(v => {
+  ['predictor', 'leagues', 'calendar', 'explorer'].forEach(v => {
     const el = $('view-' + v);
     const tab = $('tab-' + v);
     if (el) el.hidden = v !== view;
@@ -500,6 +506,7 @@ function switchView(view) {
   if ($('actionbar')) $('actionbar').hidden = view !== 'predictor';
   document.body.classList.toggle('no-actionbar', view !== 'predictor');
   if (view === 'leagues') ensureLeaguesLoaded();
+  if (view === 'calendar') ensureCalendarLoaded();
   if (view === 'explorer') ensureExplorerSubLoaded(activeExSub);
 }
 
@@ -2047,6 +2054,194 @@ function wireExplorerView() {
   if ($('ex-n-list')) $('ex-n-list').onclick = e => {
     const b = e.target.closest('button[data-nname]');
     if (b) openCountryInspector(b.dataset.nname);
+  };
+}
+
+// =========================================================================
+// TAB 4: MATCH CALENDAR (PREVIOUS, TODAY & INCOMING)
+// =========================================================================
+function shiftMonthStr(monthStr, delta) {
+  const [y, m] = monthStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, (m - 1) + delta, 1));
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonthLabel(monthStr) {
+  const [y, m] = monthStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
+function formatKickoffTime(isoStr) {
+  if (!isoStr) return '';
+  const dt = new Date(isoStr);
+  if (Number.isNaN(dt.getTime())) return '';
+  return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+async function ensureCalendarLoaded(forceMonth = null) {
+  const target = forceMonth || calActiveMonth;
+  if (calData && calData.month === target) {
+    renderCalendarView();
+    return;
+  }
+  await loadCalendarMonth(target);
+}
+
+async function loadCalendarMonth(monthStr) {
+  calActiveMonth = monthStr;
+  if ($('cal-month-label')) $('cal-month-label').textContent = formatMonthLabel(monthStr);
+  const st = $('cal-status');
+  if (calCache.has(monthStr)) {
+    calData = calCache.get(monthStr);
+    if (st) st.hidden = true;
+    renderCalendarView();
+    return;
+  }
+  if (st) { st.textContent = 'Loading fixtures for ' + formatMonthLabel(monthStr) + '...'; st.classList.remove('error'); st.hidden = false; }
+  try {
+    const d = await fetch(`/api/calendar?month=${encodeURIComponent(monthStr)}`).then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    });
+    if (d.status && d.status !== 'success') throw new Error(d.message || 'Calendar unavailable');
+    calCache.set(monthStr, d);
+    calData = d;
+    if (!calSelectedDate.startsWith(monthStr)) {
+      calSelectedDate = d.today?.startsWith(monthStr) ? d.today : `${monthStr}-01`;
+    }
+    if (st) st.hidden = true;
+    renderCalendarView();
+  } catch (e) {
+    if (st) { st.textContent = `Could not load match calendar: ${e.message}`; st.classList.add('error'); st.hidden = false; }
+  }
+}
+
+function renderCalendarView() {
+  if (!calData) return;
+  const c = calData.counts || {};
+  if ($('cal-month-label')) $('cal-month-label').textContent = formatMonthLabel(calData.month);
+  if ($('cal-kpis')) {
+    $('cal-kpis').innerHTML = [
+      ['Month Fixtures', fmtNum(c.total || 0)],
+      ['Upcoming', fmtNum(c.upcoming || 0)],
+      ['Live Now', fmtNum(c.live || 0)],
+      ['Previous / FT', fmtNum(c.finished || 0)],
+    ].map(([k, v]) => `<div class="kpi-card"><span class="kpi-label">${k}</span><span class="kpi-val">${v}</span></div>`).join('');
+  }
+  renderCalendarGrid();
+  renderCalendarMatches();
+}
+
+function renderCalendarGrid() {
+  const grid = $('cal-grid');
+  if (!grid || !calData) return;
+  const [y, m] = calData.month.split('-').map(Number);
+  const firstDay = new Date(Date.UTC(y, m - 1, 1));
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const startOffset = (firstDay.getUTCDay() + 6) % 7; // Mon=0 .. Sun=6
+  const todayStr = calData.today || new Date().toISOString().slice(0, 10);
+  const daysMap = calData.days || {};
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push('<div class="cal-day pad" aria-hidden="true"></div>');
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dStr = `${calData.month}-${String(day).padStart(2, '0')}`;
+    const info = daysMap[dStr];
+    const isToday = dStr === todayStr;
+    const isSel = dStr === calSelectedDate && calScope === 'day';
+    const badges = info ? [
+      info.finished ? `<span class="cal-cnt finished" title="${info.finished} previous">${info.finished} FT</span>` : '',
+      info.live ? `<span class="cal-cnt live" title="${info.live} live">${info.live} LIVE</span>` : '',
+      info.upcoming ? `<span class="cal-cnt upcoming" title="${info.upcoming} upcoming">${info.upcoming} UP</span>` : '',
+    ].filter(Boolean).join('') : '';
+    cells.push(`
+      <button type="button" class="cal-day ${isToday ? 'is-today' : ''} ${isSel ? 'selected' : ''}" data-date="${dStr}" role="gridcell" aria-selected="${isSel}">
+        <div class="cal-day-num"><span>${day}</span>${isToday ? '<span class="cal-today-tag">Today</span>' : ''}</div>
+        <div class="cal-badges">${badges}</div>
+      </button>`);
+  }
+  grid.innerHTML = cells.join('');
+}
+
+function renderCalendarMatches() {
+  const list = $('cal-match-list'), title = $('cal-feed-title');
+  if (!list || !calData) return;
+  const q = ($('cal-q')?.value || '').trim().toLowerCase();
+  const todayStr = calData.today || new Date().toISOString().slice(0, 10);
+  let rows = calData.matches || [];
+
+  if (calScope === 'day') {
+    rows = rows.filter(m => m.date === calSelectedDate);
+    if (title) title.textContent = calSelectedDate === todayStr ? `Today's Matches (${calSelectedDate})` : `Matches on ${calSelectedDate}`;
+  } else if (calScope === 'today') {
+    rows = rows.filter(m => m.date === todayStr);
+    if (title) title.textContent = `Today's Matches (${todayStr})`;
+  } else if (calScope === 'upcoming') {
+    rows = rows.filter(m => m.bucket === 'upcoming' || m.bucket === 'live');
+    if (title) title.textContent = `Upcoming Matches (${formatMonthLabel(calData.month)})`;
+  } else if (calScope === 'finished') {
+    rows = rows.filter(m => m.bucket === 'finished').slice().reverse();
+    if (title) title.textContent = `Previous Results (${formatMonthLabel(calData.month)})`;
+  } else {
+    if (title) title.textContent = `All Fixtures (${formatMonthLabel(calData.month)})`;
+  }
+
+  if (q) {
+    rows = rows.filter(m => `${m.home_team} ${m.away_team} ${m.league}`.toLowerCase().includes(q));
+  }
+
+  list.innerHTML = rows.length ? rows.slice(0, 80).map(m => {
+    const scoreTxt = (m.bucket !== 'upcoming' && m.home_goals != null && m.away_goals != null)
+      ? `${m.home_goals} - ${m.away_goals}`
+      : 'vs';
+    const koTime = formatKickoffTime(m.match_date);
+    const badgeLbl = m.bucket === 'finished' ? (m.status || 'FT') : (m.bucket === 'live' ? (m.status || 'LIVE') : 'UPCOMING');
+    return `
+      <div class="cal-match-row">
+        <div>
+          <div class="cal-match-meta">
+            <span class="cal-status-badge ${escRaw(m.bucket)}">${escRaw(badgeLbl)}</span>
+            <span>${escRaw(m.date)}${koTime ? ` · ${escRaw(koTime)}` : ''}</span>
+            <span>${escRaw(m.league)}</span>
+          </div>
+          <div class="cal-match-teams">${escRaw(m.home_team)} <span>${scoreTxt}</span> ${escRaw(m.away_team)}</div>
+        </div>
+        <button type="button" class="btn ghost btn-sm" data-cal-h="${escRaw(m.home_team)}" data-cal-a="${escRaw(m.away_team)}">Predict</button>
+      </div>`;
+  }).join('') : '<p class="empty-msg">No matches recorded for this selection. Try another day or switch to Upcoming / Previous.</p>';
+}
+
+function wireCalendarView() {
+  if ($('cal-prev')) $('cal-prev').onclick = () => loadCalendarMonth(shiftMonthStr(calActiveMonth, -1));
+  if ($('cal-next')) $('cal-next').onclick = () => loadCalendarMonth(shiftMonthStr(calActiveMonth, 1));
+  if ($('cal-today')) $('cal-today').onclick = () => {
+    const todayStr = (calData?.today) || new Date().toISOString().slice(0, 10);
+    calSelectedDate = todayStr;
+    calScope = 'day';
+    document.querySelectorAll('#cal-scope-tabs .filter-pill').forEach(x => x.classList.toggle('active', x.dataset.scope === 'day'));
+    loadCalendarMonth(todayStr.slice(0, 7));
+  };
+  if ($('cal-grid')) $('cal-grid').onclick = e => {
+    const b = e.target.closest('button[data-date]');
+    if (!b) return;
+    calSelectedDate = b.dataset.date;
+    calScope = 'day';
+    document.querySelectorAll('#cal-scope-tabs .filter-pill').forEach(x => x.classList.toggle('active', x.dataset.scope === 'day'));
+    renderCalendarGrid();
+    renderCalendarMatches();
+  };
+  if ($('cal-scope-tabs')) $('cal-scope-tabs').onclick = e => {
+    const b = e.target.closest('button[data-scope]');
+    if (!b) return;
+    calScope = b.dataset.scope;
+    document.querySelectorAll('#cal-scope-tabs .filter-pill').forEach(x => x.classList.toggle('active', x === b));
+    renderCalendarGrid();
+    renderCalendarMatches();
+  };
+  if ($('cal-q')) $('cal-q').addEventListener('input', renderCalendarMatches);
+  if ($('cal-match-list')) $('cal-match-list').onclick = e => {
+    const b = e.target.closest('button[data-cal-h]');
+    if (b) simulateFixture(b.dataset.calH, b.dataset.calA);
   };
 }
 

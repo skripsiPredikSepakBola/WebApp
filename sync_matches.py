@@ -64,6 +64,8 @@ _LOCAL_SYNC_STATE = {
     'last_sync': None,
     'last_result': None,
 }
+_CLUB_NAME_CACHE = {}
+_CALENDAR_CACHE = {}
 
 
 def _load_local_sync_state():
@@ -698,6 +700,181 @@ def backfill_football_data(api_key, start_date='2026-08-17', end_date=None):
         total += upsert_finished_matches(rows)
         cur = nxt + timedelta(days=1)
     return total
+
+
+def get_calendar_matches(month_str=None, competitions=('GB1', 'ES1', 'L1', 'IT1', 'FR1', 'CL', 'IN1L', 'MYS1', 'THA1', 'VIE1', 'SIN1')):
+    """Return finished, live, and upcoming matches for a given YYYY-MM month."""
+    now_utc = datetime.now(timezone.utc)
+    today_str = now_utc.strftime('%Y-%m-%d')
+    if not month_str or len(month_str) != 7 or month_str[4] != '-':
+        month_str = now_utc.strftime('%Y-%m')
+    try:
+        yr, mo = int(month_str[:4]), int(month_str[5:7])
+        if not (1 <= mo <= 12):
+            raise ValueError
+    except ValueError:
+        yr, mo = now_utc.year, now_utc.month
+        month_str = f'{yr:04d}-{mo:02d}'
+
+    cached = _CALENDAR_CACHE.get(month_str)
+    if cached and (time.time() - cached['ts'] < 300):
+        return cached['data']
+
+    season = yr if mo >= 7 else yr - 1
+    next_yr, next_mo = (yr + 1, 1) if mo == 12 else (yr, mo + 1)
+    month_start = f'{yr:04d}-{mo:02d}-01T00:00:00+00:00'
+    month_end = f'{next_yr:04d}-{next_mo:02d}-01T00:00:00+00:00'
+
+    def _fetch_comp(code):
+        fx = _tmapi_get(f'competition/{code}/fixtures?season={season}')
+        games = [g for grp in ((fx.get('data') or {}).get('fixtures') or []) for g in (grp.get('games') or [])]
+        matched = [g for g in games if (((g.get('baseDetails') or {}).get('date') or {}).get('dateTimeUTC') or '').startswith(month_str)]
+        if not matched:
+            fx_prev = _tmapi_get(f'competition/{code}/fixtures?season={season - 1}')
+            games_prev = [g for grp in ((fx_prev.get('data') or {}).get('fixtures') or []) for g in (grp.get('games') or [])]
+            matched = [g for g in games_prev if (((g.get('baseDetails') or {}).get('date') or {}).get('dateTimeUTC') or '').startswith(month_str)]
+        return code, matched
+
+    raw_games = []
+    seen_gids = set()
+    missing_cids = []
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        for code, games in pool.map(_fetch_comp, competitions):
+            for g in games:
+                gid = str(g.get('id') or '')
+                if not gid or gid in seen_gids:
+                    continue
+                seen_gids.add(gid)
+                raw_games.append((code, g))
+                for side in ('homeClub', 'awayClub'):
+                    cid = str((g.get(side) or {}).get('clubId') or '')
+                    if cid and cid not in _CLUB_NAME_CACHE:
+                        missing_cids.append(cid)
+
+    if missing_cids:
+        for c in _tmapi_batches('clubs', list(dict.fromkeys(missing_cids))):
+            if c.get('id') and c.get('name'):
+                _CLUB_NAME_CACHE[str(c['id'])] = c['name']
+
+    by_id = {}
+    for code, g in raw_games:
+        gid = str(g.get('id'))
+        base = g.get('baseDetails') or {}
+        score = g.get('score') or {}
+        dt_str = (base.get('date') or {}).get('dateTimeUTC') or ''
+        hc_id = str((g.get('homeClub') or {}).get('clubId') or '')
+        ac_id = str((g.get('awayClub') or {}).get('clubId') or '')
+        comp_id = base.get('competitionId') or code
+        league_name = (base.get('competition') or {}).get('name') or COMP_NAMES.get(comp_id, comp_id)
+        is_fin = bool(g.get('isFinished'))
+        is_live = bool(g.get('isLive'))
+        bucket = 'finished' if is_fin else ('live' if is_live else 'upcoming')
+        status = 'FT' if is_fin else ('LIVE' if is_live else 'NS')
+        by_id[f'tmapi:{gid}'] = {
+            'match_id': f'tmapi:{gid}',
+            'date': dt_str[:10],
+            'match_date': dt_str,
+            'league': league_name,
+            'comp_id': comp_id,
+            'home_team': _CLUB_NAME_CACHE.get(hc_id, hc_id),
+            'away_team': _CLUB_NAME_CACHE.get(ac_id, ac_id),
+            'home_goals': score.get('home') if (is_fin or is_live) else None,
+            'away_goals': score.get('away') if (is_fin or is_live) else None,
+            'bucket': bucket,
+            'status': status,
+            'source': 'tmapi-alpha',
+        }
+
+    # Include today's fixtures (upcoming/live/finished) from API-Football when viewing current month
+    af_key = os.environ.get('API_FOOTBALL_KEY', '').strip()
+    if af_key and month_str == today_str[:7]:
+        try:
+            af_data = _fetch_json(
+                f'https://v3.football.api-sports.io/fixtures?date={today_str}',
+                {'x-apisports-key': af_key},
+            ) or {}
+            for m in (af_data.get('response') or [])[:120]:
+                fx = m.get('fixture') or {}
+                fx_id = fx.get('id')
+                st_short = (fx.get('status') or {}).get('short') or 'NS'
+                dt_str = fx.get('date') or ''
+                if st_short in ('FT', 'AET', 'PEN'):
+                    bucket = 'finished'
+                elif st_short in ('1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE'):
+                    bucket = 'live'
+                else:
+                    bucket = 'upcoming'
+                mid = f'apifootball:{fx_id}'
+                by_id[mid] = {
+                    'match_id': mid,
+                    'date': dt_str[:10] or today_str,
+                    'match_date': dt_str,
+                    'league': (m.get('league') or {}).get('name') or '',
+                    'comp_id': str((m.get('league') or {}).get('id') or ''),
+                    'home_team': ((m.get('teams') or {}).get('home') or {}).get('name') or '',
+                    'away_team': ((m.get('teams') or {}).get('away') or {}).get('name') or '',
+                    'home_goals': (m.get('goals') or {}).get('home') if bucket != 'upcoming' else None,
+                    'away_goals': (m.get('goals') or {}).get('away') if bucket != 'upcoming' else None,
+                    'bucket': bucket,
+                    'status': st_short,
+                    'source': 'api-football',
+                }
+        except Exception:
+            pass
+
+    # Merge any Supabase finished_matches for this month not already represented
+    if _sb_cfg()[0]:
+        try:
+            q = (
+                'finished_matches?select=match_id,source,league,match_date,home_team,away_team,home_goals,away_goals,status'
+                f'&match_date=gte.{urllib.parse.quote(month_start)}&match_date=lt.{urllib.parse.quote(month_end)}'
+                '&order=match_date.desc&limit=120'
+            )
+            for row in (_sb_req(q) or []):
+                mid = row.get('match_id')
+                if mid and mid not in by_id:
+                    dt_str = row.get('match_date') or ''
+                    by_id[mid] = {
+                        'match_id': mid,
+                        'date': dt_str[:10],
+                        'match_date': dt_str,
+                        'league': row.get('league') or '',
+                        'comp_id': '',
+                        'home_team': row.get('home_team') or '',
+                        'away_team': row.get('away_team') or '',
+                        'home_goals': row.get('home_goals'),
+                        'away_goals': row.get('away_goals'),
+                        'bucket': 'finished',
+                        'status': row.get('status') or 'FT',
+                        'source': row.get('source') or 'supabase',
+                    }
+        except Exception:
+            pass
+
+    matches = sorted(by_id.values(), key=lambda x: (x.get('match_date') or '', x.get('league') or '', x.get('home_team') or ''))
+    days = {}
+    counts = {'total': len(matches), 'finished': 0, 'live': 0, 'upcoming': 0}
+    for m in matches:
+        b = m['bucket']
+        counts[b] = counts.get(b, 0) + 1
+        dkey = m['date']
+        if not dkey:
+            continue
+        if dkey not in days:
+            days[dkey] = {'total': 0, 'finished': 0, 'live': 0, 'upcoming': 0}
+        days[dkey]['total'] += 1
+        days[dkey][b] += 1
+
+    payload = {
+        'status': 'success',
+        'month': month_str,
+        'today': today_str,
+        'counts': counts,
+        'days': days,
+        'matches': matches,
+    }
+    _CALENDAR_CACHE[month_str] = {'ts': time.time(), 'data': payload}
+    return payload
 
 
 if __name__ == '__main__':

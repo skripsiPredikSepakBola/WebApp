@@ -32,6 +32,7 @@
   <nav class="main-nav" role="tablist" aria-label="Workspace views">
     <button class="nav-tab active" role="tab" id="tab-predictor" data-view="predictor" aria-selected="true" aria-controls="view-predictor" type="button">Match Predictor</button>
     <button class="nav-tab" role="tab" id="tab-leagues" data-view="leagues" aria-selected="false" aria-controls="view-leagues" type="button">League Standings &amp; Stats</button>
+    <button class="nav-tab" role="tab" id="tab-calendar" data-view="calendar" aria-selected="false" aria-controls="view-calendar" type="button">Match Calendar</button>
     <button class="nav-tab" role="tab" id="tab-explorer" data-view="explorer" aria-selected="false" aria-controls="view-explorer" type="button">Scouting &amp; Inspector</button>
   </nav>
   <div class="header-right">
@@ -405,6 +406,56 @@
         <div class="master-list" id="ex-n-list" aria-label="Country search results"></div>
         <div class="detail-panel metric-card" id="ex-n-detail">
           <p class="empty-msg">Select a country to inspect FIFA ranking, domestic leagues, top clubs, and player pool.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW 4: MATCH CALENDAR -->
+  <section id="view-calendar" class="workspace-view" role="tabpanel" aria-labelledby="tab-calendar" hidden>
+    <div class="view-head">
+      <div>
+        <h2>Match Calendar</h2>
+        <p class="sub">Track previous results, today's live &amp; scheduled fixtures, and upcoming matches across tracked leagues.</p>
+      </div>
+      <div class="cal-controls">
+        <button class="btn ghost btn-sm" id="cal-prev" type="button" aria-label="Previous month">&lsaquo; Prev</button>
+        <span class="cal-month-title" id="cal-month-label">November 2026</span>
+        <button class="btn ghost btn-sm" id="cal-next" type="button" aria-label="Next month">Next &rsaquo;</button>
+        <button class="btn btn-sm" id="cal-today" type="button">Today</button>
+      </div>
+    </div>
+
+    <div class="kpi-strip" id="cal-kpis"></div>
+    <div class="state-banner" id="cal-status" hidden></div>
+
+    <div class="cal-layout">
+      <div class="metric-card cal-board-card">
+        <div class="cal-weekdays" aria-hidden="true">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
+        <div class="cal-grid" id="cal-grid" role="grid" aria-label="Monthly match calendar"></div>
+        <div class="cal-legend">
+          <span><i class="cal-dot finished"></i>Previous / FT</span>
+          <span><i class="cal-dot live"></i>Live / Today</span>
+          <span><i class="cal-dot upcoming"></i>Upcoming</span>
+        </div>
+      </div>
+
+      <div class="metric-card cal-feed-card">
+        <div class="cal-feed-head">
+          <h3 id="cal-feed-title">Today's Matches</h3>
+          <input class="field" id="cal-q" type="search" placeholder="Filter by team or league..." aria-label="Filter calendar matches">
+        </div>
+        <div class="pill-bar inline" id="cal-scope-tabs" role="group" aria-label="Filter matches by timeframe">
+          <button class="filter-pill active" data-scope="day" type="button">Selected Day</button>
+          <button class="filter-pill" data-scope="today" type="button">Today</button>
+          <button class="filter-pill" data-scope="upcoming" type="button">Upcoming</button>
+          <button class="filter-pill" data-scope="finished" type="button">Previous</button>
+          <button class="filter-pill" data-scope="all" type="button">All Month</button>
+        </div>
+        <div class="cal-match-list" id="cal-match-list">
+          <p class="empty-msg">Loading match calendar...</p>
         </div>
       </div>
     </div>

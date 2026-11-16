@@ -14,7 +14,7 @@ from bisect import bisect_right
 from datetime import datetime, timezone
 from flask import Flask, render_template, request, jsonify
 from collections import Counter
-from sync_matches import _sb_cfg, _sb_req, get_local_sync_state, get_recent_data, load_all_players, load_all_presets, log_prediction, sync_all
+from sync_matches import _sb_cfg, _sb_req, get_calendar_matches, get_local_sync_state, get_recent_data, load_all_players, load_all_presets, log_prediction, sync_all
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -1841,6 +1841,15 @@ def recent_matches():
         return jsonify(get_recent_data())
     except Exception as e:
         return jsonify({'finished_matches': [], 'recent_predictions': [], 'error': str(e)}), 500
+
+
+@app.route('/api/calendar')
+def match_calendar():
+    month = (request.args.get('month') or '').strip() or None
+    try:
+        return jsonify(get_calendar_matches(month))
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e), 'matches': [], 'days': {}, 'counts': {}}), 500
 
 
 @app.route('/api/sync/status')
