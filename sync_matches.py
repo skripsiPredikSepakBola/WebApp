@@ -46,6 +46,10 @@ COMP_NAMES = {
     'IT1': 'Serie A',
     'FR1': 'Ligue 1',
     'CL': 'UEFA Champions League',
+    'UNLA': 'UEFA Nations League A',
+    'UNLB': 'UEFA Nations League B',
+    'UNLC': 'UEFA Nations League C',
+    'UNLD': 'UEFA Nations League D',
     'IN1L': 'Liga 1 Indonesia',
     'MYS1': 'Malaysia Super League',
     'THA1': 'Thai League 1',
@@ -338,7 +342,7 @@ def _map_tmapi_role(attrs, fallback_pos=None):
 
 
 def sync_tmapi_recent(
-    competitions=('GB1', 'ES1', 'L1', 'IT1', 'FR1', 'CL', 'IN1L', 'MYS1', 'THA1', 'VIE1', 'SIN1'),
+    competitions=('GB1', 'ES1', 'L1', 'IT1', 'FR1', 'CL', 'UNLA', 'UNLB', 'UNLC', 'UNLD', 'IN1L', 'MYS1', 'THA1', 'VIE1', 'SIN1'),
     days_back=7,
     allow_local=False,
     include_squads=False,
@@ -702,7 +706,7 @@ def backfill_football_data(api_key, start_date='2026-08-17', end_date=None):
     return total
 
 
-def get_calendar_matches(month_str=None, competitions=('GB1', 'ES1', 'L1', 'IT1', 'FR1', 'CL', 'IN1L', 'MYS1', 'THA1', 'VIE1', 'SIN1')):
+def get_calendar_matches(month_str=None, competitions=('GB1', 'ES1', 'L1', 'IT1', 'FR1', 'CL', 'UNLA', 'UNLB', 'UNLC', 'UNLD', 'IN1L', 'MYS1', 'THA1', 'VIE1', 'SIN1')):
     """Return finished, live, and upcoming matches for a given YYYY-MM month."""
     now_utc = datetime.now(timezone.utc)
     today_str = now_utc.strftime('%Y-%m-%d')
@@ -793,7 +797,15 @@ def get_calendar_matches(month_str=None, competitions=('GB1', 'ES1', 'L1', 'IT1'
                 f'https://v3.football.api-sports.io/fixtures?date={today_str}',
                 {'x-apisports-key': af_key},
             ) or {}
-            for m in (af_data.get('response') or [])[:120]:
+            def _af_priority(m):
+                lname = ((m.get('league') or {}).get('name') or '').lower()
+                if 'nations league' in lname or 'world cup' in lname or 'champions league' in lname:
+                    return 0
+                if any(k in lname for k in ('qualification', 'euro', 'copa', 'asian', 'africa', 'premier league', 'laliga', 'bundesliga', 'serie a', 'ligue 1')):
+                    return 1
+                return 2
+            af_sorted = sorted(af_data.get('response') or [], key=_af_priority)
+            for m in af_sorted[:140]:
                 fx = m.get('fixture') or {}
                 fx_id = fx.get('id')
                 st_short = (fx.get('status') or {}).get('short') or 'NS'
@@ -851,7 +863,12 @@ def get_calendar_matches(month_str=None, competitions=('GB1', 'ES1', 'L1', 'IT1'
         except Exception:
             pass
 
-    matches = sorted(by_id.values(), key=lambda x: (x.get('match_date') or '', x.get('league') or '', x.get('home_team') or ''))
+    def _cal_sort_key(x):
+        lg = (x.get('league') or '').lower()
+        prio = 0 if (x.get('source') == 'tmapi-alpha' or 'nations league' in lg or 'world cup' in lg or 'champions league' in lg) else (1 if 'qualification' in lg else 2)
+        return (x.get('date') or '', prio, x.get('match_date') or '', x.get('league') or '', x.get('home_team') or '')
+
+    matches = sorted(by_id.values(), key=_cal_sort_key)
     days = {}
     counts = {'total': len(matches), 'finished': 0, 'live': 0, 'upcoming': 0}
     for m in matches:

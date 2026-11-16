@@ -2190,7 +2190,7 @@ function renderCalendarMatches() {
     rows = rows.filter(m => `${m.home_team} ${m.away_team} ${m.league}`.toLowerCase().includes(q));
   }
 
-  list.innerHTML = rows.length ? rows.slice(0, 80).map(m => {
+  list.innerHTML = rows.length ? rows.slice(0, 200).map(m => {
     const scoreTxt = (m.bucket !== 'upcoming' && m.home_goals != null && m.away_goals != null)
       ? `${m.home_goals} - ${m.away_goals}`
       : 'vs';
