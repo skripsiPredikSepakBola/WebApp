@@ -150,7 +150,8 @@ const T = { home: mk(), away: mk() };
 let activeView = 'predictor';
 let activeExSub = 'players';
 let leaguesCache = null;
-let activeRegion = 'All';
+let activeContinent = 'All';
+let activeCountry = 'All';
 let activeLeaderKey = 'top_scorers';
 let lastLeagueData = null;
 let exPlayersCtx = { club: '', nat: '' };
@@ -1375,6 +1376,23 @@ function renderThesisTab() {
 // =========================================================================
 // TAB 2: LEAGUE STANDINGS & STATS
 // =========================================================================
+const CONFED_TO_CONTINENT = {
+  UEFA: 'Europe',
+  AFC: 'Asia & Oceania',
+  CAF: 'Africa',
+  CONMEBOL: 'South America',
+  CONCACAF: 'North America',
+  FIFA: 'World / International',
+};
+
+function leagueContinent(l) {
+  return CONFED_TO_CONTINENT[String(l?.confederation || '').toUpperCase()] || 'World / International';
+}
+
+function leagueCountry(l) {
+  return (l?.country_name && String(l.country_name).trim()) || 'International / Continental';
+}
+
 async function ensureLeaguesLoaded(preferredCompId = null, preferredSeason = null) {
   const st = $('lg-status');
   if (!leaguesCache) {
@@ -1382,7 +1400,7 @@ async function ensureLeaguesLoaded(preferredCompId = null, preferredSeason = nul
     try {
       leaguesCache = await fetch('/api/explore/leagues').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
       populateClubLeagueFilter(leaguesCache.leagues || []);
-      renderRegionPills();
+      populateContinentSelect();
     } catch (e) {
       if (st) { st.textContent = `Could not load leagues: ${e.message}`; st.classList.add('error'); st.hidden = false; }
       return;
@@ -1390,25 +1408,56 @@ async function ensureLeaguesLoaded(preferredCompId = null, preferredSeason = nul
   }
   if (preferredCompId) {
     const lg = (leaguesCache.leagues || []).find(l => l.comp_id === preferredCompId);
-    if (lg) activeRegion = 'All';
-    renderRegionPills();
+    if (lg) {
+      activeContinent = leagueContinent(lg);
+      activeCountry = leagueCountry(lg);
+    } else {
+      activeContinent = 'All';
+      activeCountry = 'All';
+    }
+    populateContinentSelect();
+    populateCountrySelect();
     populateLeagueSelect(preferredCompId);
   } else if (!$('lg-select').options.length) {
+    populateContinentSelect();
+    populateCountrySelect();
     populateLeagueSelect('GB1');
   }
   await loadSelectedLeague(preferredSeason);
 }
 
-function renderRegionPills() {
-  const wrap = $('lg-regions'); if (!wrap || !leaguesCache) return;
-  const regions = Array.from(new Set(['All', ...(leaguesCache.regions || [])]));
-  wrap.innerHTML = regions.map(r => `<button type="button" class="filter-pill ${activeRegion === r ? 'active' : ''}" data-region="${escRaw(r)}" aria-pressed="${activeRegion === r}">${escRaw(r)}</button>`).join('');
+function populateContinentSelect() {
+  const sel = $('lg-continent'); if (!sel || !leaguesCache) return;
+  const order = ['Europe', 'Asia & Oceania', 'South America', 'North America', 'Africa', 'World / International'];
+  const present = new Set((leaguesCache.leagues || []).map(leagueContinent));
+  const continents = order.filter(c => present.has(c)).concat([...present].filter(c => !order.includes(c)).sort());
+  sel.innerHTML = '<option value="All">All Continents</option>' +
+    continents.map(c => `<option value="${escRaw(c)}">${escRaw(c)}</option>`).join('');
+  sel.value = continents.includes(activeContinent) ? activeContinent : 'All';
+  activeContinent = sel.value;
+}
+
+function populateCountrySelect() {
+  const sel = $('lg-country'); if (!sel || !leaguesCache) return;
+  const inCont = (leaguesCache.leagues || []).filter(l => activeContinent === 'All' || leagueContinent(l) === activeContinent);
+  const countries = Array.from(new Set(inCont.map(leagueCountry))).sort((a, b) => {
+    if (a === 'International / Continental') return 1;
+    if (b === 'International / Continental') return -1;
+    return a.localeCompare(b);
+  });
+  sel.innerHTML = '<option value="All">All Countries</option>' +
+    countries.map(c => `<option value="${escRaw(c)}">${escRaw(c)}</option>`).join('');
+  sel.value = countries.includes(activeCountry) ? activeCountry : 'All';
+  activeCountry = sel.value;
 }
 
 function populateLeagueSelect(preferId = null) {
   const sel = $('lg-select'); if (!sel || !leaguesCache) return;
   const prev = preferId || sel.value;
-  const list = (leaguesCache.leagues || []).filter(l => activeRegion === 'All' || l.region_group === activeRegion);
+  const list = (leaguesCache.leagues || []).filter(l =>
+    (activeContinent === 'All' || leagueContinent(l) === activeContinent) &&
+    (activeCountry === 'All' || leagueCountry(l) === activeCountry)
+  );
   sel.innerHTML = list.map(l => `<option value="${escRaw(l.comp_id)}">${escRaw(l.name)}${l.country_name ? ` (${escRaw(l.country_name)})` : ''}</option>`).join('');
   if (list.some(l => l.comp_id === prev)) sel.value = prev;
   else if (list.length) sel.value = list[0].comp_id;
@@ -1539,10 +1588,15 @@ function openLeagueStandings(compId, season = null) {
 }
 
 function wireLeaguesView() {
-  if ($('lg-regions')) $('lg-regions').onclick = e => {
-    const b = e.target.closest('button[data-region]'); if (!b) return;
-    activeRegion = b.dataset.region;
-    renderRegionPills();
+  if ($('lg-continent')) $('lg-continent').onchange = () => {
+    activeContinent = $('lg-continent').value || 'All';
+    activeCountry = 'All';
+    populateCountrySelect();
+    populateLeagueSelect();
+    loadSelectedLeague();
+  };
+  if ($('lg-country')) $('lg-country').onchange = () => {
+    activeCountry = $('lg-country').value || 'All';
     populateLeagueSelect();
     loadSelectedLeague();
   };

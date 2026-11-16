@@ -701,9 +701,9 @@ h4{font:700 17px/1.15 var(--disp);letter-spacing:.02em;margin:0 0 6px;color:var(
 
 /* LEAGUE STANDINGS & SCOUTING WORKSPACES */
 .view-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:14px}
-.lg-controls{display:flex;gap:10px;flex-wrap:wrap}
+.lg-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
 .lg-controls label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--mute)}
-.lg-controls select{min-width:190px}
+.lg-controls select{min-width:145px}
 
 .pill-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;align-items:center}
 .pill-bar.inline{margin-bottom:0}
