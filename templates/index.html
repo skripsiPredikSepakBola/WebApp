@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Pre-kickoff football match outcome predictor, league standings, match calendar, and player scouting workbench.">
 <title>PitchPulse AI: Match Engine, Standings &amp; Scouting</title>
+<link rel="icon" type="image/svg+xml" href="static/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,15 +16,29 @@
   <div class="brand-group">
     <a class="brand" href="#predictor" id="brand-home">
       <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 28 28" width="24" height="24" fill="none">
-          <path d="M14 2L24 6.5V14.5C24 20.5 19.6 24.8 14 26.5C8.4 24.8 4 20.5 4 14.5V6.5L14 2Z" stroke="url(#ppGrad)" stroke-width="2" fill="rgba(15,23,38,0.92)"/>
-          <path d="M6.5 14.5H10L12.2 10L15.4 18.5L17.8 13.5L21.5 14.5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <svg viewBox="0 0 64 64" width="28" height="28" fill="none">
           <defs>
-            <linearGradient id="ppGrad" x1="4" y1="2" x2="24" y2="26">
+            <linearGradient id="ppShieldBg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#13223F"/>
+              <stop offset="100%" stop-color="#070D19"/>
+            </linearGradient>
+            <linearGradient id="ppGrad" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stop-color="#F5B700"/>
-              <stop offset="100%" stop-color="#38BDF8"/>
+              <stop offset="55%" stop-color="#38BDF8"/>
+              <stop offset="100%" stop-color="#10B981"/>
+            </linearGradient>
+            <linearGradient id="ppPulse" x1="12" y1="34" x2="52" y2="26" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38BDF8"/>
+              <stop offset="50%" stop-color="#10B981"/>
+              <stop offset="100%" stop-color="#F5B700"/>
             </linearGradient>
           </defs>
+          <path d="M32 4L54 13.5V31.5C54 45.2 44.5 55.2 32 60C19.5 55.2 10 45.2 10 31.5V13.5L32 4Z" fill="url(#ppShieldBg)" stroke="url(#ppGrad)" stroke-width="3.2" stroke-linejoin="round"/>
+          <line x1="14" y1="32" x2="50" y2="32" stroke="#38BDF8" stroke-opacity="0.25" stroke-width="1.6"/>
+          <circle cx="32" cy="32" r="11.5" stroke="#38BDF8" stroke-opacity="0.32" stroke-width="1.6"/>
+          <path d="M13 32H21.5L25.8 22.5L30.8 42.5L36.2 18.5L40.4 35.5L43.5 32H51" stroke="url(#ppPulse)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="36.2" cy="18.5" r="3.4" fill="#F5B700"/>
+          <circle cx="36.2" cy="18.5" r="1.4" fill="#FFFFFF"/>
         </svg>
       </span>
       <span>PitchPulse AI</span>
@@ -511,7 +526,6 @@
   </div>
 </dialog>
 
-<script src="static/js/gh-pages-engine.js"></script>
 <script src="static/js/app.js"></script>
 </body>
 </html>
