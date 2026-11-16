@@ -52,7 +52,11 @@ COMP_NAMES = {
     'VIE1': 'V.League 1',
     'SIN1': 'Singapore Premier League',
 }
-LOCAL_SYNC_CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'local_sync_cache.json')
+LOCAL_SYNC_CACHE_PATH = (
+    '/tmp/local_sync_cache.json'
+    if os.environ.get('VERCEL')
+    else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'local_sync_cache.json')
+)
 
 _LOCAL_SYNC_STATE = {
     'finished_matches': [],

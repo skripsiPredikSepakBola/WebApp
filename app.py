@@ -2334,10 +2334,11 @@ def explore_league_detail():
     })
 
 threading.Thread(target=_bg_warmup, daemon=True, name='app-bg-warmup').start()
-if _sync_state.get('enabled'):
-    threading.Thread(target=_auto_sync_loop, daemon=True, name='app-auto-sync').start()
-if _keep_alive_state.get('enabled'):
-    threading.Thread(target=_keep_alive_loop, daemon=True, name='app-keep-alive').start()
+if not os.environ.get('VERCEL'):
+    if _sync_state.get('enabled'):
+        threading.Thread(target=_auto_sync_loop, daemon=True, name='app-auto-sync').start()
+    if _keep_alive_state.get('enabled'):
+        threading.Thread(target=_keep_alive_loop, daemon=True, name='app-keep-alive').start()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

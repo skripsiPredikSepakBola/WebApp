@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   sync:
@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           if [ -f requirements.txt ]; then pip install -r requirements.txt; elif [ -f web_app_new_v2/requirements.txt ]; then pip install -r web_app_new_v2/requirements.txt; fi
-      - name: Run post-match sync to Supabase
+      - name: Run post-match sync
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
@@ -31,8 +31,10 @@ jobs:
           FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
         run: |
           if [ -f sync_matches.py ]; then python sync_matches.py; else python web_app_new_v2/sync_matches.py; fi
-      - name: Ping Azure App Service Keep-Alive
-        if: always()
+      - name: Refresh Vercel Sync Cache (optional)
+        if: env.VERCEL_APP_URL != ''
+        env:
+          VERCEL_APP_URL: ${{ vars.VERCEL_APP_URL }}
         run: |
-          curl --retry 3 --retry-delay 5 --max-time 60 -fsS "https://skripsiwebapp-cehte7bwece0daad.indonesiacentral-01.azurewebsites.net/api/health" || true
+          curl --retry 2 --max-time 60 -fsS -X POST "${VERCEL_APP_URL%/}/api/sync" || true
           echo ""

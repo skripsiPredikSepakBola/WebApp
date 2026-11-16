@@ -1,0 +1,12 @@
+_site/
+.git/
+__pycache__/
+*.pyc
+.env
+player_monthly_snapshots.csv
+players_lite.json
+historical_presets.json
+preset_lineups.json
+preset_categories.json
+match_tracker.db
+data/local_sync_cache.json

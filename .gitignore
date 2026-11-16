@@ -6,3 +6,6 @@ match_tracker.db
 player_monthly_snapshots.csv
 _site/
 data/local_sync_cache.json
+.vercel/
+
+.vercel
