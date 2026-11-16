@@ -705,6 +705,15 @@ function loadPreset(t, name) {
   return true;
 }
 
+function fitScore(p, role) {
+  if (!p) return -999;
+  const nr = playerRole(p);
+  const sameLine = roleToGroup(nr) === roleToGroup(role) ? 6 : 0;
+  const exact = nr === role ? 2 : 0;
+  const gkPenalty = (role === 'GK' && nr !== 'GK') || (role !== 'GK' && nr === 'GK') ? -25 : 0;
+  return eff(p, role) + sameLine + exact + gkPenalty;
+}
+
 function rearrangeLineupForFormation(t, newFormation) {
   T[t].formation = FORMATIONS.includes(newFormation) ? newFormation : '4-3-3';
   const roles = layout(T[t].formation).map(x => x.role);
@@ -716,39 +725,38 @@ function rearrangeLineupForFormation(t, newFormation) {
   });
   if (!pool.length) return;
 
-  // Initial assignment: prioritize exact-role matches first, then highest effective rating per slot
   const slots = Array(11).fill(null);
   const used = new Set();
+  const byRtg = [...pool].sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
   // Pass 1: exact natural-role match (highest rating first)
-  const byRtg = [...pool].sort((a, b) => (b.rating || 0) - (a.rating || 0));
   roles.forEach((role, idx) => {
     const hit = byRtg.find(p => !used.has(p.id) && playerRole(p) === role);
     if (hit) { slots[idx] = hit; used.add(hit.id); }
   });
 
-  // Pass 2: fill remaining slots with best available effective rating
+  // Pass 2: fill remaining slots with best fitScore (prefers same tactical line + highest rating)
   roles.forEach((role, idx) => {
     if (slots[idx]) return;
     let best = null, bestScore = -1e9;
     for (const p of byRtg) {
       if (used.has(p.id)) continue;
-      const sc = eff(p, role) * 100 + (p.rating || 0);
+      const sc = fitScore(p, role) * 100 + (p.rating || 0);
       if (sc > bestScore) { bestScore = sc; best = p; }
     }
     if (best) { slots[idx] = best; used.add(best.id); }
   });
 
-  // Pass 3: pairwise swap refinement across starters and bench to maximize total effective rating
-  let bench = byRtg.filter(p => !used.has(p.id));
-  for (let pass = 0; pass < 3; pass++) {
+  // Pass 3: pairwise swap refinement across starters and bench to maximize total fitScore
+  const bench = byRtg.filter(p => !used.has(p.id));
+  for (let pass = 0; pass < 4; pass++) {
     let improved = false;
     for (let i = 0; i < 11; i++) {
       for (let j = i + 1; j < 11; j++) {
         const pi = slots[i], pj = slots[j];
         if (!pi && !pj) continue;
-        const cur = (pi ? eff(pi, roles[i]) : 0) + (pj ? eff(pj, roles[j]) : 0);
-        const swp = (pj ? eff(pj, roles[i]) : 0) + (pi ? eff(pi, roles[j]) : 0);
+        const cur = (pi ? fitScore(pi, roles[i]) : 0) + (pj ? fitScore(pj, roles[j]) : 0);
+        const swp = (pj ? fitScore(pj, roles[i]) : 0) + (pi ? fitScore(pi, roles[j]) : 0);
         if (swp > cur + 0.01) {
           slots[i] = pj;
           slots[j] = pi;
@@ -757,8 +765,8 @@ function rearrangeLineupForFormation(t, newFormation) {
       }
       for (let k = 0; k < bench.length; k++) {
         const pi = slots[i], pk = bench[k];
-        const cur = pi ? eff(pi, roles[i]) : 0;
-        const swp = eff(pk, roles[i]);
+        const cur = pi ? fitScore(pi, roles[i]) : -999;
+        const swp = fitScore(pk, roles[i]);
         if (swp > cur + 0.01) {
           slots[i] = pk;
           if (pi) bench[k] = pi;
