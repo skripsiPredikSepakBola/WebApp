@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PitchPulse AI — Match Engine, Standings &amp; Global Scouting</title>
+<meta name="description" content="Pre-kickoff football match outcome predictor, league standings, match calendar, and player scouting workbench.">
+<title>PitchPulse AI: Match Engine, Standings &amp; Scouting</title>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
@@ -41,7 +44,7 @@
       <span id="header-sync-label">Auto-Sync</span>
     </button>
     <div class="g-search">
-      <input class="field g-search-input" id="global-search" type="search" placeholder="Search player, club, country, league..." autocomplete="off" aria-label="Global quick search">
+      <input class="field g-search-input" id="global-search" type="search" placeholder="Search player, club, country, league…" autocomplete="off" aria-label="Global quick search">
       <ul class="pk-list g-search-list" id="global-search-results" hidden></ul>
     </div>
   </div>
@@ -79,7 +82,7 @@
         <div class="exec-title-block">
           <div class="matchup-sub" id="exec-matchup">Spain (Home) vs England (Away)</div>
           <h1 class="exec-title" id="exec-headline">Spain v England Prediction</h1>
-          <p class="conf" id="exec-conf"><b>Analyzing matchup...</b> Click predict or pick squads below.</p>
+          <p class="conf" id="exec-conf"><b>Analyzing matchup…</b> Click predict or pick squads below.</p>
         </div>
         <div class="exec-controls">
           <button class="btn ghost btn-sm" id="exp" type="button" disabled>Download Excel Report</button>
@@ -159,11 +162,11 @@
       <!-- Granular Analyst Metrics -->
       <div id="analyst-results" class="analyst-results" hidden>
         <div class="analytics-section-head">
-          <span class="deck-tag analyst-tag">1 · Scoreline &amp; Goalscorer Outlook</span>
+          <span class="deck-tag analyst-tag">Scoreline &amp; Goalscorer Outlook</span>
         </div>
         <div class="cols">
           <section class="metric-card">
-            <h3>Bivariate Poisson Score Matrix</h3>
+            <h2>Bivariate Poisson Score Matrix</h2>
             <p class="sub">Exact scoreline probabilities (%). Lower triangle = Home Win, diagonal = Draw, upper triangle = Away Win.</p>
             <div class="heat-matrix-shell">
               <div class="heat-x-axis-title" id="heat-x-title">AWAY TEAM GOALS (&rarr;): Away (0 to 5)</div>
@@ -176,7 +179,7 @@
               <div class="heat-swatches">
                 <span class="hl-item"><i class="hl-sw top1"></i>&#9733; Most Likely Scoreline</span>
                 <span class="hl-item"><i class="hl-sw high"></i>High (&ge;10%)</span>
-                <span class="hl-item"><i class="hl-sw mod"></i>Moderate (4&ndash;9.9%)</span>
+                <span class="hl-item"><i class="hl-sw mod"></i>Moderate (4 to 9.9%)</span>
                 <span class="hl-item"><i class="hl-sw low"></i>Low (&lt;4%)</span>
               </div>
               <div class="heat-sums" id="heat-sums"></div>
@@ -184,20 +187,20 @@
             <div class="heat-readout" id="heat-readout">Click or hover any scoreline cell to inspect exact odds.</div>
           </section>
           <section class="metric-card">
-            <h3>Anytime Goalscorer Odds</h3>
+            <h2>Anytime Goalscorer Odds</h2>
             <p class="sub">Individual goal probabilities from offensive firepower and g/90. Click any player to open Scouting Inspector.</p>
             <div class="sc2" id="analyst-scorers"></div>
           </section>
         </div>
 
         <div class="analytics-section-head">
-          <span class="deck-tag analyst-tag">2 · Squad Strength &amp; Tactical Radar</span>
+          <span class="deck-tag analyst-tag">Squad Strength &amp; Tactical Radar</span>
         </div>
         <section class="wide metric-card">
           <div class="card-head-row">
             <div>
-              <h3>Tactical Comparison Breakdown</h3>
-              <p class="sub">Electric Gold is Home, Electric Cyan is Away. Symmetrical model invariance verified.</p>
+              <h2>Tactical Comparison Breakdown</h2>
+              <p class="sub">Orange is Home, Sky Blue is Away. Symmetrical model invariance verified.</p>
             </div>
           </div>
           <div class="tactical-compare-grid">
@@ -207,13 +210,13 @@
         </section>
 
         <div class="analytics-section-head">
-          <span class="deck-tag analyst-tag">3 · Model Validation &amp; Live Sync</span>
+          <span class="deck-tag analyst-tag">Model Validation &amp; Live Sync</span>
         </div>
         <section class="wide metric-card" id="thesis-sync-card">
           <div class="card-head-row">
             <div>
-              <h3>Thesis Benchmark &amp; Post-Match Sync</h3>
-              <p class="sub" id="thesis-summary">Loading validation metrics (unseen hold-out)...</p>
+              <h2>Thesis Benchmark &amp; Post-Match Sync</h2>
+              <p class="sub" id="thesis-summary">Loading validation metrics (unseen hold-out)…</p>
             </div>
             <button class="btn ghost btn-sm" id="sync-btn" type="button">Sync Finished Matches</button>
           </div>
@@ -315,10 +318,10 @@
     <!-- SUB-TAB: PLAYERS -->
     <div id="ex-pane-players" class="ex-pane">
       <div class="filter-bar">
-        <input class="field" id="ex-p-q" type="search" placeholder="Search player name, club, nationality..." aria-label="Search players">
+        <input class="field" id="ex-p-q" type="search" placeholder="Search player name, club, nationality…" aria-label="Search players">
         <div class="pill-bar inline" id="ex-p-status" role="group" aria-label="Filter by player status">
           <button class="filter-pill active" data-status="active" type="button">Active Players</button>
-          <button class="filter-pill" data-status="former" type="button">&#127942; Legends &amp; Former</button>
+          <button class="filter-pill" data-status="former" type="button">Legends &amp; Former</button>
           <button class="filter-pill" data-status="all" type="button">All</button>
         </div>
         <select class="field" id="ex-p-sort" aria-label="Sort players">
@@ -362,7 +365,7 @@
     <!-- SUB-TAB: CLUBS -->
     <div id="ex-pane-clubs" class="ex-pane" hidden>
       <div class="filter-bar">
-        <input class="field" id="ex-c-q" type="search" placeholder="Search club name, stadium, coach..." aria-label="Search clubs">
+        <input class="field" id="ex-c-q" type="search" placeholder="Search club name, stadium, coach…" aria-label="Search clubs">
         <select class="field" id="ex-c-comp" aria-label="Filter clubs by league">
           <option value="">All competitions</option>
         </select>
@@ -385,7 +388,7 @@
     <!-- SUB-TAB: COUNTRIES -->
     <div id="ex-pane-countries" class="ex-pane" hidden>
       <div class="filter-bar">
-        <input class="field" id="ex-n-q" type="search" placeholder="Search country or national team..." aria-label="Search countries">
+        <input class="field" id="ex-n-q" type="search" placeholder="Search country or national team…" aria-label="Search countries">
         <div class="pill-bar inline" id="ex-n-conf" role="group" aria-label="Filter by confederation">
           <button class="filter-pill active" data-conf="" type="button">ALL</button>
           <button class="filter-pill" data-conf="AFC" type="button">AFC</button>
@@ -416,12 +419,12 @@
     <div class="view-head">
       <div>
         <h2>Match Calendar</h2>
-        <p class="sub">Track previous results, today's live &amp; scheduled fixtures, and upcoming matches across tracked leagues.</p>
+        <p class="sub">Track previous results, today’s live &amp; scheduled fixtures, and upcoming matches across tracked leagues.</p>
       </div>
       <div class="cal-controls">
-        <button class="btn ghost btn-sm" id="cal-prev" type="button" aria-label="Previous month">&lsaquo; Prev</button>
+        <button class="btn ghost btn-sm" id="cal-prev" type="button" aria-label="Previous month">Prev</button>
         <span class="cal-month-title" id="cal-month-label">November 2026</span>
-        <button class="btn ghost btn-sm" id="cal-next" type="button" aria-label="Next month">Next &rsaquo;</button>
+        <button class="btn ghost btn-sm" id="cal-next" type="button" aria-label="Next month">Next</button>
         <button class="btn btn-sm" id="cal-today" type="button">Today</button>
       </div>
     </div>
@@ -444,8 +447,8 @@
 
       <div class="metric-card cal-feed-card">
         <div class="cal-feed-head">
-          <h3 id="cal-feed-title">Today's Matches</h3>
-          <input class="field" id="cal-q" type="search" placeholder="Filter by team or league..." aria-label="Filter calendar matches">
+          <h3 id="cal-feed-title">Today’s Matches</h3>
+          <input class="field" id="cal-q" type="search" placeholder="Filter by team or league…" aria-label="Filter calendar matches">
         </div>
         <div class="pill-bar inline" id="cal-scope-tabs" role="group" aria-label="Filter matches by timeframe">
           <button class="filter-pill active" data-scope="day" type="button">Selected Day</button>
@@ -455,7 +458,7 @@
           <button class="filter-pill" data-scope="all" type="button">All Month</button>
         </div>
         <div class="cal-match-list" id="cal-match-list">
-          <p class="empty-msg">Loading match calendar...</p>
+          <p class="empty-msg">Loading match calendar…</p>
         </div>
       </div>
     </div>
@@ -495,7 +498,7 @@
     <button class="x" aria-label="Close">Close</button>
   </form>
   <div id="sync-dlg-body" class="sync-dlg-body">
-    <p class="empty-msg">Checking sync health and hold-out metrics...</p>
+    <p class="empty-msg">Checking sync health and hold-out metrics…</p>
   </div>
   <div class="dlg-actions">
     <button class="btn btn-sm" id="sync-dlg-run" type="button">Sync Finished Matches Now</button>
