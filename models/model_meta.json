@@ -68,6 +68,7 @@
     "league_tiers.py": "3780cc3fa6fd37a10be359e36c15b974596b33af89b1413a901056085f49a75e",
     "retrain_gate.py": "d419dff9d0aabcbf36d6c7e3db8373646106ee69b7464827a1db43b3e8ce3a8e",
     "data/history_features.parquet": "cb053a69012accd1a8ad123b72b4f9a3555b0f219cc369eb0a45467555beea1a",
-    "models/model_bundle.joblib": null
-  }
+    "models/model_bundle.joblib": "41d585567186d3833611330640245353af97fca56be3f219fede65605c1da89e"
+  },
+  "rho": 0.0
 }

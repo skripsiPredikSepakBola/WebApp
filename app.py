@@ -220,31 +220,32 @@ def _ensure_models():
         globals()['model_advanced_xg'] = joblib.load(os.path.join(DATA_DIR, 'model_advanced_xg.joblib'))
         globals()['advanced_features'] = joblib.load(os.path.join(DATA_DIR, 'advanced_feature_cols.joblib'))
 
-        ts_path = os.path.join(DATA_DIR, 'models', 'team_state.json')
-        if os.path.exists(ts_path):
-            with open(ts_path, 'r', encoding='utf-8') as f:
-                globals()['TEAM_STATE'] = json.load(f)
-        ls_path = os.path.join(DATA_DIR, 'models', 'league_state.json')
-        if os.path.exists(ls_path):
-            with open(ls_path, 'r', encoding='utf-8') as f:
-                globals()['LEAGUE_STATE'] = json.load(f)
+        if USE_BUNDLE:
+            ts_path = os.path.join(DATA_DIR, 'models', 'team_state.json')
+            if os.path.exists(ts_path):
+                with open(ts_path, 'r', encoding='utf-8') as f:
+                    globals()['TEAM_STATE'] = json.load(f)
+            ls_path = os.path.join(DATA_DIR, 'models', 'league_state.json')
+            if os.path.exists(ls_path):
+                with open(ls_path, 'r', encoding='utf-8') as f:
+                    globals()['LEAGUE_STATE'] = json.load(f)
 
-        bundle_path = os.path.join(DATA_DIR, 'models', 'model_bundle.joblib')
-        meta_path = os.path.join(DATA_DIR, 'models', 'model_meta.json')
-        if os.path.exists(bundle_path):
-            if os.path.exists(meta_path):
-                import sklearn
-                with open(meta_path, 'r', encoding='utf-8') as f:
-                    meta = json.load(f)
-                if meta.get('sklearn_version') and meta['sklearn_version'] != sklearn.__version__:
-                    raise RuntimeError(
-                        f"model trained with sklearn {meta['sklearn_version']}, runtime has {sklearn.__version__}"
-                    )
-                if meta.get('numpy_version') and meta['numpy_version'] != np_lib.__version__:
-                    raise RuntimeError(
-                        f"model trained with numpy {meta['numpy_version']}, runtime has {np_lib.__version__}"
-                    )
-            globals()['MODEL_BUNDLE'] = joblib.load(bundle_path)
+            bundle_path = os.path.join(DATA_DIR, 'models', 'model_bundle.joblib')
+            meta_path = os.path.join(DATA_DIR, 'models', 'model_meta.json')
+            if os.path.exists(bundle_path):
+                if os.path.exists(meta_path):
+                    import sklearn
+                    with open(meta_path, 'r', encoding='utf-8') as f:
+                        meta = json.load(f)
+                    if meta.get('sklearn_version') and meta['sklearn_version'] != sklearn.__version__:
+                        raise RuntimeError(
+                            f"model trained with sklearn {meta['sklearn_version']}, runtime has {sklearn.__version__}"
+                        )
+                    if meta.get('numpy_version') and meta['numpy_version'] != np_lib.__version__:
+                        raise RuntimeError(
+                            f"model trained with numpy {meta['numpy_version']}, runtime has {np_lib.__version__}"
+                        )
+                globals()['MODEL_BUNDLE'] = joblib.load(bundle_path)
         _models_ready.set()
 
 
@@ -1658,30 +1659,6 @@ def predict():
             scorers_a = compute_player_scorers(st_a, xg_a)
             scorers_b = compute_player_scorers(st_b, xg_b)
             over25 = round(sum(s['prob'] for s in score_matrix if s['team_a_goals'] + s['team_b_goals'] > 2), 1)
-
-            if MODEL_BUNDLE is not None and data.get('match_id'):
-                try:
-                    import hashlib
-                    f_ab, f_ba, _ = build_bundle_feature_pair(team_a_name, team_b_name, st_a, st_b, stats_a, stats_b, data)
-                    sa_w, s_dr, sb_w, s_xga, s_xgb, _ = _predict_with_bundle(MODEL_BUNDLE, f_ab, f_ba, stats_a, stats_b)
-                    shadow_path = os.path.join(DATA_DIR, 'data', 'shadow_predictions.jsonl')
-                    if os.path.isdir(os.path.dirname(shadow_path)):
-                        feat_hash = hashlib.sha256(json.dumps(MODEL_BUNDLE.get('feats', [])).encode('utf-8')).hexdigest()[:16]
-                        with open(shadow_path, 'a', encoding='utf-8') as sf:
-                            sf.write(json.dumps({
-                                'ts': datetime.now().isoformat(),
-                                'match_id': data.get('match_id'),
-                                'home': team_a_name,
-                                'away': team_b_name,
-                                'model_commit': os.environ.get('VERCEL_GIT_COMMIT_SHA', 'local'),
-                                'feature_hash': feat_hash,
-                                'state_version': TEAM_STATE.get('as_of'),
-                                'legacy': [round(p_a_win, 4), round(p_draw, 4), round(p_b_win, 4)],
-                                'bundle': [round(sa_w, 4), round(s_dr, 4), round(sb_w, 4)],
-                                'bundle_xg': [round(s_xga, 3), round(s_xgb, 3)],
-                            }) + '\n')
-                except Exception:
-                    pass
 
         metrics = [(l, x, y) for l, x, y in [
             ('Starting XI quality (effective)', stats_a['starter_overall_mean'], stats_b['starter_overall_mean']),

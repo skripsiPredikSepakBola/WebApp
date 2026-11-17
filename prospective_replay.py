@@ -63,6 +63,7 @@ def run_prospective_replay(freeze_date='2026-11-17', matches=None):
         if mid and dt_str > freeze_date and m.get('home_goals') is not None and m.get('away_goals') is not None:
             dedup[str(mid)] = (dt_str, str(mid), m)
 
+    total_finished = len(dedup)
     for dt_str, _, m in sorted(dedup.values(), key=lambda x: (x[0], x[1])):
         ht, at = str(m['home_team']).strip(), str(m['away_team']).strip()
         hg, ag = int(m['home_goals']), int(m['away_goals'])
@@ -135,14 +136,16 @@ def run_prospective_replay(freeze_date='2026-11-17', matches=None):
         teams.update(at, ag, hg, dt if pd.notna(dt) else None)
 
     if not y_all:
-        return {'status': 'empty', 'freeze_date': freeze_date, 'scored_matches': 0}
+        return {'status': 'empty', 'freeze_date': freeze_date, 'all_finished_matches': total_finished, 'scored_matches': 0, 'coverage': 0.0}
 
     PL, PN, Y = np.vstack(p_leg_all), np.vstack(p_new_all), np.array(y_all)
     mg, p5, p95, pgt = paired_boot(PL, PN, Y)
     res = {
         'status': 'ok',
         'freeze_date': freeze_date,
+        'all_finished_matches': total_finished,
         'scored_matches': int(len(Y)),
+        'coverage': round(len(Y) / max(total_finished, 1), 4),
         'legacy_ll': round(float(log_loss(Y, PL, labels=[0, 1, 2])), 5),
         'new_ll': round(float(log_loss(Y, PN, labels=[0, 1, 2])), 5),
         'legacy_rps': round(rps(PL, Y), 5),
@@ -157,10 +160,13 @@ def run_prospective_replay(freeze_date='2026-11-17', matches=None):
     asean_mask = np.isin(cids, list(ASEAN_LEAGUES))
     if asean_mask.any():
         ya = Y[asean_mask]
+        leg_a = float(log_loss(ya, PL[asean_mask], labels=[0, 1, 2]))
+        new_a = float(log_loss(ya, PN[asean_mask], labels=[0, 1, 2]))
         res['asean'] = {
             'n': int(asean_mask.sum()),
-            'legacy_ll': round(float(log_loss(ya, PL[asean_mask], labels=[0, 1, 2])), 5),
-            'new_ll': round(float(log_loss(ya, PN[asean_mask], labels=[0, 1, 2])), 5),
+            'legacy_ll': round(leg_a, 5),
+            'new_ll': round(new_a, 5),
+            'gain': round(leg_a - new_a, 5),
             'legacy_rps': round(rps(PL[asean_mask], ya), 5),
             'new_rps': round(rps(PN[asean_mask], ya), 5),
         }

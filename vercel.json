@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ':!models/team_state.json' ':!models/league_state.json' ':!reports/'",
   "services": {
     "web": {
       "root": ".",
