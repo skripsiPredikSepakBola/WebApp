@@ -55,10 +55,13 @@ def build_50_payloads(players_lite, presets, seed=42):
     return payloads
 
 
+PINNED_MAIN_COMMIT = '7d67674d619f4a8bd2534a9162c6259687b01143'
+
+
 def generate_golden_from_main():
     tmp_path = os.path.join(BASE_DIR, '_tmp_main_app.py')
-    main_sha = subprocess.check_output(['git', 'rev-parse', 'main'], cwd=BASE_DIR).decode().strip()
-    src = subprocess.check_output(['git', 'show', 'main:app.py'], cwd=BASE_DIR)
+    main_sha = subprocess.check_output(['git', 'rev-parse', PINNED_MAIN_COMMIT], cwd=BASE_DIR).decode().strip()
+    src = subprocess.check_output(['git', 'show', f'{PINNED_MAIN_COMMIT}:app.py'], cwd=BASE_DIR)
     with open(tmp_path, 'wb') as f:
         f.write(src)
     try:
@@ -82,6 +85,7 @@ def generate_golden_from_main():
 
 
 def verify_branch_matches_golden():
+    assert os.path.exists(GOLDEN_PATH), f"Missing golden fixture: {GOLDEN_PATH} (run with --regen to create from {PINNED_MAIN_COMMIT[:7]})"
     with open(GOLDEN_PATH, 'r', encoding='utf-8') as f:
         data = json.load(f)
     records = data['records']
@@ -99,6 +103,6 @@ def verify_branch_matches_golden():
 
 
 if __name__ == '__main__':
-    if '--regen' in sys.argv or not os.path.exists(GOLDEN_PATH):
+    if '--regen' in sys.argv:
         generate_golden_from_main()
     verify_branch_matches_golden()
