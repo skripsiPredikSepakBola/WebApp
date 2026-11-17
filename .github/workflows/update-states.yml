@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: update-states
+  group: model-state-push
   cancel-in-progress: false
 
 permissions:
@@ -26,10 +26,13 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python update_states.py
-      - name: Commit updated states only (never models)
+      - name: Commit updated states only (rebase on conflict, never models)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add models/team_state.json models/league_state.json
-          git diff --staged --quiet || git commit -m "chore(state): daily Elo & rolling form state update"
-          git push
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(state): daily Elo & rolling form state update"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+            git push origin "${GITHUB_REF_NAME}"
+          fi

@@ -135,10 +135,10 @@ def test_rescaled_grid_and_gate():
     print(f"Gate Unit Checks PASSED: identical={ok_same} (gain={m_same['mean_gain']:.2e}), better_vs_prior={ok_better} (gain={m_better['mean_gain']:+.4f}, p5={m_better['gain_p5']:+.4f}), <20k={small_res['status']}.")
 
 
-def test_context_lookup_parity(n=100):
-    """Test real get_match_context() against 100 historical matches' exact pre-match state in history_features.parquet."""
-    from elo import EloTracker
-    from features import LeagueStats, TeamState, is_neutral_match
+def test_context_lookup_parity_and_mutation(n=100):
+    """Independent plain-Python sequential rebuild vs real get_match_context() + mutation test."""
+    from collections import defaultdict, deque
+    import hashlib, json
 
     web_app._ensure_models()
     hist = pd.read_parquet(os.path.join(web_app.DATA_DIR, 'data', 'history_features.parquet'))
@@ -155,27 +155,43 @@ def test_context_lookup_parity(n=100):
     games['date'] = pd.to_datetime(games['date'], errors='coerce')
     games = games.dropna().drop_duplicates('game_id', keep='last').sort_values(['date', 'game_id'], kind='mergesort')
 
+    # Independent plain-Python trackers (do NOT import EloTracker, LeagueStats, or TeamState)
+    elo_r = defaultdict(lambda: 1500.0)
+    lg_n, lg_g, lg_h = defaultdict(int), defaultdict(float), defaultdict(float)
+    tm_hist, tm_last = defaultdict(lambda: deque(maxlen=10)), {}
+    neutral_comps = {'FIWC', 'EURO', 'COPA', 'AFAC', 'AFCN', 'KLUB'}
+    final_comps = {'CL', 'EL', 'UCOL', 'USC', 'FAC', 'CDR', 'DFB', 'CIT', 'FRC', 'GBCS', 'SUC', 'DFL', 'FRCH', 'SCI'}
+
     target_ids = set(hist_fwd.tail(n).index.astype(int).tolist())
-    elo, leagues, teams = EloTracker(), LeagueStats(), TeamState()
     prev_s = None
     orig_ts, orig_ls = web_app.TEAM_STATE, web_app.LEAGUE_STATE
     max_err = 0.0
     checked = 0
+    mutation_caught = False
 
     try:
         for r in games.itertuples(index=False):
             if prev_s is not None and r.season != prev_s:
-                elo.season_regress(0.25)
+                for k in list(elo_r):
+                    elo_r[k] = elo_r[k] * 0.75 + 1500.0 * 0.25
             prev_s = r.season
             gid, hid, aid = int(r.game_id), int(r.home_club_id), int(r.away_club_id)
             cid = str(r.competition_id or '').strip()
-            neu = is_neutral_match(cid, r.round)
+            rd = str(r.round or '').lower()
+            neu = (cid in neutral_comps) or (cid in final_comps and 'final' in rd and 'semi' not in rd and 'quarter' not in rd)
 
             if gid in target_ids:
-                eh, ea = elo.rating(hid), elo.rating(aid)
-                gfh, gah, rh = teams.get(hid, r.date)
-                gfa, gaa, ra = teams.get(aid, r.date)
-                lgg, lgh = leagues.get(cid)
+                eh, ea = elo_r[hid], elo_r[aid]
+                hh, ha = tm_hist[hid], tm_hist[aid]
+                gfh = (sum(x for x, _ in hh) + 4.05) / (len(hh) + 3.0)
+                gah = (sum(y for _, y in hh) + 4.05) / (len(hh) + 3.0)
+                gfa = (sum(x for x, _ in ha) + 4.05) / (len(ha) + 3.0)
+                gaa = (sum(y for _, y in ha) + 4.05) / (len(ha) + 3.0)
+                rh = float(max(1, min((r.date - tm_last[hid]).days, 14))) if hid in tm_last else 7.0
+                ra = float(max(1, min((r.date - tm_last[aid]).days, 14))) if aid in tm_last else 7.0
+                lgg = (lg_g[cid] + 200.0 * 2.7) / (lg_n[cid] + 200.0)
+                lgh = (lg_h[cid] + 200.0 * 0.45) / (lg_n[cid] + 200.0)
+
                 web_app.TEAM_STATE = {
                     'by_id': {
                         str(hid): {'elo': eh, 'gf10': gfh, 'ga10': gah},
@@ -203,20 +219,72 @@ def test_context_lookup_parity(n=100):
                 ]
                 max_err = max(max_err, *diffs)
                 assert max(diffs) < 1e-9, f"Context parity mismatch at game_id={gid}: {diffs}"
+
+                # Mutation test on first target match: shift Elo by +1.0 and assert parity FAILS
+                if not mutation_caught:
+                    web_app.TEAM_STATE['by_id'][str(hid)]['elo'] = eh + 1.0
+                    mut_ctx = web_app.get_match_context('Home', 'Away', {
+                        'home_club_id': hid, 'away_club_id': aid, 'league_id': cid,
+                        'neutral': neu, 'home_rest': rh, 'away_rest': ra,
+                    })
+                    assert abs(mut_ctx['elo_a'] - row['own_elo']) >= 1.0 - 1e-9
+                    mutation_caught = True
                 checked += 1
 
-            elo.update(hid, aid, r.home_club_goals, r.away_club_goals, neutral=neu)
-            leagues.update(cid, r.home_club_goals, r.away_club_goals)
-            teams.update(hid, r.home_club_goals, r.away_club_goals, r.date)
-            teams.update(aid, r.away_club_goals, r.home_club_goals, r.date)
+            # Update independent trackers
+            ha_adj = 0.0 if neu else 65.0
+            exp_h = 1.0 / (1.0 + 10.0 ** (-(elo_r[hid] + ha_adj - elo_r[aid]) / 400.0))
+            sc = 1.0 if r.home_club_goals > r.away_club_goals else (0.5 if r.home_club_goals == r.away_club_goals else 0.0)
+            gd = abs(r.home_club_goals - r.away_club_goals)
+            mult = 1.0 if gd <= 1 else (1.5 if gd == 2 else (11.0 + gd) / 8.0)
+            delta = 20.0 * mult * (sc - exp_h)
+            elo_r[hid] += delta
+            elo_r[aid] -= delta
+            lg_n[cid] += 1
+            lg_g[cid] += r.home_club_goals + r.away_club_goals
+            lg_h[cid] += 1.0 if r.home_club_goals > r.away_club_goals else 0.0
+            tm_hist[hid].append((r.home_club_goals, r.away_club_goals))
+            tm_hist[aid].append((r.away_club_goals, r.home_club_goals))
+            tm_last[hid] = r.date
+            tm_last[aid] = r.date
     finally:
         web_app.TEAM_STATE, web_app.LEAGUE_STATE = orig_ts, orig_ls
 
-    assert checked == n, f"Checked {checked} != {n}"
-    print(f"F11 Context Lookup Parity PASSED ({checked} historical matches via get_match_context, max_diff={max_err:.2e} < 1e-9).")
+    assert checked == n and mutation_caught
+    print(f"F11 Independent Context Parity + Mutation PASSED ({checked} matches, max_diff={max_err:.2e}, mutation_caught=True).")
+
+
+def test_idempotent_state_updater_and_freeze_hashes():
+    import hashlib, json
+    from update_states import apply_matches_idempotent
+
+    ts0 = {'as_of': '2026-11-17', 'watermark': {'date': '2026-11-17', 'ids': []}, 'by_id': {}, 'by_name': {}}
+    ls0 = {}
+    batch = [
+        {'match_id': 'm2', 'home_team': 'TeamA', 'away_team': 'TeamB', 'home_goals': 2, 'away_goals': 1, 'match_date': '2026-11-18', 'league': 'GB1'},
+        {'match_id': 'm1', 'home_team': 'TeamA', 'away_team': 'TeamB', 'home_goals': 1, 'away_goals': 1, 'match_date': '2026-11-18', 'league': 'GB1'},
+    ]
+    ts1, ls1, c1 = apply_matches_idempotent(ts0, ls0, batch)
+    ts2, ls2, c2 = apply_matches_idempotent(ts1, ls1, batch)
+    assert c1 == 2 and c2 == 0 and ts1 == ts2 and ls1 == ls2
+    print(f"State Updater Idempotency PASSED (first_run={c1}, second_run={c2}).")
+
+    # Verify freeze SHA-256 hashes in models/model_meta.json
+    meta_path = os.path.join(web_app.DATA_DIR, 'models', 'model_meta.json')
+    with open(meta_path, 'r', encoding='utf-8') as f:
+        meta = json.load(f)
+    hashes = meta.get('freeze_sha256') or {}
+    for rel, expected in hashes.items():
+        if expected is None:
+            continue
+        p = os.path.join(web_app.DATA_DIR, rel)
+        actual = hashlib.sha256(open(p, 'rb').read()).hexdigest()
+        assert actual == expected, f"Freeze SHA-256 mismatch on {rel}: {actual} != {expected}"
+    print(f"Freeze SHA-256 Integrity PASSED ({len(hashes)} artifacts verified).")
 
 
 if __name__ == '__main__':
     test_f11_independent_parity(100)
-    test_context_lookup_parity(100)
+    test_context_lookup_parity_and_mutation(100)
+    test_idempotent_state_updater_and_freeze_hashes()
     test_rescaled_grid_and_gate()

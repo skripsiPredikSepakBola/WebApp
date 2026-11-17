@@ -1659,15 +1659,23 @@ def predict():
             scorers_b = compute_player_scorers(st_b, xg_b)
             over25 = round(sum(s['prob'] for s in score_matrix if s['team_a_goals'] + s['team_b_goals'] > 2), 1)
 
-            if MODEL_BUNDLE is not None:
+            if MODEL_BUNDLE is not None and data.get('match_id'):
                 try:
+                    import hashlib
                     f_ab, f_ba, _ = build_bundle_feature_pair(team_a_name, team_b_name, st_a, st_b, stats_a, stats_b, data)
                     sa_w, s_dr, sb_w, s_xga, s_xgb, _ = _predict_with_bundle(MODEL_BUNDLE, f_ab, f_ba, stats_a, stats_b)
                     shadow_path = os.path.join(DATA_DIR, 'data', 'shadow_predictions.jsonl')
                     if os.path.isdir(os.path.dirname(shadow_path)):
+                        feat_hash = hashlib.sha256(json.dumps(MODEL_BUNDLE.get('feats', [])).encode('utf-8')).hexdigest()[:16]
                         with open(shadow_path, 'a', encoding='utf-8') as sf:
                             sf.write(json.dumps({
-                                'ts': datetime.now().isoformat(), 'home': team_a_name, 'away': team_b_name,
+                                'ts': datetime.now().isoformat(),
+                                'match_id': data.get('match_id'),
+                                'home': team_a_name,
+                                'away': team_b_name,
+                                'model_commit': os.environ.get('VERCEL_GIT_COMMIT_SHA', 'local'),
+                                'feature_hash': feat_hash,
+                                'state_version': TEAM_STATE.get('as_of'),
                                 'legacy': [round(p_a_win, 4), round(p_draw, 4), round(p_b_win, 4)],
                                 'bundle': [round(sa_w, 4), round(s_dr, 4), round(sb_w, 4)],
                                 'bundle_xg': [round(s_xga, 3), round(s_xgb, 3)],
