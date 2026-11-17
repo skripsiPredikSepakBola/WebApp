@@ -110,6 +110,7 @@ GRANULAR_SCORER_WEIGHTS = {
 players_lite, boot_players, player_by_id, player_by_name, presets, categories, preset_meta = [], [], {}, {}, {}, {}, {}
 player_search_blobs = []
 _blob_snapshots, _blob_historical, _snap_count = None, None, 0
+_blob_pair_synergy, _pair_synergy = None, None
 _data_lock = threading.Lock()
 _hist_lock = threading.Lock()
 _hist_ready = threading.Event()
@@ -510,7 +511,7 @@ def reload_supabase_data():
 
 def load_startup_cache():
     global players_lite, boot_players, player_by_id, player_by_name, player_search_blobs
-    global presets, categories, preset_meta, _blob_snapshots, _blob_historical, _snap_count
+    global presets, categories, preset_meta, _blob_snapshots, _blob_historical, _snap_count, _blob_pair_synergy
     if os.path.exists(STARTUP_CACHE_PATH):
         try:
             cache = _fast_load_joblib(STARTUP_CACHE_PATH)
@@ -527,6 +528,7 @@ def load_startup_cache():
                 categories = cache['categories']
                 preset_meta = cache['preset_meta']
                 _snap_count = int(cache.get('snap_count') or 0)
+                _blob_pair_synergy = cache.get('blob_pair_synergy')
                 if 'blob_snapshots' in cache and 'blob_historical' in cache:
                     _blob_snapshots = cache['blob_snapshots']
                     _blob_historical = cache['blob_historical']
@@ -860,13 +862,45 @@ def calculate_player_effective_rating(p, slot_pos):
     return eff_rating, penalty
 
 
+def _get_pair_synergy():
+    global _pair_synergy, _blob_pair_synergy
+    if _pair_synergy is not None:
+        return _pair_synergy
+    with _data_lock:
+        if _pair_synergy is None:
+            _pair_synergy = _unpickle_blob(_blob_pair_synergy) if _blob_pair_synergy is not None else {}
+            _blob_pair_synergy = None
+    return _pair_synergy
+
+
 def cohesion_proxy(players):
-    # ponytail: club-overlap proxy for shared chemistry, replace with historical lineup-pair minutes when DB populated
-    clubs = [p.get('club', '') for p in players if p.get('club')]
-    if not clubs:
+    """Pairwise shared-matches chemistry in [0, 1] with club-overlap fallback for new/unsynced pairs."""
+    n = len(players)
+    if n < 2:
         return 0.0
-    n = len(players) or 1
-    return sum((c / n) ** 2 for c in Counter(clubs).values())
+    synergy = _get_pair_synergy()
+    denom = math.log1p(50.0)
+    total = 0.0
+    pairs = 0
+    for i in range(n):
+        pi = players[i]
+        idi = pi.get('id')
+        ci = pi.get('club') or ''
+        for j in range(i + 1, n):
+            pj = players[j]
+            idj = pj.get('id')
+            cnt = 0
+            if synergy and idi is not None and idj is not None:
+                a, b = int(idi), int(idj)
+                key = (a << 32) | b if a < b else (b << 32) | a
+                cnt = synergy.get(key, 0)
+            if cnt > 0:
+                s = math.log1p(cnt) / denom
+                total += 1.0 if s > 1.0 else s
+            elif ci and ci == (pj.get('club') or ''):
+                total += 0.25
+            pairs += 1
+    return total / pairs if pairs else 0.0
 
 
 def aggregate_team_advanced(starters_input, subs_input, team_name="Team", report_date=None):
@@ -1506,6 +1540,7 @@ def predict():
             ('Defence line', stats_a['overall_mean_DEF'], stats_b['overall_mean_DEF']),
             ('Aerial: attack height vs opp. defence (cm)', stats_a['height_mean_ATT'], stats_b['height_mean_DEF']),
             ('Age-prime factor', stats_a['starter_prime_mean'] * 100, stats_b['starter_prime_mean'] * 100),
+            ('Lineup chemistry (shared matches)', cohesion_proxy(st_a) * 100, cohesion_proxy(st_b) * 100),
             ('Bench depth', stats_a['sub_overall_mean'], stats_b['sub_overall_mean'])]]
         tactical = [{'label': l, 'home': round(x, 1), 'away': round(y, 1)} for l, x, y in metrics]
 

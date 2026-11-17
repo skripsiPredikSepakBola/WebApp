@@ -105,6 +105,46 @@ def _load_json(filename, default):
     return default
 
 
+def _load_pair_synergy():
+    """Count shared starting_lineup appearances per player pair from game_lineups.csv."""
+    from collections import defaultdict
+    lu_path = os.path.join(TM_DIR, 'game_lineups.csv')
+    if not os.path.exists(lu_path):
+        return {}
+    df = pd.read_csv(lu_path, usecols=['game_id', 'club_id', 'player_id', 'type'])
+    df = df[df['type'] == 'starting_lineup'].dropna(subset=['game_id', 'club_id', 'player_id'])
+    df['game_id'] = pd.to_numeric(df['game_id'], errors='coerce')
+    df['club_id'] = pd.to_numeric(df['club_id'], errors='coerce')
+    df['player_id'] = pd.to_numeric(df['player_id'], errors='coerce')
+    df = df.dropna(subset=['game_id', 'club_id', 'player_id']).drop_duplicates(['game_id', 'club_id', 'player_id'])
+    df = df.sort_values(['game_id', 'club_id', 'player_id'], kind='mergesort')
+
+    gids = df['game_id'].to_numpy(dtype=np.int64)
+    cids = df['club_id'].to_numpy(dtype=np.int64)
+    pids = df['player_id'].to_numpy(dtype=np.int64)
+
+    counts = defaultdict(int)
+    n = len(gids)
+    i = 0
+    while i < n:
+        g, c = gids[i], cids[i]
+        j = i + 1
+        while j < n and gids[j] == g and cids[j] == c:
+            j += 1
+        team_pids = pids[i:j]
+        m = len(team_pids)
+        for a in range(m):
+            pa = int(team_pids[a])
+            for b in range(a + 1, m):
+                pb = int(team_pids[b])
+                key = (pa << 32) | pb if pa < pb else (pb << 32) | pa
+                counts[key] += 1
+        i = j
+
+    # Keep pairs with >= 2 shared starts (single-match pairs add minimal signal & bloat bundle)
+    return {k: min(v, 255) for k, v in counts.items() if v >= 2}
+
+
 def _load_snapshots():
     s_dates, s_rows = {}, {}
     snap_path = os.path.join(BASE_DIR, 'player_monthly_snapshots.csv')
@@ -393,6 +433,7 @@ def build_cache():
 
     snap_dates, snap_rows = _load_snapshots()
     snap_count = sum(len(v) for v in snap_rows.values())
+    pair_synergy = _load_pair_synergy()
 
     bundle = {
         'players_lite': players_lite,
@@ -404,6 +445,11 @@ def build_cache():
         'categories': categories,
         'preset_meta': preset_meta,
         'snap_count': snap_count,
+        'pair_synergy_count': len(pair_synergy),
+        'blob_pair_synergy': zlib.compress(
+            pickle.dumps(pair_synergy, protocol=pickle.HIGHEST_PROTOCOL),
+            level=6,
+        ),
         'blob_snapshots': zlib.compress(
             pickle.dumps((snap_dates, snap_rows), protocol=pickle.HIGHEST_PROTOCOL),
             level=9,
