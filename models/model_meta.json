@@ -1,0 +1,62 @@
+{
+  "freeze_date": "2026-11-17",
+  "feature_set": "G6+tier",
+  "features": [
+    "diff_overall_mean",
+    "diff_sub_mean",
+    "diff_market_val_log",
+    "diff_form_gd_5",
+    "diff_cohesion",
+    "diff_elo",
+    "home_flag",
+    "sum_elo",
+    "league_avg_goals",
+    "league_home_win_rate",
+    "league_tier_factor",
+    "own_att",
+    "opp_att",
+    "own_def",
+    "opp_def",
+    "own_gk",
+    "opp_gk",
+    "own_elo",
+    "opp_elo",
+    "own_gf10",
+    "opp_gf10",
+    "own_ga10",
+    "opp_ga10",
+    "own_rest",
+    "opp_rest"
+  ],
+  "n_features": 25,
+  "clf_params": {
+    "max_iter": 200,
+    "learning_rate": 0.05,
+    "max_depth": 4,
+    "l2_regularization": 6.0,
+    "min_samples_leaf": 250,
+    "random_state": 42
+  },
+  "reg_params": {
+    "loss": "poisson",
+    "max_iter": 200,
+    "learning_rate": 0.05,
+    "max_depth": 4,
+    "l2_regularization": 6.0,
+    "min_samples_leaf": 250,
+    "random_state": 42
+  },
+  "blend_w": 0.25,
+  "rho_procedure": "grid_search(-0.25..0.10, 36 pts) on chronological tune slice",
+  "tier_map_source": "league_tiers.py (0.75-1.00 hand-set league-quality prior)",
+  "known_limitations": [
+    "UEFA continental competitions show ~-0.034 home_gap (higher ~49-51% actual home win rate vs 0.45 domestic prior; k=50+is_continental variant failed UEFA bootstrap p5=-0.00048).",
+    "Test-fold selection caveat: G6+tier selected on 2023-2026 folds; prospective check must evaluate on matches played after freeze_date."
+  ],
+  "sklearn_version": "1.6.1",
+  "numpy_version": "1.26.4",
+  "python_version": "3.9.0",
+  "history_matches": 74483,
+  "team_state_count": 3486,
+  "generated_at": "2026-11-17T12:26:49Z"
+}

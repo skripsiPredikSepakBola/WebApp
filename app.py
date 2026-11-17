@@ -118,6 +118,12 @@ _models_lock = threading.Lock()
 _models_ready = threading.Event()
 _pd_mod = None
 _np_mod = None
+USE_BUNDLE = os.environ.get('PITCHPULSE_USE_BUNDLE', '0').strip() == '1' and os.path.exists(
+    os.path.join(DATA_DIR, 'models', 'model_bundle.joblib')
+)
+MODEL_BUNDLE = None
+TEAM_STATE = {'by_id': {}, 'by_name': {}}
+LEAGUE_STATE = {}
 _sync_lock = threading.Lock()
 _init_local_sync = get_local_sync_state() or {}
 _sync_state = {
@@ -213,6 +219,28 @@ def _ensure_models():
         globals()['model_advanced_3class'] = joblib.load(os.path.join(DATA_DIR, 'model_advanced_3class.joblib'))
         globals()['model_advanced_xg'] = joblib.load(os.path.join(DATA_DIR, 'model_advanced_xg.joblib'))
         globals()['advanced_features'] = joblib.load(os.path.join(DATA_DIR, 'advanced_feature_cols.joblib'))
+
+        ts_path = os.path.join(DATA_DIR, 'models', 'team_state.json')
+        if os.path.exists(ts_path):
+            with open(ts_path, 'r', encoding='utf-8') as f:
+                globals()['TEAM_STATE'] = json.load(f)
+        ls_path = os.path.join(DATA_DIR, 'models', 'league_state.json')
+        if os.path.exists(ls_path):
+            with open(ls_path, 'r', encoding='utf-8') as f:
+                globals()['LEAGUE_STATE'] = json.load(f)
+
+        bundle_path = os.path.join(DATA_DIR, 'models', 'model_bundle.joblib')
+        meta_path = os.path.join(DATA_DIR, 'models', 'model_meta.json')
+        if os.path.exists(bundle_path):
+            if os.path.exists(meta_path):
+                import sklearn
+                with open(meta_path, 'r', encoding='utf-8') as f:
+                    meta = json.load(f)
+                if meta.get('sklearn_version') and meta['sklearn_version'] != sklearn.__version__:
+                    raise RuntimeError(
+                        f"model trained with sklearn {meta['sklearn_version']}, runtime has {sklearn.__version__}"
+                    )
+            globals()['MODEL_BUNDLE'] = joblib.load(bundle_path)
         _models_ready.set()
 
 
@@ -1399,6 +1427,82 @@ def _get_team_crest(team_name):
     return ''
 
 
+def _lookup_team_state(team_name, club_id=None):
+    if club_id is not None and str(club_id) in (TEAM_STATE.get('by_id') or {}):
+        return TEAM_STATE['by_id'][str(club_id)]
+    by_nm = TEAM_STATE.get('by_name') or {}
+    clean = str(team_name or '').replace(' (National Team)', '').strip()
+    return by_nm.get(team_name) or by_nm.get(clean) or by_nm.get(clean.lower())
+
+
+def get_match_context(team_a, team_b, data):
+    from league_tiers import resolve_league_tier
+    from features import is_neutral_match
+
+    sa_state = _lookup_team_state(team_a, data.get('home_club_id'))
+    sb_state = _lookup_team_state(team_b, data.get('away_club_id'))
+    cid = str(data.get('league_id') or data.get('competition_id') or '').strip()
+    lg = LEAGUE_STATE.get(cid, {'avg_goals': 2.7, 'home_win': 0.45})
+    tier_val, tier_known = resolve_league_tier(cid)
+    if cid and cid in LEAGUE_STATE and LEAGUE_STATE[cid].get('tier_known') is not None:
+        tier_known = bool(LEAGUE_STATE[cid]['tier_known'])
+    neutral = bool(data.get('neutral', False)) or is_neutral_match(cid)
+    return {
+        'neutral': neutral,
+        'elo_a': (sa_state or {}).get('elo', 1500.0),
+        'elo_b': (sb_state or {}).get('elo', 1500.0),
+        'gf_a': (sa_state or {}).get('gf10', 1.35),
+        'ga_a': (sa_state or {}).get('ga10', 1.35),
+        'gf_b': (sb_state or {}).get('gf10', 1.35),
+        'ga_b': (sb_state or {}).get('ga10', 1.35),
+        'rest_a': float(data.get('home_rest', 7.0)),
+        'rest_b': float(data.get('away_rest', 7.0)),
+        'league_avg_goals': float(lg.get('avg_goals', 2.7)),
+        'league_home_win_rate': float(lg.get('home_win', 0.45)),
+        'league_tier_factor': float(tier_val),
+        'elo_missing': sa_state is None or sb_state is None,
+        'tier_missing': not tier_known,
+    }
+
+
+def build_bundle_feature_pair(team_a_name, team_b_name, st_a, st_b, stats_a, stats_b, data, ctx=None):
+    from features import build_feature_row, mirror
+    ctx = ctx or get_match_context(team_a_name, team_b_name, data)
+    form_gd_diff = (ctx['gf_a'] - ctx['ga_a']) - (ctx['gf_b'] - ctx['ga_b'])
+    f_ab = build_feature_row(
+        stats_a, stats_b, cohesion_proxy(st_a), cohesion_proxy(st_b),
+        ctx['elo_a'], ctx['elo_b'],
+        ctx['gf_a'], ctx['ga_a'], ctx['rest_a'],
+        ctx['gf_b'], ctx['ga_b'], ctx['rest_b'],
+        form_gd_diff,
+        ctx['league_avg_goals'], ctx['league_home_win_rate'], ctx['league_tier_factor'],
+        neutral=ctx['neutral'],
+    )
+    return f_ab, mirror(f_ab), ctx
+
+
+def _predict_with_bundle(bundle, f_ab, f_ba, stats_a, stats_b):
+    from scoreline import score_grid, wdl_from_grid
+    from retrain_gate import sym_proba
+    pd, np = _pd_mod, _np_mod
+    feats = bundle['feats']
+    X_ab = pd.DataFrame([f_ab])[feats]
+    X_ba = pd.DataFrame([f_ba])[feats]
+
+    xg_a = max(0.2, float(bundle['reg'].predict(X_ab)[0]))
+    xg_b = max(0.2, float(bundle['reg'].predict(X_ba)[0]))
+    if stats_a['has_outfield_in_gk']:
+        xg_b = xg_b * 2.2 + 1.2
+    if stats_b['has_outfield_in_gk']:
+        xg_a = xg_a * 2.2 + 1.2
+
+    grid = score_grid(xg_a, xg_b, bundle['rho'])
+    p_grid = np.array(wdl_from_grid(grid))
+    p_clf = sym_proba(bundle['clf'], X_ab, X_ba)[0]
+    p_b_win, p_draw, p_a_win = (bundle['blend_w'] * p_grid + (1.0 - bundle['blend_w']) * p_clf).tolist()
+    return p_a_win, p_draw, p_b_win, xg_a, xg_b, grid
+
+
 @app.route('/api/predict', methods=['POST'])
 def predict():
     try:
@@ -1426,111 +1530,147 @@ def predict():
         stats_a, st_a, sb_a = aggregate_team_advanced(starters_a, subs_a, team_a_name, report_date=report_date)
         stats_b, st_b, sb_b = aggregate_team_advanced(starters_b, subs_b, team_b_name, report_date=report_date)
         
-        features_ab = {
-            'diff_overall_mean': stats_a['starter_overall_mean'] - stats_b['starter_overall_mean'],
-            'diff_overall_max': stats_a['starter_overall_max'] - stats_b['starter_overall_max'],
-            'diff_overall_min': stats_a['starter_overall_min'] - stats_b['starter_overall_min'],
-            'diff_attack_vs_defense': stats_a['overall_mean_ATT'] - stats_b['overall_mean_DEF'],
-            'diff_defense_vs_attack': stats_a['overall_mean_DEF'] - stats_b['overall_mean_ATT'],
-            'diff_midfield': stats_a['overall_mean_MID'] - stats_b['overall_mean_MID'],
-            'diff_sub_mean': stats_a['sub_overall_mean'] - stats_b['sub_overall_mean'],
-            'diff_depth_gap': stats_a['depth_gap'] - stats_b['depth_gap'],
-            'diff_market_val_log': np.log1p(stats_a['starter_market_val_sum']) - np.log1p(stats_b['starter_market_val_sum']),
-            'diff_form_pts_5': form_pts_a - form_pts_b,
-            'diff_form_gd_5': form_gd_a - form_gd_b,
-            'diff_aerial_att_vs_def': stats_a['height_mean_ATT'] - stats_b['height_mean_DEF'],
-            'diff_aerial_def_vs_att': stats_a['height_mean_DEF'] - stats_b['height_mean_ATT'],
-            'diff_prime_score': stats_a['starter_prime_mean'] - stats_b['starter_prime_mean'],
-            'diff_cohesion': cohesion_proxy(st_a) - cohesion_proxy(st_b),
-            'league_tier_factor': float(data.get('league_tier_factor', 0.95))
-        }
-        
-        X_ab = pd.DataFrame([features_ab])[advanced_features]
-        
-        features_ba = {
-            'diff_overall_mean': -features_ab['diff_overall_mean'],
-            'diff_overall_max': -features_ab['diff_overall_max'],
-            'diff_overall_min': -features_ab['diff_overall_min'],
-            'diff_attack_vs_defense': -features_ab['diff_defense_vs_attack'],
-            'diff_defense_vs_attack': -features_ab['diff_attack_vs_defense'],
-            'diff_midfield': -features_ab['diff_midfield'],
-            'diff_sub_mean': -features_ab['diff_sub_mean'],
-            'diff_depth_gap': -features_ab['diff_depth_gap'],
-            'diff_market_val_log': -features_ab['diff_market_val_log'],
-            'diff_form_pts_5': -features_ab['diff_form_pts_5'],
-            'diff_form_gd_5': -features_ab['diff_form_gd_5'],
-            'diff_aerial_att_vs_def': -features_ab['diff_aerial_def_vs_att'],
-            'diff_aerial_def_vs_att': -features_ab['diff_aerial_att_vs_def'],
-            'diff_prime_score': -features_ab['diff_prime_score'],
-            'diff_cohesion': -features_ab['diff_cohesion'],
-            'league_tier_factor': features_ab['league_tier_factor']
-        }
-        X_ba = pd.DataFrame([features_ba])[advanced_features]
-        
-        # 1. 3-Class Probabilities
-        prob_ab = model_advanced_3class.predict_proba(X_ab)[0]
-        prob_ba = model_advanced_3class.predict_proba(X_ba)[0]
-        
-        p_a_win = float((prob_ab[2] + prob_ba[0]) / 2.0)
-        p_b_win = float((prob_ab[0] + prob_ba[2]) / 2.0)
-        p_draw = float((prob_ab[1] + prob_ba[1]) / 2.0)
-        
-        # 2. Expected Goals (xG) with Absolute Offensive Firepower Scaling
-        xg_base_a = max(0.4, float(model_advanced_xg.predict(X_ab)[0]))
-        xg_base_b = max(0.4, float(model_advanced_xg.predict(X_ba)[0]))
-        
-        # Absolute offensive scaling & defensive resistance
-        att_g90_a = float(pd.to_numeric(pd.DataFrame(st_a).get('goals_per_90', pd.Series([0.0])), errors='coerce').fillna(0.0).nlargest(3).sum()) if st_a else 0.8
-        att_g90_b = float(pd.to_numeric(pd.DataFrame(st_b).get('goals_per_90', pd.Series([0.0])), errors='coerce').fillna(0.0).nlargest(3).sum()) if st_b else 0.8
-        
-        att_mult_a = ((stats_a['overall_mean_ATT'] / 78.0) ** 1.25) * (1.0 + (att_g90_a - 0.7) / 3.2)
-        att_mult_b = ((stats_b['overall_mean_ATT'] / 78.0) ** 1.25) * (1.0 + (att_g90_b - 0.7) / 3.2)
-        
-        def_supp_a = (stats_a['overall_mean_DEF'] / 78.0) ** 0.5
-        def_supp_b = (stats_b['overall_mean_DEF'] / 78.0) ** 0.5
-        
-        form_boost_a = 0.88 + 0.12 * (form_pts_a / 2.0)
-        form_boost_b = 0.88 + 0.12 * (form_pts_b / 2.0)
-        
-        xg_a = max(0.3, xg_base_a * (att_mult_a / def_supp_b) * form_boost_a)
-        xg_b = max(0.3, xg_base_b * (att_mult_b / def_supp_a) * form_boost_b)
-        
-        # If Squad A has an outfield player in goal (e.g. Messi as GK), Opponent xG doubles!
-        if stats_a['has_outfield_in_gk']:
-            xg_b = xg_b * 2.2 + 1.2
-            p_b_win = min(0.92, p_b_win * 1.8 + 0.35)
-            p_a_win = max(0.04, p_a_win * 0.25)
-            p_draw = max(0.04, 1.0 - p_a_win - p_b_win)
-            
-        if stats_b['has_outfield_in_gk']:
-            xg_a = xg_a * 2.2 + 1.2
-            p_a_win = min(0.92, p_a_win * 1.8 + 0.35)
-            p_b_win = max(0.04, p_b_win * 0.25)
-            p_draw = max(0.04, 1.0 - p_a_win - p_b_win)
-            
-        # Generate Bivariate Poisson Exact Score Matrix
-        score_matrix = []
-        for ga in range(6):
-            for gb in range(6):
-                p_ga = (math.pow(xg_a, ga) * math.exp(-xg_a)) / math.factorial(ga)
-                p_gb = (math.pow(xg_b, gb) * math.exp(-xg_b)) / math.factorial(gb)
-                prob = p_ga * p_gb
-                score_matrix.append({
-                    'score': f"{ga} - {gb}",
-                    'team_a_goals': ga,
-                    'team_b_goals': gb,
-                    'prob': round(prob * 100, 1)
-                })
-                
-        score_matrix.sort(key=lambda x: x['prob'], reverse=True)
-        top_score = score_matrix[0]
-        score_grid = [[0.0] * 6 for _ in range(6)]
-        for sc in score_matrix: score_grid[sc['team_a_goals']][sc['team_b_goals']] = sc['prob']
-        
+        confidence_cap = None
+        if USE_BUNDLE and MODEL_BUNDLE is not None:
+            f_ab, f_ba, ctx = build_bundle_feature_pair(team_a_name, team_b_name, st_a, st_b, stats_a, stats_b, data)
+            p_a_win, p_draw, p_b_win, xg_a, xg_b, grid = _predict_with_bundle(MODEL_BUNDLE, f_ab, f_ba, stats_a, stats_b)
+            score_matrix = [{
+                'score': f"{i} - {j}",
+                'team_a_goals': i,
+                'team_b_goals': j,
+                'prob': round(float(grid[i, j]) * 100, 1),
+            } for i in range(6) for j in range(6)]
+            score_matrix.sort(key=lambda x: x['prob'], reverse=True)
+            top_score = score_matrix[0]
+            score_grid = [[0.0] * 6 for _ in range(6)]
+            for sc in score_matrix:
+                score_grid[sc['team_a_goals']][sc['team_b_goals']] = sc['prob']
+            scorers_a = compute_player_scorers(st_a, xg_a)
+            scorers_b = compute_player_scorers(st_b, xg_b)
+            over25 = round(float(sum(grid[i, j] for i in range(11) for j in range(11) if i + j > 2)) * 100, 1)
+            if ctx['elo_missing'] or ctx['tier_missing']:
+                confidence_cap = 'Low'
+        else:
+            features_ab = {
+                'diff_overall_mean': stats_a['starter_overall_mean'] - stats_b['starter_overall_mean'],
+                'diff_overall_max': stats_a['starter_overall_max'] - stats_b['starter_overall_max'],
+                'diff_overall_min': stats_a['starter_overall_min'] - stats_b['starter_overall_min'],
+                'diff_attack_vs_defense': stats_a['overall_mean_ATT'] - stats_b['overall_mean_DEF'],
+                'diff_defense_vs_attack': stats_a['overall_mean_DEF'] - stats_b['overall_mean_ATT'],
+                'diff_midfield': stats_a['overall_mean_MID'] - stats_b['overall_mean_MID'],
+                'diff_sub_mean': stats_a['sub_overall_mean'] - stats_b['sub_overall_mean'],
+                'diff_depth_gap': stats_a['depth_gap'] - stats_b['depth_gap'],
+                'diff_market_val_log': np.log1p(stats_a['starter_market_val_sum']) - np.log1p(stats_b['starter_market_val_sum']),
+                'diff_form_pts_5': form_pts_a - form_pts_b,
+                'diff_form_gd_5': form_gd_a - form_gd_b,
+                'diff_aerial_att_vs_def': stats_a['height_mean_ATT'] - stats_b['height_mean_DEF'],
+                'diff_aerial_def_vs_att': stats_a['height_mean_DEF'] - stats_b['height_mean_ATT'],
+                'diff_prime_score': stats_a['starter_prime_mean'] - stats_b['starter_prime_mean'],
+                'diff_cohesion': cohesion_proxy(st_a) - cohesion_proxy(st_b),
+                'league_tier_factor': float(data.get('league_tier_factor', 0.95))
+            }
 
-        scorers_a = compute_player_scorers(st_a, xg_a)
-        scorers_b = compute_player_scorers(st_b, xg_b)
-        over25 = round(sum(s['prob'] for s in score_matrix if s['team_a_goals'] + s['team_b_goals'] > 2), 1)
+            X_ab = pd.DataFrame([features_ab])[advanced_features]
+
+            features_ba = {
+                'diff_overall_mean': -features_ab['diff_overall_mean'],
+                'diff_overall_max': -features_ab['diff_overall_max'],
+                'diff_overall_min': -features_ab['diff_overall_min'],
+                'diff_attack_vs_defense': -features_ab['diff_defense_vs_attack'],
+                'diff_defense_vs_attack': -features_ab['diff_attack_vs_defense'],
+                'diff_midfield': -features_ab['diff_midfield'],
+                'diff_sub_mean': -features_ab['diff_sub_mean'],
+                'diff_depth_gap': -features_ab['diff_depth_gap'],
+                'diff_market_val_log': -features_ab['diff_market_val_log'],
+                'diff_form_pts_5': -features_ab['diff_form_pts_5'],
+                'diff_form_gd_5': -features_ab['diff_form_gd_5'],
+                'diff_aerial_att_vs_def': -features_ab['diff_aerial_def_vs_att'],
+                'diff_aerial_def_vs_att': -features_ab['diff_aerial_att_vs_def'],
+                'diff_prime_score': -features_ab['diff_prime_score'],
+                'diff_cohesion': -features_ab['diff_cohesion'],
+                'league_tier_factor': features_ab['league_tier_factor']
+            }
+            X_ba = pd.DataFrame([features_ba])[advanced_features]
+
+            # 1. 3-Class Probabilities
+            prob_ab = model_advanced_3class.predict_proba(X_ab)[0]
+            prob_ba = model_advanced_3class.predict_proba(X_ba)[0]
+
+            p_a_win = float((prob_ab[2] + prob_ba[0]) / 2.0)
+            p_b_win = float((prob_ab[0] + prob_ba[2]) / 2.0)
+            p_draw = float((prob_ab[1] + prob_ba[1]) / 2.0)
+
+            # 2. Expected Goals (xG) with Absolute Offensive Firepower Scaling
+            xg_base_a = max(0.4, float(model_advanced_xg.predict(X_ab)[0]))
+            xg_base_b = max(0.4, float(model_advanced_xg.predict(X_ba)[0]))
+
+            # Absolute offensive scaling & defensive resistance
+            att_g90_a = float(pd.to_numeric(pd.DataFrame(st_a).get('goals_per_90', pd.Series([0.0])), errors='coerce').fillna(0.0).nlargest(3).sum()) if st_a else 0.8
+            att_g90_b = float(pd.to_numeric(pd.DataFrame(st_b).get('goals_per_90', pd.Series([0.0])), errors='coerce').fillna(0.0).nlargest(3).sum()) if st_b else 0.8
+
+            att_mult_a = ((stats_a['overall_mean_ATT'] / 78.0) ** 1.25) * (1.0 + (att_g90_a - 0.7) / 3.2)
+            att_mult_b = ((stats_b['overall_mean_ATT'] / 78.0) ** 1.25) * (1.0 + (att_g90_b - 0.7) / 3.2)
+
+            def_supp_a = (stats_a['overall_mean_DEF'] / 78.0) ** 0.5
+            def_supp_b = (stats_b['overall_mean_DEF'] / 78.0) ** 0.5
+
+            form_boost_a = 0.88 + 0.12 * (form_pts_a / 2.0)
+            form_boost_b = 0.88 + 0.12 * (form_pts_b / 2.0)
+
+            xg_a = max(0.3, xg_base_a * (att_mult_a / def_supp_b) * form_boost_a)
+            xg_b = max(0.3, xg_base_b * (att_mult_b / def_supp_a) * form_boost_b)
+
+            # If Squad A has an outfield player in goal (e.g. Messi as GK), Opponent xG doubles!
+            if stats_a['has_outfield_in_gk']:
+                xg_b = xg_b * 2.2 + 1.2
+                p_b_win = min(0.92, p_b_win * 1.8 + 0.35)
+                p_a_win = max(0.04, p_a_win * 0.25)
+                p_draw = max(0.04, 1.0 - p_a_win - p_b_win)
+
+            if stats_b['has_outfield_in_gk']:
+                xg_a = xg_a * 2.2 + 1.2
+                p_a_win = min(0.92, p_a_win * 1.8 + 0.35)
+                p_b_win = max(0.04, p_b_win * 0.25)
+                p_draw = max(0.04, 1.0 - p_a_win - p_b_win)
+
+            # Generate Bivariate Poisson Exact Score Matrix
+            score_matrix = []
+            for ga in range(6):
+                for gb in range(6):
+                    p_ga = (math.pow(xg_a, ga) * math.exp(-xg_a)) / math.factorial(ga)
+                    p_gb = (math.pow(xg_b, gb) * math.exp(-xg_b)) / math.factorial(gb)
+                    prob = p_ga * p_gb
+                    score_matrix.append({
+                        'score': f"{ga} - {gb}",
+                        'team_a_goals': ga,
+                        'team_b_goals': gb,
+                        'prob': round(prob * 100, 1)
+                    })
+
+            score_matrix.sort(key=lambda x: x['prob'], reverse=True)
+            top_score = score_matrix[0]
+            score_grid = [[0.0] * 6 for _ in range(6)]
+            for sc in score_matrix: score_grid[sc['team_a_goals']][sc['team_b_goals']] = sc['prob']
+
+            scorers_a = compute_player_scorers(st_a, xg_a)
+            scorers_b = compute_player_scorers(st_b, xg_b)
+            over25 = round(sum(s['prob'] for s in score_matrix if s['team_a_goals'] + s['team_b_goals'] > 2), 1)
+
+            if MODEL_BUNDLE is not None:
+                try:
+                    f_ab, f_ba, _ = build_bundle_feature_pair(team_a_name, team_b_name, st_a, st_b, stats_a, stats_b, data)
+                    sa_w, s_dr, sb_w, s_xga, s_xgb, _ = _predict_with_bundle(MODEL_BUNDLE, f_ab, f_ba, stats_a, stats_b)
+                    shadow_path = os.path.join(DATA_DIR, 'data', 'shadow_predictions.jsonl')
+                    if os.path.isdir(os.path.dirname(shadow_path)):
+                        with open(shadow_path, 'a', encoding='utf-8') as sf:
+                            sf.write(json.dumps({
+                                'ts': datetime.now().isoformat(), 'home': team_a_name, 'away': team_b_name,
+                                'legacy': [round(p_a_win, 4), round(p_draw, 4), round(p_b_win, 4)],
+                                'bundle': [round(sa_w, 4), round(s_dr, 4), round(sb_w, 4)],
+                                'bundle_xg': [round(s_xga, 3), round(s_xgb, 3)],
+                            }) + '\n')
+                except Exception:
+                    pass
 
         metrics = [(l, x, y) for l, x, y in [
             ('Starting XI quality (effective)', stats_a['starter_overall_mean'], stats_b['starter_overall_mean']),
@@ -1555,7 +1695,7 @@ def predict():
 
         pa, pdr, pb = round(p_a_win * 100, 1), round(p_draw * 100, 1), round(p_b_win * 100, 1)
         margin = abs(p_a_win - p_b_win)
-        confidence = 'High' if margin >= 0.25 else ('Medium' if margin >= 0.10 else 'Low')
+        confidence = confidence_cap or ('High' if margin >= 0.25 else ('Medium' if margin >= 0.10 else 'Low'))
 
         # 1. Argmax Formulation
         if pdr >= pa and pdr >= pb:
