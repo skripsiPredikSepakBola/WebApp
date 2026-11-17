@@ -29,6 +29,22 @@ def wdl_from_grid(g):
     return float(np.triu(g, 1).sum()), float(np.trace(g)), float(np.tril(g, -1).sum())
 
 
+def rescale_grid_to_wdl(g, p_b_win, p_draw, p_a_win):
+    """Rescale each outcome region of Poisson/Dixon-Coles grid so region sums equal classifier W/D/L."""
+    out = np.array(g, dtype=float, copy=True)
+    n = out.shape[0]
+    iu = np.triu_indices(n, 1)
+    idg = np.diag_indices(n)
+    il = np.tril_indices(n, -1)
+
+    for idx, target in ((iu, p_b_win), (idg, p_draw), (il, p_a_win)):
+        cur = float(out[idx].sum())
+        if cur > 1e-12:
+            out[idx] *= float(target) / cur
+    tot = float(out.sum())
+    return out / tot if tot > 0 else out
+
+
 def fit_rho(lams_a, lams_b, goals_a, goals_b, grid=np.linspace(-0.25, 0.10, 36)):
     """Pick rho by scoreline log-likelihood on VALIDATION data only."""
     best_rho, best_ll = 0.0, -np.inf

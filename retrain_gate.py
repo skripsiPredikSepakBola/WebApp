@@ -31,7 +31,7 @@ REG_PARAMS = dict(
     loss="poisson", max_iter=200, learning_rate=0.05, max_depth=4,
     l2_regularization=6.0, min_samples_leaf=250, random_state=42,
 )
-FIXED_BLEND_W = 0.25
+FIXED_BLEND_W = 0.0  # Classifier W/D/L; scoreline grid is region-rescaled to match classifier W/D/L
 
 MIN_TRAIN_MATCHES = 20_000
 MIN_VAL_MATCHES = 300

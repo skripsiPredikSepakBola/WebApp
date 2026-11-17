@@ -46,9 +46,13 @@
     "min_samples_leaf": 250,
     "random_state": 42
   },
-  "blend_w": 0.25,
+  "blend_w": 0.0,
+  "grid_rescaling": "region_rescaled_to_classifier_wdl",
   "rho_procedure": "grid_search(-0.25..0.10, 36 pts) on chronological tune slice",
   "tier_map_source": "league_tiers.py (0.75-1.00 hand-set league-quality prior)",
+  "v2_backlog": [
+    "Recency-weighted league goal rate (last 2 seasons) to address IT1/L1/FR1 goals drift on post-freeze matches."
+  ],
   "known_limitations": [
     "UEFA continental competitions show ~-0.034 home_gap (higher ~49-51% actual home win rate vs 0.45 domestic prior; k=50+is_continental variant failed UEFA bootstrap p5=-0.00048).",
     "Test-fold selection caveat: G6+tier selected on 2023-2026 folds; prospective check must evaluate on matches played after freeze_date."

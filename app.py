@@ -1482,9 +1482,9 @@ def build_bundle_feature_pair(team_a_name, team_b_name, st_a, st_b, stats_a, sta
 
 
 def _predict_with_bundle(bundle, f_ab, f_ba, stats_a, stats_b):
-    from scoreline import score_grid, wdl_from_grid
+    from scoreline import rescale_grid_to_wdl, score_grid
     from retrain_gate import sym_proba
-    pd, np = _pd_mod, _np_mod
+    pd, _ = _pd_mod, _np_mod
     feats = bundle['feats']
     X_ab = pd.DataFrame([f_ab])[feats]
     X_ba = pd.DataFrame([f_ba])[feats]
@@ -1496,10 +1496,9 @@ def _predict_with_bundle(bundle, f_ab, f_ba, stats_a, stats_b):
     if stats_b['has_outfield_in_gk']:
         xg_a = xg_a * 2.2 + 1.2
 
-    grid = score_grid(xg_a, xg_b, bundle['rho'])
-    p_grid = np.array(wdl_from_grid(grid))
-    p_clf = sym_proba(bundle['clf'], X_ab, X_ba)[0]
-    p_b_win, p_draw, p_a_win = (bundle['blend_w'] * p_grid + (1.0 - bundle['blend_w']) * p_clf).tolist()
+    p_b_win, p_draw, p_a_win = sym_proba(bundle['clf'], X_ab, X_ba)[0].tolist()
+    raw_grid = score_grid(xg_a, xg_b, bundle['rho'])
+    grid = rescale_grid_to_wdl(raw_grid, p_b_win, p_draw, p_a_win)
     return p_a_win, p_draw, p_b_win, xg_a, xg_b, grid
 
 
