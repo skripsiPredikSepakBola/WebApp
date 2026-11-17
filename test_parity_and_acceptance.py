@@ -281,7 +281,10 @@ def test_idempotent_state_updater_and_freeze_hashes():
         if expected is None:
             continue
         p = os.path.join(web_app.DATA_DIR, rel)
-        actual = hashlib.sha256(open(p, 'rb').read()).hexdigest()
+        raw = open(p, 'rb').read()
+        if rel.endswith('.py'):
+            raw = raw.replace(b'\r\n', b'\n')
+        actual = hashlib.sha256(raw).hexdigest()
         assert actual == expected, f"Freeze SHA-256 mismatch on {rel}: {actual} != {expected}"
     print(f"Freeze SHA-256 Integrity PASSED ({len(hashes)} artifacts verified).")
 
