@@ -145,6 +145,9 @@ def test_context_lookup_parity_and_mutation(n=100):
     hist_fwd = hist[hist['is_forward'] == 1].set_index('match_id')
 
     games_csv = os.path.abspath(os.path.join(web_app.DATA_DIR, '..', 'Football Data from Transfermarkt', 'games.csv'))
+    if not os.path.exists(games_csv):
+        print("F11 Independent Context Parity SKIPPED in CI (raw games.csv not in repo).")
+        return
     games = pd.read_csv(
         games_csv,
         usecols=['game_id', 'season', 'competition_id', 'round', 'date',

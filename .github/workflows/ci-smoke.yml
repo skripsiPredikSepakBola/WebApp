@@ -15,6 +15,10 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
+      - name: Run golden legacy test (50 payloads, USE_BUNDLE=False)
+        run: python tests/test_golden_legacy.py
+      - name: Run parity, idempotency, SHA-256, rescaled grid & gate checks
+        run: python test_parity_and_acceptance.py
       - name: Run smoke test (probabilities sum to 1, swap symmetry < 1e-9, version guard)
         run: |
           python -c "
