@@ -240,6 +240,10 @@ def _ensure_models():
                     raise RuntimeError(
                         f"model trained with sklearn {meta['sklearn_version']}, runtime has {sklearn.__version__}"
                     )
+                if meta.get('numpy_version') and meta['numpy_version'] != np_lib.__version__:
+                    raise RuntimeError(
+                        f"model trained with numpy {meta['numpy_version']}, runtime has {np_lib.__version__}"
+                    )
             globals()['MODEL_BUNDLE'] = joblib.load(bundle_path)
         _models_ready.set()
 

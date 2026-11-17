@@ -135,6 +135,88 @@ def test_rescaled_grid_and_gate():
     print(f"Gate Unit Checks PASSED: identical={ok_same} (gain={m_same['mean_gain']:.2e}), better_vs_prior={ok_better} (gain={m_better['mean_gain']:+.4f}, p5={m_better['gain_p5']:+.4f}), <20k={small_res['status']}.")
 
 
+def test_context_lookup_parity(n=100):
+    """Test real get_match_context() against 100 historical matches' exact pre-match state in history_features.parquet."""
+    from elo import EloTracker
+    from features import LeagueStats, TeamState, is_neutral_match
+
+    web_app._ensure_models()
+    hist = pd.read_parquet(os.path.join(web_app.DATA_DIR, 'data', 'history_features.parquet'))
+    hist_fwd = hist[hist['is_forward'] == 1].set_index('match_id')
+
+    games_csv = os.path.abspath(os.path.join(web_app.DATA_DIR, '..', 'Football Data from Transfermarkt', 'games.csv'))
+    games = pd.read_csv(
+        games_csv,
+        usecols=['game_id', 'season', 'competition_id', 'round', 'date',
+                 'home_club_id', 'away_club_id', 'home_club_goals', 'away_club_goals'],
+    )
+    for col in ('game_id', 'season', 'home_club_id', 'away_club_id', 'home_club_goals', 'away_club_goals'):
+        games[col] = pd.to_numeric(games[col], errors='coerce')
+    games['date'] = pd.to_datetime(games['date'], errors='coerce')
+    games = games.dropna().drop_duplicates('game_id', keep='last').sort_values(['date', 'game_id'], kind='mergesort')
+
+    target_ids = set(hist_fwd.tail(n).index.astype(int).tolist())
+    elo, leagues, teams = EloTracker(), LeagueStats(), TeamState()
+    prev_s = None
+    orig_ts, orig_ls = web_app.TEAM_STATE, web_app.LEAGUE_STATE
+    max_err = 0.0
+    checked = 0
+
+    try:
+        for r in games.itertuples(index=False):
+            if prev_s is not None and r.season != prev_s:
+                elo.season_regress(0.25)
+            prev_s = r.season
+            gid, hid, aid = int(r.game_id), int(r.home_club_id), int(r.away_club_id)
+            cid = str(r.competition_id or '').strip()
+            neu = is_neutral_match(cid, r.round)
+
+            if gid in target_ids:
+                eh, ea = elo.rating(hid), elo.rating(aid)
+                gfh, gah, rh = teams.get(hid, r.date)
+                gfa, gaa, ra = teams.get(aid, r.date)
+                lgg, lgh = leagues.get(cid)
+                web_app.TEAM_STATE = {
+                    'by_id': {
+                        str(hid): {'elo': eh, 'gf10': gfh, 'ga10': gah},
+                        str(aid): {'elo': ea, 'gf10': gfa, 'ga10': gaa},
+                    },
+                    'by_name': {},
+                }
+                web_app.LEAGUE_STATE = {cid: {'avg_goals': lgg, 'home_win': lgh, 'tier_known': True}}
+                ctx = web_app.get_match_context('Home', 'Away', {
+                    'home_club_id': hid, 'away_club_id': aid, 'league_id': cid,
+                    'neutral': neu, 'home_rest': rh, 'away_rest': ra,
+                })
+                row = hist_fwd.loc[gid]
+                diffs = [
+                    abs(ctx['elo_a'] - row['own_elo']),
+                    abs(ctx['elo_b'] - row['opp_elo']),
+                    abs(ctx['gf_a'] - row['own_gf10']),
+                    abs(ctx['ga_a'] - row['own_ga10']),
+                    abs(ctx['gf_b'] - row['opp_gf10']),
+                    abs(ctx['ga_b'] - row['opp_ga10']),
+                    abs(ctx['league_avg_goals'] - row['league_avg_goals']),
+                    abs(ctx['league_home_win_rate'] - row['league_home_win_rate']),
+                    abs(ctx['league_tier_factor'] - row['league_tier_factor']),
+                    abs((0.0 if ctx['neutral'] else 1.0) - row['home_flag']),
+                ]
+                max_err = max(max_err, *diffs)
+                assert max(diffs) < 1e-9, f"Context parity mismatch at game_id={gid}: {diffs}"
+                checked += 1
+
+            elo.update(hid, aid, r.home_club_goals, r.away_club_goals, neutral=neu)
+            leagues.update(cid, r.home_club_goals, r.away_club_goals)
+            teams.update(hid, r.home_club_goals, r.away_club_goals, r.date)
+            teams.update(aid, r.away_club_goals, r.home_club_goals, r.date)
+    finally:
+        web_app.TEAM_STATE, web_app.LEAGUE_STATE = orig_ts, orig_ls
+
+    assert checked == n, f"Checked {checked} != {n}"
+    print(f"F11 Context Lookup Parity PASSED ({checked} historical matches via get_match_context, max_diff={max_err:.2e} < 1e-9).")
+
+
 if __name__ == '__main__':
     test_f11_independent_parity(100)
+    test_context_lookup_parity(100)
     test_rescaled_grid_and_gate()
