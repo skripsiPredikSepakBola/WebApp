@@ -98,7 +98,9 @@ def verify_branch_matches_golden():
     for i, rec in enumerate(records):
         got = c.post('/api/predict', json=rec['payload']).get_json()
         exp = rec['expected']
-        assert got == exp, f"Full-JSON mismatch at payload {i}"
+        if got != exp:
+            diff_keys = [k for k in set(got) | set(exp) if got.get(k) != exp.get(k)]
+            raise AssertionError(f"Full-JSON mismatch at payload {i} keys={diff_keys}: got={ {k: got.get(k) for k in diff_keys} } exp={ {k: exp.get(k) for k in diff_keys} }")
     print(f"GOLDEN_LEGACY_50 PASSED: {len(records)}/50 full-JSON responses match main@{main_sha[:7]} identically (USE_BUNDLE=False).")
 
 
