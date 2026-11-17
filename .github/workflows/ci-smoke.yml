@@ -17,8 +17,12 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Run golden legacy test (50 payloads, USE_BUNDLE=False)
         run: python tests/test_golden_legacy.py
-      - name: Run parity, idempotency, SHA-256, rescaled grid & gate checks
-        run: python test_parity_and_acceptance.py
+      - name: Run F11 payload parity (100 matchups)
+        run: python -c "import test_parity_and_acceptance as t; t.test_f11_independent_parity(100)"
+      - name: Run idempotency & Freeze SHA-256 integrity
+        run: python -c "import test_parity_and_acceptance as t; t.test_idempotent_state_updater_and_freeze_hashes()"
+      - name: Run rescaled grid & gate unit checks
+        run: python -c "import test_parity_and_acceptance as t; t.test_rescaled_grid_and_gate()"
       - name: Run smoke test (probabilities sum to 1, swap symmetry < 1e-9, version guard)
         run: |
           python -c "

@@ -2,6 +2,12 @@
 import math
 import os
 import random
+
+os.environ.setdefault('SUPABASE_URL', '')
+os.environ.setdefault('SUPABASE_KEY', '')
+os.environ.setdefault('AUTO_SYNC_ENABLED', '0')
+os.environ.setdefault('KEEP_ALIVE_ENABLED', '0')
+os.environ.setdefault('VERCEL', '1')
 import numpy as np
 import pandas as pd
 from sklearn.dummy import DummyClassifier
