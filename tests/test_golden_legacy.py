@@ -12,6 +12,12 @@ import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
+# Force offline deterministic mode (prevent .env Supabase or background threads from drifting golden outputs)
+os.environ['SUPABASE_URL'] = ''
+os.environ['SUPABASE_KEY'] = ''
+os.environ['AUTO_SYNC_ENABLED'] = '0'
+os.environ['KEEP_ALIVE_ENABLED'] = '0'
+os.environ['VERCEL'] = '1'
 GOLDEN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'golden_legacy_50.json')
 
 
