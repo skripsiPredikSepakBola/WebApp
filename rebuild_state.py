@@ -59,6 +59,7 @@ LIVE_COMP_ALIASES = {
     'copa america': 'CA',
     'liga 1': 'IN1L',
     'bri liga 1': 'IN1L',
+    'indonesia super league': 'IN1L',
     'super league': 'MYS1',
     'thai league 1': 'THA1',
     'v.league 1': 'VIE1',

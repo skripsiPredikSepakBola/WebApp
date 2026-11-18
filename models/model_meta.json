@@ -1,5 +1,5 @@
 {
-  "freeze_date": "2026-11-17",
+  "freeze_date": "2026-11-18",
   "feature_set": "G6+tier",
   "features": [
     "diff_overall_mean",
@@ -54,21 +54,36 @@
     "Recency-weighted league goal rate (last 2 seasons) to address IT1/L1/FR1 goals drift on post-freeze matches."
   ],
   "known_limitations": [
+    "v3 second-look caveat: v3 was evaluated on the same 2023-2026 folds as v2, triggered by an implementation defect in v2 training Elo (season_regress firing on interleaved season labels).",
     "UEFA continental competitions show ~-0.034 home_gap (higher ~49-51% actual home win rate vs 0.45 domestic prior; k=50+is_continental variant failed UEFA bootstrap p5=-0.00048).",
-    "Test-fold selection caveat: G6+tier selected on 2023-2026 folds; prospective check must evaluate on matches played after freeze_date."
+    "Prospective check must evaluate on matches played after freeze_date (2026-11-18)."
   ],
   "sklearn_version": "1.6.1",
   "numpy_version": "1.26.4",
   "python_version": "3.9.0",
   "history_matches": 74483,
   "team_state_count": 3486,
-  "generated_at": "2026-11-17T12:26:49Z",
+  "generated_at": "2026-11-18T02:55:59Z",
   "freeze_sha256": {
     "features.py": "14ffd29726436c260195aa52f3572918b5a0f48a3d65dbe1b5106dc26489ad1f",
     "league_tiers.py": "3780cc3fa6fd37a10be359e36c15b974596b33af89b1413a901056085f49a75e",
     "retrain_gate.py": "d419dff9d0aabcbf36d6c7e3db8373646106ee69b7464827a1db43b3e8ce3a8e",
-    "data/history_features.parquet": "cb053a69012accd1a8ad123b72b4f9a3555b0f219cc369eb0a45467555beea1a",
-    "models/model_bundle.joblib": "41d585567186d3833611330640245353af97fca56be3f219fede65605c1da89e"
+    "data/history_features.parquet": "4384350ec91a464b821ac8007020c7b82d0a69544707c60a02619eed13a96d39",
+    "models/model_bundle.joblib": "5be979a3c365e86e3ae3289e58bbcf267a88862e1ac7d18cda79cf48a9b50506"
   },
-  "rho": 0.0
+  "rho": 0.0,
+  "model_version": "v3",
+  "elo_procedure": "continuous EloTracker (k=20, home_adv=65, base=1500, no season_regress)",
+  "v3_vs_v2_walkforward": {
+    "v2_ll": 0.95418,
+    "v3_ll": 0.95212,
+    "v2_rps": 0.19873,
+    "v3_rps": 0.19801,
+    "mean_gain": 0.00205,
+    "boot_p5": 0.00129,
+    "boot_p95": 0.0028,
+    "P_v3_better": 1.0,
+    "v3_home_gap": 0.0053,
+    "v3_draw_gap": -0.0077
+  }
 }

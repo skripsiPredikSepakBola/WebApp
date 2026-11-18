@@ -32,7 +32,7 @@ def paired_boot(p_leg, p_new, y, seed=0, n_boot=1000):
     return float(d.mean()), float(np.percentile(boot, 5)), float(np.percentile(boot, 95)), float((boot > 0).mean())
 
 
-def run_prospective_replay(freeze_date='2026-11-17', matches=None, base_path=BASE_STATE_PATH):
+def run_prospective_replay(freeze_date='2026-11-18', matches=None, base_path=BASE_STATE_PATH):
     web_app._ensure_models()
     if matches is None:
         url, _ = _sb_cfg()
