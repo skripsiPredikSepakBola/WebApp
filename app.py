@@ -1474,7 +1474,7 @@ def get_match_context(team_a, team_b, data):
         if cid in LEAGUE_STATE and LEAGUE_STATE[cid].get('tier_known') is not None:
             tier_known = bool(LEAGUE_STATE[cid]['tier_known'])
     neutral = bool(data.get('neutral', False)) or is_neutral_match(cid)
-    ref_date_str = data.get('match_date') or (TEAM_STATE or {}).get('as_of')
+    ref_date_str = data.get('match_date') or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     return {
         'neutral': neutral,
         'elo_a': (sa_state or {}).get('elo', 1500.0),

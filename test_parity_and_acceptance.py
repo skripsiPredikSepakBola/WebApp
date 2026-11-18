@@ -262,9 +262,16 @@ def test_context_lookup_parity_and_mutation(n=100):
 def test_rebuild_state_equivalence_and_freeze_hashes():
     import hashlib, json
     from collections import deque
+    from datetime import datetime, timedelta, timezone
     from elo import EloTracker
     from features import LeagueStats, TeamState, is_neutral_match
-    from rebuild_state import BASE_STATE_PATH, load_trackers_from_base, rebuild
+    from rebuild_state import (
+        BASE_STATE_PATH,
+        fetch_finished_matches_paginated,
+        load_trackers_from_base,
+        map_match_ids,
+        rebuild,
+    )
 
     # Real 200-match equivalence test (runs in CI without games.csv):
     # Hydrate trackers at 2026-10-01 cutoff, step through next 210 matches,
@@ -359,6 +366,26 @@ def test_rebuild_state_equivalence_and_freeze_hashes():
         },
         {
             'match_id': 'apifootball:999002',
+            'home_team': 'Arsenal FC',
+            'away_team': 'Chelsea FC',
+            'home_goals': 1,
+            'away_goals': 1,
+            'match_date': '2026-11-18',
+            'league': 'Premier League',
+            'raw_json': {},
+        },
+        {
+            'match_id': 'apifootball:999003',
+            'home_team': 'PERSIB Bandung',
+            'away_team': 'Persija Jakarta',
+            'home_goals': 2,
+            'away_goals': 0,
+            'match_date': '2026-11-18',
+            'league': 'Indonesia Super League',
+            'raw_json': {},
+        },
+        {
+            'match_id': 'apifootball:999004',
             'home_team': 'Armenia U19',
             'away_team': 'Montenegro U17',
             'home_goals': 1,
@@ -368,9 +395,36 @@ def test_rebuild_state_equivalence_and_freeze_hashes():
             'raw_json': {},
         },
     ]
+    club_n2i = base.get('club_name_to_id') or {}
+    comp_n2i = base.get('comp_name_to_id') or {}
+    known_cids = set((base.get('leagues') or {}).keys())
+    assert map_match_ids(batch[0], club_n2i, comp_n2i, known_cids=known_cids) == (3262, 3375, 'UNLA')
+    assert map_match_ids(batch[1], club_n2i, comp_n2i, known_cids=known_cids)[2] == 'GB1'
+    assert map_match_ids(batch[2], club_n2i, comp_n2i, known_cids=known_cids)[2] == 'IN1L'
+    assert map_match_ids(batch[3], club_n2i, comp_n2i, known_cids=known_cids) == (None, None, None)
+
     r1 = rebuild(batch, write_files=False)
     r2 = rebuild(batch, write_files=False)
-    assert r1 == r2 and r1['mapped_matches'] == 1 and r1['skipped_unmapped'] == 1, r1
+    assert r1 == r2 and r1['mapped_matches'] == 3 and r1['skipped_unmapped'] == 1, r1
+
+    # Unit tests for fetch_finished_matches_paginated: (a) multi-page fetch, (b) truncation guard
+    mock_rows = [{'match_id': 'm1'}, {'match_id': 'm2'}, {'match_id': 'm3'}]
+    calls = []
+
+    def _mock_req(path):
+        calls.append(path)
+        idx = len(calls) - 1
+        return mock_rows[idx * 2:(idx + 1) * 2]
+
+    fetched = fetch_finished_matches_paginated(page_size=2, max_pages=5, req_fn=_mock_req)
+    assert len(calls) == 2 and len(fetched) == 3, (calls, fetched)
+
+    trunc_caught = False
+    try:
+        fetch_finished_matches_paginated(page_size=2, max_pages=2, req_fn=lambda _: [{'match_id': 'x'}, {'match_id': 'y'}])
+    except RuntimeError as e:
+        trunc_caught = 'Pagination cap hit' in str(e)
+    assert trunc_caught, 'Expected RuntimeError on pagination cap exhaustion'
 
     elo_b, lg_b, tm_b, _, _ = load_trackers_from_base(base)
     cr_gf, cr_ga, _ = tm_b.get(base['club_name_to_id']['costa rica'], pd.Timestamp('2026-11-12'))
@@ -380,35 +434,48 @@ def test_rebuild_state_equivalence_and_freeze_hashes():
     empty_res = pr.run_prospective_replay(matches=[])
     assert empty_res['status'] == 'empty' and empty_res['mapping_coverage'] == 0.0, empty_res
 
-    # Problems 2 & 5: missing league_id -> league_tier_factor=0.95, tier_missing=False; rest days from last_date
+    # Problems 2 & 5 + Audit Item 3: missing league_id -> league_tier_factor=0.95, tier_missing=False;
+    # explicit match_date and default UTC today reference date for rest days
     orig_ts2 = web_app.TEAM_STATE
     try:
+        today_utc = datetime.now(timezone.utc).date()
+        four_days_ago = (today_utc - timedelta(days=4)).strftime('%Y-%m-%d')
         web_app.TEAM_STATE = {
-            'as_of': '2026-11-17',
+            'as_of': '2020-01-01',
             'by_id': {
                 '9991': {'elo': 1600.0, 'gf10': 1.5, 'ga10': 1.0, 'last_date': '2026-11-14'},
                 '9992': {'elo': 1550.0, 'gf10': 1.2, 'ga10': 1.1, 'last_date': '2026-11-10'},
+                '9993': {'elo': 1580.0, 'gf10': 1.4, 'ga10': 1.0, 'last_date': four_days_ago},
             },
             'by_name': {},
         }
         ctx_p25 = web_app.get_match_context('Home', 'Away', {
             'home_club_id': 9991,
             'away_club_id': 9992,
+            'match_date': '2026-11-17',
         })
         assert abs(ctx_p25['league_tier_factor'] - 0.95) < 1e-12, ctx_p25
         assert ctx_p25['tier_missing'] is False, ctx_p25
         assert abs(ctx_p25['rest_a'] - 3.0) < 1e-12, ctx_p25
         assert abs(ctx_p25['rest_b'] - 7.0) < 1e-12, ctx_p25
+
+        ctx_utc = web_app.get_match_context('Home', 'Away', {
+            'home_club_id': 9993,
+            'away_club_id': 9992,
+        })
+        assert abs(ctx_utc['rest_a'] - 4.0) < 1e-12, ctx_utc
     finally:
         web_app.TEAM_STATE = orig_ts2
 
-    print(f"Rebuild State & 200-Match CI Equivalence PASSED (n={eq_checked}, max_diff={max_eq_err:.2e}, mapped=1, skipped=1).")
+    print(f"Rebuild State & 200-Match CI Equivalence PASSED (n={eq_checked}, max_diff={max_eq_err:.2e}, mapped=3, skipped=1).")
 
-    # Verify freeze SHA-256 hashes in models/model_meta.json
+    # Verify freeze SHA-256 hashes in models/model_meta.json (all 7 frozen artifacts)
     meta_path = os.path.join(web_app.DATA_DIR, 'models', 'model_meta.json')
     with open(meta_path, 'r', encoding='utf-8') as f:
         meta = json.load(f)
     hashes = meta.get('freeze_sha256') or {}
+    assert len(hashes) == 7, f"Expected 7 freeze_sha256 artifacts, got {len(hashes)}"
+    assert 'models/base_state_2026-11-12.json' in hashes and 'tests/equivalence_200.json' in hashes
     for rel, expected in hashes.items():
         if expected is None:
             continue

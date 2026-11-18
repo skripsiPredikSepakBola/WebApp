@@ -5,9 +5,15 @@ import joblib
 import pandas as pd
 
 from app import aggregate_team_advanced, cohesion_proxy, model_advanced_3class, advanced_features
-from elo import EloTracker
-from features import FEATURE_COLS, LeagueStats, TeamState, build_feature_row, is_neutral_match, mirror
-from league_tiers import resolve_league_tier
+from features import FEATURE_COLS, build_feature_row, is_neutral_match, mirror
+from league_tiers import LEAGUE_TIER_MAP, resolve_league_tier
+from rebuild_state import (
+    BASE_CUTOFF_DATE,
+    BASE_STATE_PATH,
+    fetch_finished_matches_paginated,
+    load_trackers_from_base,
+    map_match_ids,
+)
 from retrain_gate import BUNDLE_PATH, retrain as gated_retrain
 from sync_matches import _sb_cfg, _sb_req
 
@@ -69,48 +75,48 @@ def _extract_lineups(raw):
     return None
 
 
-def _seed_trackers():
-    elo, leagues, teams = EloTracker(), LeagueStats(), TeamState()
-    if os.path.exists(TEAM_STATE_PATH):
-        with open(TEAM_STATE_PATH, 'r', encoding='utf-8') as f:
-            ts = json.load(f)
-        for name, v in (ts.get('by_name') or {}).items():
-            elo.r[name] = float(v.get('elo', 1500.0))
-            if v.get('last_date'):
-                teams.last[name] = pd.Timestamp(v['last_date'])
-    if os.path.exists(LEAGUE_STATE_PATH):
-        with open(LEAGUE_STATE_PATH, 'r', encoding='utf-8') as f:
-            ls = json.load(f)
-        for cid, v in ls.items():
-            leagues.n[cid] = int(v.get('n', 0))
-            leagues.goals[cid] = float(v.get('goals', 0.0))
-            leagues.home[cid] = float(v.get('home', 0.0))
+def _seed_trackers(base_path=BASE_STATE_PATH):
+    with open(base_path, 'r', encoding='utf-8') as f:
+        base = json.load(f)
+    elo, leagues, teams, _, _ = load_trackers_from_base(base)
     return elo, leagues, teams
 
 
-def build_dataset(matches):
-    elo, leagues, teams = _seed_trackers()
+def build_dataset(matches, base_path=BASE_STATE_PATH):
+    with open(base_path, 'r', encoding='utf-8') as f:
+        base = json.load(f)
+    elo, leagues, teams = _seed_trackers(base_path=base_path)
+    club_name_to_id = base.get('club_name_to_id') or {}
+    comp_name_to_id = base.get('comp_name_to_id') or {}
+    known_cids = set((base.get('leagues') or {}).keys()) | set(LEAGUE_TIER_MAP.keys())
     rows = []
-    prev_season = None
 
-    for m in matches:
-        hg, ag = m.get('home_goals'), m.get('away_goals')
-        if hg is None or ag is None:
+    dedup = {}
+    for idx, m in enumerate(matches):
+        if m.get('home_goals') is None or m.get('away_goals') is None:
             continue
-        ht, at = m['home_team'], m['away_team']
-        lg = str(m.get('league_id') or m.get('league') or '').strip()
-        dt = pd.to_datetime(m.get('match_date'), errors='coerce')
-        season = m.get('season') or (dt.year if pd.notna(dt) else 2026)
-        if prev_season is not None and season != prev_season:
-            elo.season_regress(0.25)
-        prev_season = season
-        neutral = bool(m.get('neutral', False)) or is_neutral_match(lg)
+        mid = str(m.get('match_id') or m.get('id') or f'row_{idx}')
+        dt_str = str(m.get('match_date') or '')[:10]
+        if dt_str and dt_str <= BASE_CUTOFF_DATE:
+            continue
+        dedup[mid] = (dt_str, mid, m)
 
-        eh, ea = elo.rating(ht), elo.rating(at)
-        lg_g, lg_h = leagues.get(lg)
-        tier_val, _ = resolve_league_tier(lg)
-        gfh, gah, rh = teams.get(ht, dt if pd.notna(dt) else None)
-        gfa, gaa, ra = teams.get(at, dt if pd.notna(dt) else None)
+    for dt_str, mid, m in sorted(dedup.values(), key=lambda x: (x[0], x[1])):
+        hid, aid, cid = map_match_ids(m, club_name_to_id, comp_name_to_id, known_cids=known_cids)
+        if hid is None or aid is None or cid is None:
+            continue
+
+        hg, ag = int(m['home_goals']), int(m['away_goals'])
+        ht, at = str(m.get('home_team') or '').strip(), str(m.get('away_team') or '').strip()
+        dt = pd.to_datetime(dt_str or m.get('match_date'), errors='coerce')
+        season = m.get('season') or (dt.year if pd.notna(dt) else 2026)
+        neutral = bool(m.get('neutral', False)) or is_neutral_match(cid)
+
+        eh, ea = elo.rating(hid), elo.rating(aid)
+        lg_g, lg_h = leagues.get(cid)
+        tier_val, _ = resolve_league_tier(cid)
+        gfh, gah, rh = teams.get(hid, dt if pd.notna(dt) else None)
+        gfa, gaa, ra = teams.get(aid, dt if pd.notna(dt) else None)
 
         lu = _extract_lineups(m.get('raw_json') or {})
         if lu:
@@ -127,20 +133,22 @@ def build_dataset(matches):
                 f_ba = mirror(f_ab)
                 y_ab = 2 if hg > ag else (1 if hg == ag else 0)
                 common = dict(
-                    match_id=m.get('id') or f"{m.get('match_date')}-{ht}-{at}",
-                    date=str(m.get('match_date') or '')[:10],
+                    match_id=m.get('match_id') or m.get('id') or f"{dt_str}-{hid}-{aid}",
+                    date=dt_str,
                     season=int(season),
+                    competition_id=cid,
                 )
                 rows.append({**f_ab, **common, 'is_forward': 1, 'y3': y_ab, 'goals_a': float(hg), 'goals_b': float(ag)})
                 rows.append({**f_ba, **common, 'is_forward': 0, 'y3': 2 - y_ab, 'goals_a': float(ag), 'goals_b': float(hg)})
             except Exception:
                 pass
 
-        # Always update Elo, league stats, and team rolling state even if lineup is missing
-        elo.update(ht, at, hg, ag, neutral=neutral)
-        leagues.update(lg, hg, ag)
-        teams.update(ht, hg, ag, dt if pd.notna(dt) else None)
-        teams.update(at, ag, hg, dt if pd.notna(dt) else None)
+        # Always update Elo, league stats, and team rolling state (keyed by Transfermarkt ID) even if lineup is missing
+        elo.update(hid, aid, hg, ag, neutral=neutral)
+        leagues.update(cid, hg, ag)
+        if pd.notna(dt):
+            teams.update(hid, hg, ag, dt)
+            teams.update(aid, ag, hg, dt)
 
     return pd.DataFrame(rows) if rows else None
 
@@ -162,7 +170,7 @@ def retrain():
     if not os.path.exists(HISTORY_PATH):
         return {'status': 'skipped', 'reason': f'missing {HISTORY_PATH}'}
 
-    live = _sb_req('finished_matches?select=id,home_team,away_team,home_goals,away_goals,match_date,league,raw_json&order=match_date.asc&limit=5000') or []
+    live = fetch_finished_matches_paginated(after_date=BASE_CUTOFF_DATE)
     live_df = build_dataset(live)
     history = pd.read_parquet(HISTORY_PATH)
     df = pd.concat([history, live_df], ignore_index=True) if live_df is not None else history

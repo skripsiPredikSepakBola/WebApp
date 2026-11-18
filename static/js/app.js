@@ -1688,7 +1688,10 @@ function renderLeagueLeaders() {
 async function simulateFixture(homeName, awayName) {
   switchView('predictor');
   const [okH, okA] = await Promise.all([setPredictorTeam('home', homeName), setPredictorTeam('away', awayName)]);
-  if (okH && okA) predict();
+  if (okH && okA) {
+    if ($('neutral')) $('neutral').checked = false;
+    predict();
+  }
 }
 
 function openLeagueStandings(compId, season = null) {

@@ -1,4 +1,7 @@
-"""Build frozen history_features.parquet, team_state.json, league_state.json, and model_meta.json."""
+"""DEPRECATED: Use rebuild_state.py for deterministic state builds without season_regress.
+
+Build frozen history_features.parquet, team_state.json, league_state.json, and model_meta.json.
+"""
 import json
 import os
 import platform
@@ -57,14 +60,9 @@ def main():
             comp_conf[str(r['competition_id']).strip()] = str(r['confederation']).strip()
 
     elo, leagues, teams = EloTracker(), LeagueStats(), TeamState()
-    prev_season = None
     all_cids = set()
 
     for r in games.itertuples(index=False):
-        if prev_season is not None and r.season != prev_season:
-            elo.season_regress(0.25)
-        prev_season = r.season
-
         hid, aid = int(r.home_club_id), int(r.away_club_id)
         if pd.notna(r.home_club_name) and hid not in club_names:
             club_names[hid] = str(r.home_club_name).strip()

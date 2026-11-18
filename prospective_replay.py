@@ -15,7 +15,13 @@ from sklearn.metrics import log_loss
 import app as web_app
 from features import FEATURE_COLS, build_feature_row, is_neutral_match, mirror
 from league_tiers import LEAGUE_TIER_MAP, resolve_league_tier
-from rebuild_state import BASE_CUTOFF_DATE, BASE_STATE_PATH, load_trackers_from_base, map_match_ids
+from rebuild_state import (
+    BASE_CUTOFF_DATE,
+    BASE_STATE_PATH,
+    fetch_finished_matches_paginated,
+    load_trackers_from_base,
+    map_match_ids,
+)
 from retrain import _extract_lineups
 from retrain_gate import BUNDLE_PATH, sym_proba
 from scoreline import rps
@@ -38,10 +44,7 @@ def run_prospective_replay(freeze_date='2026-11-18', matches=None, base_path=BAS
         url, _ = _sb_cfg()
         if not url:
             return {'status': 'skipped', 'reason': 'Set SUPABASE_URL and SUPABASE_KEY'}
-        matches = _sb_req(
-            f'finished_matches?select=match_id,home_team,away_team,home_goals,away_goals,match_date,league,raw_json'
-            f'&match_date=gt.{BASE_CUTOFF_DATE}&order=match_date.asc&limit=5000'
-        ) or []
+        matches = fetch_finished_matches_paginated(after_date=BASE_CUTOFF_DATE)
 
     if not os.path.exists(BUNDLE_PATH):
         return {'status': 'skipped', 'reason': f'Missing candidate bundle at {BUNDLE_PATH}'}

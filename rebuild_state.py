@@ -237,6 +237,24 @@ def map_match_ids(match, club_name_to_id, comp_name_to_id, known_cids=None):
     return hid, aid, cid
 
 
+def fetch_finished_matches_paginated(after_date=BASE_CUTOFF_DATE, page_size=1000, max_pages=100, req_fn=None):
+    """Fetch all finished matches after after_date using deterministic pagination, failing loudly on truncation."""
+    req_fn = req_fn or _sb_req
+    out = []
+    for page in range(max_pages):
+        batch = req_fn(
+            f'finished_matches?select=match_id,home_team,away_team,home_goals,away_goals,match_date,league,raw_json'
+            f'&match_date=gt.{after_date}&order=match_date.asc,match_id.asc'
+            f'&limit={page_size}&offset={page * page_size}'
+        ) or []
+        if len(batch) > page_size:
+            raise RuntimeError(f'Page returned {len(batch)} > page_size={page_size}')
+        out.extend(batch)
+        if len(batch) < page_size:
+            return out
+    raise RuntimeError(f'Pagination cap hit ({max_pages * page_size} matches); refusing silent truncation')
+
+
 def rebuild(matches=None, base_path=BASE_STATE_PATH, write_files=True):
     """Deterministically rebuild team_state.json and league_state.json from base_state + all > 2026-11-12 matches."""
     with open(base_path, 'r', encoding='utf-8') as f:
@@ -246,10 +264,7 @@ def rebuild(matches=None, base_path=BASE_STATE_PATH, write_files=True):
         url, _ = _sb_cfg()
         if not url:
             return {'status': 'skipped', 'reason': 'Set SUPABASE_URL and SUPABASE_KEY'}
-        matches = _sb_req(
-            f'finished_matches?select=match_id,home_team,away_team,home_goals,away_goals,match_date,league,raw_json'
-            f'&match_date=gt.{BASE_CUTOFF_DATE}&order=match_date.asc&limit=5000'
-        ) or []
+        matches = fetch_finished_matches_paginated(after_date=BASE_CUTOFF_DATE)
 
     elo, leagues, teams, club_names, league_meta = load_trackers_from_base(base)
     club_name_to_id = base.get('club_name_to_id') or {}
