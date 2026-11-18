@@ -67,10 +67,10 @@ jobs:
               hashes[rel] = hashlib.sha256(raw).hexdigest()
 
           res = run_prospective_replay()
-          monitoring_only = (report_date < '2026-12-15') or (int(res.get('scored_matches') or 0) < 500)
+          monitoring_only = (report_date < '2026-12-16') or (int(res.get('scored_matches') or 0) < 500)
           payload = {
               'report_date': report_date,
-              'label': 'MONITORING ONLY (do not flip until >= 2026-12-15 and >= 500 lineup matches)' if monitoring_only else 'DECISION_ELIGIBLE',
+              'label': 'MONITORING ONLY (do not flip until >= 2026-12-16 and >= 500 lineup matches)' if monitoring_only else 'DECISION_ELIGIBLE',
               'team_state_as_of': state_as_of,
               'model_hashes': hashes,
               'replay': res,
@@ -84,18 +84,29 @@ jobs:
           with open(log_path, 'w', encoding='utf-8', newline='\n') as f:
               f.write(f"report_date={report_date} label={payload['label']} team_state_as_of={state_as_of}\n")
               f.write(json.dumps(res, indent=2) + '\n')
+          by_comp = res.get('by_competition') or {}
+          comp_rows = [
+              f"| `{cid}` | {v.get('mapped', 0)} | {v.get('scored', 0)} | {v.get('lineup_rate', 0.0)} |"
+              for cid, v in sorted(by_comp.items())
+          ] or ['| *(none)* | 0 | 0 | 0.0 |']
           lines = [
               f'# Weekly Prospective Replay ({report_date})',
               '',
               f"**Status:** {payload['label']}",
+              f"- **Scored domain:** {res.get('domain_note', 'Only matches from the 74 history competitions (plus tracked UNL) with >= 7 starters per team are scored.')}",
               f"- **team_state.json `as_of`:** `{state_as_of}`",
-              f"- **All finished matches (> 2026-11-17):** `{res.get('all_finished_matches', 0)}`",
+              f"- **All finished matches (> 2026-11-18):** `{res.get('all_finished_matches', 0)}` (mapped in-domain: `{res.get('mapped_matches', 0)}`, skipped out-of-domain/unmapped: `{res.get('skipped_unmapped', 0)}`)",
               f"- **Scored matches with lineups:** `{res.get('scored_matches', 0)}`",
-              f"- **Coverage:** `{res.get('coverage', 0.0)}`",
+              f"- **Coverage (scored / all finished):** `{res.get('coverage', 0.0)}` | **In-domain lineup coverage (scored / mapped):** `{res.get('mapped_coverage', 0.0)}` | **Mapping rate:** `{res.get('mapping_coverage', 0.0)}`",
               f"- **Bootstrap mean gain / p5 / p95 / P(>0):** `{res.get('boot_mean_gain')}` / `{res.get('boot_p5')}` / `{res.get('boot_p95')}` / `{res.get('P_new_better')}`",
               f"- **Log-loss (legacy vs new):** `{res.get('legacy_ll')}` vs `{res.get('new_ll')}`",
               f"- **RPS (legacy vs new):** `{res.get('legacy_rps')}` vs `{res.get('new_rps')}`",
               f"- **Bundle SHA-256 (`models/model_bundle.joblib`):** `{hashes.get('models/model_bundle.joblib')}`",
+              '',
+              '## Mapping & Scoring by Competition',
+              '| Competition | Mapped | Scored (with lineups) | Lineup Rate |',
+              '|---|---:|---:|---:|',
+              *comp_rows,
               '',
               '## Model Hashes',
               *[f'- `{k}`: `{v}`' for k, v in hashes.items()],

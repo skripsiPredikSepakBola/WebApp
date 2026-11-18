@@ -11,8 +11,8 @@
 ## Primary Metric & Evaluation Scope
 - **Primary metric:** Paired mean log-loss gain (`logloss_legacy - logloss_new`, where `> 0` means candidate is better).
 - **Secondary metrics:** RPS, calibration (`home_gap`, `draw_gap`), and **ASEAN** subset (`IN1L`, `MYS1`, `THA1`, `VIE1`, `SIN1`).
-- **Evaluation window:** Only finished matches in Supabase with `match_date > 2026-11-18` that have lineups (`>= 7` starters per team).
-- **Coverage reporting:** Every look must report `coverage = matches_with_lineups / all_finished_matches` alongside scores to expose lineup selection bias.
+- **Evaluation window & domain:** Only finished matches in Supabase with `match_date > 2026-11-18` belonging to the **74 history competitions** (plus tracked UEFA Nations League divisions) that have lineups (`>= 7` starters per team) are scored. Unmapped rows (youth, women, lower tiers, friendlies) are outside the training domain and skipped.
+- **Coverage reporting:** Every look must report `coverage = scored_matches / all_finished_matches`, `mapped_coverage = scored_matches / mapped_matches`, and per-competition mapped/scored counts to separate lineup availability from out-of-domain fixtures.
 
 ## Monitoring & Decision Rules
 - **Weekly runs:** Monitoring only via `python prospective_replay.py`. No feature, hyperparameter, or threshold edits during the replay period.
@@ -38,6 +38,15 @@
 | `65f14a0` | `2026-11-18 00:45` | `model_bundle.joblib` and its SHA-256 hash committed |
 | `4459c59` | `2026-11-18 01:37` | CI fix where `freeze-2026-11-17` tag points (kept unmoved) |
 - **State & replay fix (`2026-11-18`):** Replaced incremental `update_states.py` with deterministic `rebuild_state.py` (keyed by Transfermarkt ID, built from `models/base_state_2026-11-12.json` without `season_regress` collapse, preserving `last10` rolling goals, skipping unmapped youth matches) and switched `prospective_replay.py` legacy arm to `app.build_legacy_feature_pair`. Any replay results generated prior to this fix are discarded.
+
+### Post-freeze changes (harness-only, 7 frozen hashes unchanged)
+The `v3-frozen-bundle` tag remains unmoved at `2cd1581`. Only harness/serving/reporting changes landed after `v3` freeze (`b669e69`):
+
+| Commit | Scope | Notes |
+|---|---|---|
+| `2cd1581` | Merge `exp/v3-elo-fix` -> `main` (`v3-frozen-bundle` tag) | Merged v3 continuous Elo + Part 2 prerequisites (venue UI, missing-league `0.95` tier, rest-days calc, flag-on CI). |
+| `60f3c14` | Harness-only | Removed `season_regress` from `retrain.py` & deprecated `build_history_and_states.py`, paginated Supabase fetches + cap guard, UTC rest date default, fixture unchecks neutral, added `base_state` & `equivalence_200` to `freeze_sha256`, committed evidence CSVs. |
+| `Post-60f3c14` | Harness-only | Expanded `mapper_validation_by_competition.csv` across all 75 history competitions (`>= 10` matches each) + all 208 pre-cutoff / 445 post-cutoff Supabase rows, fixed `FIWC`/`COPA` aliases, added replay domain note + per-competition breakdown, and recorded this table. |
 
 ## Part 2 Flag-Flip Prerequisites (Before `PITCHPULSE_USE_BUNDLE=1`)
 In addition to the replay decision rules above, the following serving/CI fixes must land before flipping `PITCHPULSE_USE_BUNDLE=1` in production (status: implemented & tested; v3 prospective replay gate `>= 2026-12-16` and `>= 500` lineup matches remains required):

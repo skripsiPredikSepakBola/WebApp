@@ -65,6 +65,7 @@ def run_prospective_replay(freeze_date='2026-11-18', matches=None, base_path=BAS
             dedup[str(mid)] = (dt_str, str(mid), m)
 
     p_leg_all, p_new_all, y_all, cids = [], [], [], []
+    mapped_by_comp, scored_by_comp = {}, {}
     total_post_freeze, mapped_post_freeze, skipped_unmapped_post_freeze = 0, 0, 0
 
     for dt_str, _, m in sorted(dedup.values(), key=lambda x: (x[0], x[1])):
@@ -79,6 +80,7 @@ def run_prospective_replay(freeze_date='2026-11-18', matches=None, base_path=BAS
             continue
         if in_window:
             mapped_post_freeze += 1
+            mapped_by_comp[cid] = mapped_by_comp.get(cid, 0) + 1
 
         ht, at = str(m['home_team']).strip(), str(m['away_team']).strip()
         hg, ag = int(m['home_goals']), int(m['away_goals'])
@@ -124,6 +126,7 @@ def run_prospective_replay(freeze_date='2026-11-18', matches=None, base_path=BAS
                     p_new_all.append(p_new)
                     y_all.append(y)
                     cids.append(cid)
+                    scored_by_comp[cid] = scored_by_comp.get(cid, 0) + 1
                 except Exception:
                     pass
 
@@ -134,16 +137,32 @@ def run_prospective_replay(freeze_date='2026-11-18', matches=None, base_path=BAS
             teams.update(aid, ag, hg, dt)
 
     mapping_cov = round(mapped_post_freeze / max(total_post_freeze, 1), 4)
+    by_comp = {
+        k: {
+            'mapped': mapped_by_comp[k],
+            'scored': scored_by_comp.get(k, 0),
+            'lineup_rate': round(scored_by_comp.get(k, 0) / max(mapped_by_comp[k], 1), 4),
+        }
+        for k in sorted(mapped_by_comp)
+    }
+    domain_note = (
+        'Only finished matches in the 74 history competitions (plus tracked UEFA Nations League '
+        'divisions) with lineups (>= 7 starters per team) are scored; unmapped rows are '
+        'out-of-domain youth, women, lower-tier, or friendly matches.'
+    )
     if not y_all:
         return {
             'status': 'empty',
             'freeze_date': freeze_date,
+            'domain_note': domain_note,
             'all_finished_matches': total_post_freeze,
             'mapped_matches': mapped_post_freeze,
             'skipped_unmapped': skipped_unmapped_post_freeze,
             'mapping_coverage': mapping_cov,
             'scored_matches': 0,
             'coverage': 0.0,
+            'mapped_coverage': 0.0,
+            'by_competition': by_comp,
         }
 
     PL, PN, Y = np.vstack(p_leg_all), np.vstack(p_new_all), np.array(y_all)
@@ -151,12 +170,15 @@ def run_prospective_replay(freeze_date='2026-11-18', matches=None, base_path=BAS
     res = {
         'status': 'ok',
         'freeze_date': freeze_date,
+        'domain_note': domain_note,
         'all_finished_matches': total_post_freeze,
         'mapped_matches': mapped_post_freeze,
         'skipped_unmapped': skipped_unmapped_post_freeze,
         'mapping_coverage': mapping_cov,
         'scored_matches': int(len(Y)),
         'coverage': round(len(Y) / max(total_post_freeze, 1), 4),
+        'mapped_coverage': round(len(Y) / max(mapped_post_freeze, 1), 4),
+        'by_competition': by_comp,
         'legacy_ll': round(float(log_loss(Y, PL, labels=[0, 1, 2])), 5),
         'new_ll': round(float(log_loss(Y, PN, labels=[0, 1, 2])), 5),
         'legacy_rps': round(rps(PL, Y), 5),
