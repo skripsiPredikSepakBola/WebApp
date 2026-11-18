@@ -36,12 +36,24 @@ BASE_STATE_PATH = os.path.join(WEB_DIR, 'models', 'base_state_2026-11-12.json')
 TEAM_STATE_PATH = os.path.join(WEB_DIR, 'models', 'team_state.json')
 LEAGUE_STATE_PATH = os.path.join(WEB_DIR, 'models', 'league_state.json')
 
-# Known live competition name -> Transfermarkt competition_id overrides
+# Ambiguous league names shared across countries: never map via name-only fallback without a competition code.
+AMBIGUOUS_COMP_SLUGS = {
+    'premier league',
+    'bundesliga',
+    'super league',
+    'liga 1',
+    'superliga',
+    'premier liga',
+    'primera division',
+    'segunda division',
+    'super cup',
+    'national league',
+}
+
+# Known unambiguous live competition name -> Transfermarkt competition_id overrides
 LIVE_COMP_ALIASES = {
-    'premier league': 'GB1',
     'laliga': 'ES1',
     'la liga': 'ES1',
-    'bundesliga': 'L1',
     'serie a': 'IT1',
     'ligue 1': 'FR1',
     'eredivisie': 'NL1',
@@ -57,10 +69,10 @@ LIVE_COMP_ALIASES = {
     'world cup': 'FIWC',
     'euro': 'EURO',
     'copa america': 'COPA',
-    'liga 1': 'IN1L',
+    'liga 1 indonesia': 'IN1L',
     'bri liga 1': 'IN1L',
     'indonesia super league': 'IN1L',
-    'super league': 'MYS1',
+    'malaysia super league': 'MYS1',
     'thai league 1': 'THA1',
     'v.league 1': 'VIE1',
     'singapore premier league': 'SIN1',
@@ -227,10 +239,13 @@ def map_match_ids(match, club_name_to_id, comp_name_to_id, known_cids=None):
         aid = club_name_to_id.get(_norm(match.get('away_team')))
     if not cid:
         lg_raw = str(match.get('league') or '').strip()
+        lg_norm = _norm(lg_raw)
         if known_cids and lg_raw in known_cids:
             cid = lg_raw
+        elif lg_norm in AMBIGUOUS_COMP_SLUGS:
+            cid = ''
         else:
-            cid = comp_name_to_id.get(_norm(lg_raw), '')
+            cid = LIVE_COMP_ALIASES.get(lg_norm) or comp_name_to_id.get(lg_norm, '')
 
     if hid is None or aid is None or not cid:
         return None, None, None

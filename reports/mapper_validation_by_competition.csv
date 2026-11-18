@@ -1,268 +1,268 @@
-window,group,competition_id,league,total_rows,mapped_rows,mapping_rate,exact_id_verified,exact_id_rate
-supabase_pre_cutoff,ASEAN,IN1L,Indonesia Super League,30,30,1.0,30,1.0
-supabase_pre_cutoff,Youth_Reserve_Friendly_Unmapped,,V.League 1,25,25,1.0,25,1.0
-supabase_pre_cutoff,Top5_EU,ES1,LaLiga,19,19,1.0,19,1.0
-supabase_pre_cutoff,ASEAN,THA1,Thai League 1,19,19,1.0,19,1.0
-supabase_pre_cutoff,UEFA_Continental,CL,UEFA Champions League,18,18,1.0,18,1.0
-supabase_pre_cutoff,Top5_EU,L1,Bundesliga,17,17,1.0,17,1.0
-supabase_pre_cutoff,Top5_EU,IT1,Serie A,17,17,1.0,17,1.0
-supabase_pre_cutoff,Youth_Reserve_Friendly_Unmapped,,Premier League,15,15,1.0,15,1.0
-supabase_pre_cutoff,Top5_EU,FR1,Ligue 1,14,14,1.0,14,1.0
-supabase_pre_cutoff,ASEAN,SIN1,Singapore Premier League,10,10,1.0,10,1.0
-supabase_pre_cutoff,ASEAN,MYS1,Malaysia Super League,6,6,1.0,6,1.0
-supabase_pre_cutoff,ASEAN,IN1L,Liga 1 Indonesia,4,4,1.0,4,1.0
-supabase_pre_cutoff,UEFA_Continental,UNLA,UEFA Nations League A,4,4,1.0,4,1.0
-supabase_pre_cutoff,UEFA_Continental,UNLC,UEFA Nations League C,4,4,1.0,4,1.0
-supabase_pre_cutoff,Other_Tracked,"{'id': 'IN1L', 'name': 'Super League', 'typeId': 1, 'logoUrl': 'https://img.a.transfermarkt.technology/logo/medium/in1l.png?lm=1789378670', 'shortName': 'Super League', 'historical': {'names': [], 'images': [{'url': 'https://img.a.transfermarkt.technology/logo/medium/in1l.png?lm=1789378670', 'name': 'in1l.png', 'seasonId': 0}]}, 'identifier': 'Super League (IN1L)', 'baseDetails': {'stage': 'none', 'isOngoing': True, 'shortName': 'Super League', 'gameDayCount': 0, 'isStandalone': False, 'isTournament': False, 'closestGameDay': 9, 'standardGameDurationMinutes': 90}, 'relativeUrl': '/super-league/startseite/wettbewerb/IN1L', 'originDetails': {'countryId': 68, 'confederationId': 1}, 'currentSeasonId': 2026, 'showMarketValue': True, 'totalMarketValue': {'value': 94190000, 'compact': {'prefix': '€', 'suffix': 'M', 'content': '94.19'}, 'currency': 'EUR'}}",Super League,3,3,1.0,3,1.0
-supabase_pre_cutoff,Other_Tracked,"{'id': 'THA1', 'name': 'Thai League', 'typeId': 1, 'logoUrl': 'https://img.a.transfermarkt.technology/logo/medium/tha1.png?lm=1789378667', 'shortName': 'Thai League', 'historical': {'names': [], 'images': [{'url': 'https://img.a.transfermarkt.technology/logo/medium/tha1.png?lm=1789378667', 'name': 'tha1.png', 'seasonId': 0}]}, 'identifier': 'Thai League (THA1)', 'baseDetails': {'stage': 'none', 'isOngoing': True, 'shortName': 'Thai League', 'gameDayCount': 0, 'isStandalone': False, 'isTournament': False, 'closestGameDay': 8, 'standardGameDurationMinutes': 90}, 'relativeUrl': '/thai-league/startseite/wettbewerb/THA1', 'originDetails': {'countryId': 167, 'confederationId': 1}, 'currentSeasonId': 2026, 'showMarketValue': True, 'totalMarketValue': {'value': 97300000, 'compact': {'prefix': '€', 'suffix': 'M', 'content': '97.30'}, 'currency': 'EUR'}}",Thai League,3,3,1.0,3,1.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Friendlies,31,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,UEFA U19 Championship - Qualification,28,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Africa Cup of Nations - Qualification,24,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,UEFA U17 Championship - Qualification,24,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,UEFA Nations League,22,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,AFC U17 Asian Cup,18,0,0.0,0,0.0
-supabase_post_cutoff,UEFA_Continental,UNLB,UEFA Nations League B,16,16,1.0,16,1.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,CONCACAF Nations League,14,0,0.0,0,0.0
-supabase_post_cutoff,UEFA_Continental,UNLA,UEFA Nations League A,12,12,1.0,12,1.0
-supabase_post_cutoff,UEFA_Continental,UNLC,UEFA Nations League C,12,12,1.0,12,1.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,2. Lig,10,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,CAF U23 Cup of Nations,10,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera B,10,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Premier League,9,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Azadegan League,8,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera División,8,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Reserve League,7,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Copa Perú,6,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Segunda División,6,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,3. liga - CFL B,5,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,J2 League,5,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Kings Cup,5,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,4. liga - Divizie B,4,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Australian Championship,4,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Ligue 1,4,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,National League - North,4,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Non League Premier - Isthmian,4,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Non League Premier - Northern,4,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Supreme Division Women,4,0,0.0,0,0.0
-supabase_post_cutoff,UEFA_Continental,UNLD,UEFA Nations League D,4,4,1.0,4,1.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,WE League,4,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Diski Challenge,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,J3 League,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Panameña de Fútbol,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Non League Premier - Southern Central,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Non League Premier - Southern South,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Premier League Cup,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera Nacional,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera Premier,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Super League 2,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Torneo Federal A,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,U20 Elite League,3,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,1. Liga U19,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,4. liga - Divizie A,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,4. liga - Divizie C,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,4. liga - Divizie F,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Championship,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Copa Fares Lopes,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Copa de la División Profesional,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Druha Liga,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Eerste Divisie,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Friendlies Clubs,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,I Liga - Women,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,League Cup,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga MX Femenil,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Nacional,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Premier Serie A,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Revelação U23,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Nacional B,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,National League - South,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Paraense U20,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Pernambucano - U20,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Première Division,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera A,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera Division,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Professional Development League,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Prva Liga,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,SAFF Championship,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,USL Super League,2,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,1. Division,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,2. liga,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,3. liga - CFL A,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Carioca U20,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Central Youth League,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Copa do Brasil U20,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Cup,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Division di Honor,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,EFL Trophy,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Elite One,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,FKF Premier League,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Frauen Bundesliga,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Goiano - 3,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,I-League,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,II Liga - East,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,King's Cup,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Premier Serie B,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga de Ascenso,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga de Expansión MX,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,NPFL,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,NWSL Women,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,National League - National,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Pernambucano - 1,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Persha Liga,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Premier League U22,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera C,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Second NL,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Segunda Liga,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Serie C - Girone B,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Serie C - Girone C,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,U19 Bundesliga,1,0,0.0,0,0.0
-supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,UEFA U21 Championship - Qualification,1,0,0.0,0,0.0
-history_tmapi_id_75comps,Other_Tracked,A1,bundesliga,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,A1,bundesliga,50,50,1.0,0,0.0
-history_tmapi_id_75comps,Other_Tracked,AFAC,afc-asian-cup,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,AFAC,afc-asian-cup,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,AFCN,africa-cup-of-nations,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,AFCN,africa-cup-of-nations,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,ARG1,torneo-apertura,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,ARG1,torneo-apertura,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,AUS1,a-league-men,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,AUS1,a-league-men,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,BE1,jupiler-pro-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,BE1,jupiler-pro-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,BESC,volkswagen-supercup,14,14,1.0,14,1.0
-history_name_fallback_75comps,Other_Tracked,BESC,volkswagen-supercup,14,14,1.0,14,1.0
-history_tmapi_id_75comps,Other_Tracked,BPO4,jupiler-pro-league-relegation-play-offs,12,12,1.0,12,1.0
-history_name_fallback_75comps,Other_Tracked,BPO4,jupiler-pro-league-relegation-play-offs,12,12,1.0,12,1.0
-history_tmapi_id_75comps,Other_Tracked,BRA1,campeonato-brasileiro-serie-a,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,BRA1,campeonato-brasileiro-serie-a,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,C1,super-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,C1,super-league,50,50,1.0,0,0.0
-history_tmapi_id_75comps,Other_Tracked,CDR,copa-del-rey,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,CDR,copa-del-rey,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,CGB,CGB,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,CGB,CGB,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,CIT,italy-cup,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,CIT,italy-cup,50,50,1.0,50,1.0
-history_tmapi_id_75comps,UEFA_Continental,CL,uefa-champions-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,UEFA_Continental,CL,uefa-champions-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,CLQ,uefa-champions-league-qualifying,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,CLQ,uefa-champions-league-qualifying,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,COL1,COL1,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,COL1,COL1,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,COPA,copa-america,32,32,1.0,32,1.0
-history_name_fallback_75comps,Other_Tracked,COPA,copa-america,32,32,1.0,0,0.0
-history_tmapi_id_75comps,Other_Tracked,DFB,dfb-pokal,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,DFB,dfb-pokal,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,DFL,franz-beckenbauer-supercup,15,15,1.0,15,1.0
-history_name_fallback_75comps,Other_Tracked,DFL,franz-beckenbauer-supercup,15,15,1.0,15,1.0
-history_tmapi_id_75comps,Other_Tracked,DK1,superliga,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,DK1,superliga,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,DKP,oddset-pokalen,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,DKP,oddset-pokalen,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,ECLQ,uefa-conference-league-qualifying,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,ECLQ,uefa-conference-league-qualifying,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,EJPL,jupiler-pro-league-playoff-i,30,30,1.0,30,1.0
-history_name_fallback_75comps,Other_Tracked,EJPL,jupiler-pro-league-playoff-i,30,30,1.0,30,1.0
-history_tmapi_id_75comps,UEFA_Continental,EL,uefa-europa-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,UEFA_Continental,EL,uefa-europa-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,ELQ,uefa-europa-league-qualifying,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,ELQ,uefa-europa-league-qualifying,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Top5_EU,ES1,laliga,50,50,1.0,50,1.0
-history_name_fallback_75comps,Top5_EU,ES1,laliga,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,EURO,uefa-euro,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,EURO,uefa-euro,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,FAC,fa-cup,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,FAC,fa-cup,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,FIWC,world-cup,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,FIWC,world-cup,50,50,1.0,0,0.0
-history_tmapi_id_75comps,Top5_EU,FR1,ligue-1,50,50,1.0,50,1.0
-history_name_fallback_75comps,Top5_EU,FR1,ligue-1,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,FRCH,trophee-des-champions,15,15,1.0,15,1.0
-history_name_fallback_75comps,Other_Tracked,FRCH,trophee-des-champions,15,15,1.0,15,1.0
-history_tmapi_id_75comps,Top5_EU,GB1,premier-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,Top5_EU,GB1,premier-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,GBCS,community-shield,15,15,1.0,15,1.0
-history_name_fallback_75comps,Other_Tracked,GBCS,community-shield,15,15,1.0,15,1.0
-history_tmapi_id_75comps,Other_Tracked,GR1,super-league-1,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,GR1,super-league-1,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,GRP,kypello-elladas,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,GRP,kypello-elladas,50,50,1.0,50,1.0
-history_tmapi_id_75comps,ASEAN,IN1L,super-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,ASEAN,IN1L,super-league,50,50,1.0,0,0.0
-history_tmapi_id_75comps,Top5_EU,IT1,serie-a,50,50,1.0,50,1.0
-history_name_fallback_75comps,Top5_EU,IT1,serie-a,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,JAP1,j1-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,JAP1,j1-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,KLUB,KLUB,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,KLUB,KLUB,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,KR1,supersport-hnl,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,KR1,supersport-hnl,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Top5_EU,L1,bundesliga,50,50,1.0,50,1.0
-history_name_fallback_75comps,Top5_EU,L1,bundesliga,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,MEX1,liga-mx-clausura,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,MEX1,liga-mx-clausura,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,MLS1,major-league-soccer,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,MLS1,major-league-soccer,50,50,1.0,50,1.0
-history_tmapi_id_75comps,ASEAN,MYS1,malaysia-super-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,ASEAN,MYS1,malaysia-super-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,NL1,eredivisie,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,NL1,eredivisie,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,NLP,knvb-beker,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,NLP,knvb-beker,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,NLSC,johan-cruijff-schaal,14,14,1.0,14,1.0
-history_name_fallback_75comps,Other_Tracked,NLSC,johan-cruijff-schaal,14,14,1.0,14,1.0
-history_tmapi_id_75comps,Other_Tracked,NO1,eliteserien,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,NO1,eliteserien,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,PL1,pko-bp-ekstraklasa,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,PL1,pko-bp-ekstraklasa,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,PO1,liga-portugal,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,PO1,liga-portugal,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,POBE,jupiler-pro-league-europe-play-offs,30,30,1.0,30,1.0
-history_name_fallback_75comps,Other_Tracked,POBE,jupiler-pro-league-europe-play-offs,30,30,1.0,30,1.0
-history_tmapi_id_75comps,Other_Tracked,POCP,POCP,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,POCP,POCP,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,POSU,supercup-candido-de-oliveira,15,15,1.0,15,1.0
-history_name_fallback_75comps,Other_Tracked,POSU,supercup-candido-de-oliveira,15,15,1.0,15,1.0
-history_tmapi_id_75comps,Other_Tracked,RO1,superliga,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,RO1,superliga,50,50,1.0,0,0.0
-history_tmapi_id_75comps,Other_Tracked,RSK1,k-league-1,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,RSK1,k-league-1,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,RU1,premier-liga,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,RU1,premier-liga,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,RUP,russian-cup,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,RUP,russian-cup,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,RUSS,russian-super-cup,15,15,1.0,15,1.0
-history_name_fallback_75comps,Other_Tracked,RUSS,russian-super-cup,15,15,1.0,9,0.6
-history_tmapi_id_75comps,Other_Tracked,SA1,saudi-pro-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,SA1,saudi-pro-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,SC1,scottish-premiership,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,SC1,scottish-premiership,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,SCI,supercoppa-italiana,20,20,1.0,20,1.0
-history_name_fallback_75comps,Other_Tracked,SCI,supercoppa-italiana,20,20,1.0,20,1.0
-history_tmapi_id_75comps,Other_Tracked,SE1,allsvenskan,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,SE1,allsvenskan,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,SER1,super-liga-srbije,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,SER1,super-liga-srbije,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,SFA,scottish-fa-cup,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,SFA,scottish-fa-cup,50,50,1.0,50,1.0
-history_tmapi_id_75comps,ASEAN,SIN1,singapore-premier-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,ASEAN,SIN1,singapore-premier-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,SUC,supercopa,34,34,1.0,34,1.0
-history_name_fallback_75comps,Other_Tracked,SUC,supercopa,34,34,1.0,34,1.0
-history_tmapi_id_75comps,ASEAN,THA1,thai-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,ASEAN,THA1,thai-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,TR1,super-lig,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,TR1,super-lig,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,TS1,chance-liga,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,TS1,chance-liga,50,50,1.0,50,1.0
-history_tmapi_id_75comps,UEFA_Continental,UCOL,uefa-conference-league,50,50,1.0,50,1.0
-history_name_fallback_75comps,UEFA_Continental,UCOL,uefa-conference-league,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,UKR1,premier-liga,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,UKR1,premier-liga,50,50,1.0,0,0.0
-history_tmapi_id_75comps,Other_Tracked,UKRP,ukrainian-cup,50,50,1.0,50,1.0
-history_name_fallback_75comps,Other_Tracked,UKRP,ukrainian-cup,50,50,1.0,50,1.0
-history_tmapi_id_75comps,Other_Tracked,UKRS,UKRS,10,10,1.0,10,1.0
-history_name_fallback_75comps,Other_Tracked,UKRS,UKRS,10,10,1.0,10,1.0
-history_tmapi_id_75comps,UEFA_Continental,USC,uefa-super-cup,15,15,1.0,15,1.0
-history_name_fallback_75comps,UEFA_Continental,USC,uefa-super-cup,15,15,1.0,15,1.0
-history_tmapi_id_75comps,ASEAN,VIE1,v-league-1,50,50,1.0,50,1.0
-history_name_fallback_75comps,ASEAN,VIE1,v-league-1,50,50,1.0,50,1.0
+window,evidence_type,group,competition_id,league,total_rows,mapped_rows,mapping_rate,exact_id_verified,exact_id_rate
+supabase_pre_cutoff,real_supabase_pre_cutoff,ASEAN,IN1L,Indonesia Super League,30,30,1.0,30,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,Youth_Reserve_Friendly_Unmapped,,V.League 1,25,25,1.0,25,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,Top5_EU,ES1,LaLiga,19,19,1.0,19,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,ASEAN,THA1,Thai League 1,19,19,1.0,19,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,UEFA_Continental,CL,UEFA Champions League,18,18,1.0,18,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,Top5_EU,L1,Bundesliga,17,8,0.4706,8,0.4706
+supabase_pre_cutoff,real_supabase_pre_cutoff,Top5_EU,IT1,Serie A,17,17,1.0,17,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,Youth_Reserve_Friendly_Unmapped,,Premier League,15,9,0.6,9,0.6
+supabase_pre_cutoff,real_supabase_pre_cutoff,Top5_EU,FR1,Ligue 1,14,14,1.0,14,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,ASEAN,SIN1,Singapore Premier League,10,10,1.0,10,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,ASEAN,MYS1,Malaysia Super League,6,6,1.0,6,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,ASEAN,IN1L,Liga 1 Indonesia,4,4,1.0,4,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,UEFA_Continental,UNLA,UEFA Nations League A,4,4,1.0,4,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,UEFA_Continental,UNLC,UEFA Nations League C,4,4,1.0,4,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,Other_Tracked,"{'id': 'IN1L', 'name': 'Super League', 'typeId': 1, 'logoUrl': 'https://img.a.transfermarkt.technology/logo/medium/in1l.png?lm=1789378670', 'shortName': 'Super League', 'historical': {'names': [], 'images': [{'url': 'https://img.a.transfermarkt.technology/logo/medium/in1l.png?lm=1789378670', 'name': 'in1l.png', 'seasonId': 0}]}, 'identifier': 'Super League (IN1L)', 'baseDetails': {'stage': 'none', 'isOngoing': True, 'shortName': 'Super League', 'gameDayCount': 0, 'isStandalone': False, 'isTournament': False, 'closestGameDay': 9, 'standardGameDurationMinutes': 90}, 'relativeUrl': '/super-league/startseite/wettbewerb/IN1L', 'originDetails': {'countryId': 68, 'confederationId': 1}, 'currentSeasonId': 2026, 'showMarketValue': True, 'totalMarketValue': {'value': 94190000, 'compact': {'prefix': '€', 'suffix': 'M', 'content': '94.19'}, 'currency': 'EUR'}}",Super League,3,3,1.0,3,1.0
+supabase_pre_cutoff,real_supabase_pre_cutoff,Other_Tracked,"{'id': 'THA1', 'name': 'Thai League', 'typeId': 1, 'logoUrl': 'https://img.a.transfermarkt.technology/logo/medium/tha1.png?lm=1789378667', 'shortName': 'Thai League', 'historical': {'names': [], 'images': [{'url': 'https://img.a.transfermarkt.technology/logo/medium/tha1.png?lm=1789378667', 'name': 'tha1.png', 'seasonId': 0}]}, 'identifier': 'Thai League (THA1)', 'baseDetails': {'stage': 'none', 'isOngoing': True, 'shortName': 'Thai League', 'gameDayCount': 0, 'isStandalone': False, 'isTournament': False, 'closestGameDay': 8, 'standardGameDurationMinutes': 90}, 'relativeUrl': '/thai-league/startseite/wettbewerb/THA1', 'originDetails': {'countryId': 167, 'confederationId': 1}, 'currentSeasonId': 2026, 'showMarketValue': True, 'totalMarketValue': {'value': 97300000, 'compact': {'prefix': '€', 'suffix': 'M', 'content': '97.30'}, 'currency': 'EUR'}}",Thai League,3,3,1.0,3,1.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Friendlies,31,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,UEFA U19 Championship - Qualification,28,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Africa Cup of Nations - Qualification,24,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,UEFA U17 Championship - Qualification,24,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,UEFA Nations League,22,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,AFC U17 Asian Cup,18,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,UEFA_Continental,UNLB,UEFA Nations League B,16,16,1.0,16,1.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,CONCACAF Nations League,14,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,UEFA_Continental,UNLA,UEFA Nations League A,12,12,1.0,12,1.0
+supabase_post_cutoff,real_supabase_post_cutoff,UEFA_Continental,UNLC,UEFA Nations League C,12,12,1.0,12,1.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,2. Lig,10,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,CAF U23 Cup of Nations,10,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera B,10,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Premier League,9,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Azadegan League,8,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera División,8,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Reserve League,7,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Copa Perú,6,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Segunda División,6,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,3. liga - CFL B,5,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,J2 League,5,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Kings Cup,5,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,4. liga - Divizie B,4,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Australian Championship,4,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Ligue 1,4,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,National League - North,4,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Non League Premier - Isthmian,4,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Non League Premier - Northern,4,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Supreme Division Women,4,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,UEFA_Continental,UNLD,UEFA Nations League D,4,4,1.0,4,1.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,WE League,4,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Diski Challenge,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,J3 League,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Panameña de Fútbol,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Non League Premier - Southern Central,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Non League Premier - Southern South,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Premier League Cup,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera Nacional,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera Premier,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Super League 2,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Torneo Federal A,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,U20 Elite League,3,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,1. Liga U19,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,4. liga - Divizie A,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,4. liga - Divizie C,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,4. liga - Divizie F,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Championship,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Copa Fares Lopes,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Copa de la División Profesional,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Druha Liga,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Eerste Divisie,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Friendlies Clubs,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,I Liga - Women,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,League Cup,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga MX Femenil,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Nacional,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Premier Serie A,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Revelação U23,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Nacional B,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,National League - South,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Paraense U20,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Pernambucano - U20,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Première Division,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera A,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera Division,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Professional Development League,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Prva Liga,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,SAFF Championship,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,USL Super League,2,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,1. Division,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,2. liga,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,3. liga - CFL A,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Carioca U20,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Central Youth League,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Copa do Brasil U20,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Cup,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Division di Honor,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,EFL Trophy,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Elite One,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,FKF Premier League,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Frauen Bundesliga,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Goiano - 3,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,I-League,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,II Liga - East,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,King's Cup,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga Premier Serie B,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga de Ascenso,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Liga de Expansión MX,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,NPFL,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,NWSL Women,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,National League - National,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Pernambucano - 1,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Persha Liga,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Premier League U22,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Primera C,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Second NL,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Segunda Liga,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Serie C - Girone B,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,Serie C - Girone C,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,U19 Bundesliga,1,0,0.0,0,0.0
+supabase_post_cutoff,real_supabase_post_cutoff,Youth_Reserve_Friendly_Unmapped,,UEFA U21 Championship - Qualification,1,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,A1,bundesliga,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,A1,bundesliga,50,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,AFAC,afc-asian-cup,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,AFAC,afc-asian-cup,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,AFCN,africa-cup-of-nations,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,AFCN,africa-cup-of-nations,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,ARG1,torneo-apertura,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,ARG1,torneo-apertura,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,AUS1,a-league-men,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,AUS1,a-league-men,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,BE1,jupiler-pro-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,BE1,jupiler-pro-league,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,BESC,volkswagen-supercup,14,14,1.0,14,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,BESC,volkswagen-supercup,14,14,1.0,14,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,BPO4,jupiler-pro-league-relegation-play-offs,12,12,1.0,12,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,BPO4,jupiler-pro-league-relegation-play-offs,12,12,1.0,12,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,BRA1,campeonato-brasileiro-serie-a,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,BRA1,campeonato-brasileiro-serie-a,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,C1,super-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,C1,super-league,50,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,CDR,copa-del-rey,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,CDR,copa-del-rey,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,CGB,CGB,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,CGB,CGB,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,CIT,italy-cup,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,CIT,italy-cup,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,UEFA_Continental,CL,uefa-champions-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,UEFA_Continental,CL,uefa-champions-league,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,CLQ,uefa-champions-league-qualifying,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,CLQ,uefa-champions-league-qualifying,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,COL1,COL1,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,COL1,COL1,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,COPA,copa-america,32,32,1.0,32,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,COPA,copa-america,32,32,1.0,32,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,DFB,dfb-pokal,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,DFB,dfb-pokal,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,DFL,franz-beckenbauer-supercup,15,15,1.0,15,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,DFL,franz-beckenbauer-supercup,15,15,1.0,15,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,DK1,superliga,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,DK1,superliga,50,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,DKP,oddset-pokalen,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,DKP,oddset-pokalen,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,ECLQ,uefa-conference-league-qualifying,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,ECLQ,uefa-conference-league-qualifying,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,EJPL,jupiler-pro-league-playoff-i,30,30,1.0,30,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,EJPL,jupiler-pro-league-playoff-i,30,30,1.0,30,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,UEFA_Continental,EL,uefa-europa-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,UEFA_Continental,EL,uefa-europa-league,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,ELQ,uefa-europa-league-qualifying,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,ELQ,uefa-europa-league-qualifying,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Top5_EU,ES1,laliga,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Top5_EU,ES1,laliga,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,EURO,uefa-euro,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,EURO,uefa-euro,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,FAC,fa-cup,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,FAC,fa-cup,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,FIWC,world-cup,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,FIWC,world-cup,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Top5_EU,FR1,ligue-1,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Top5_EU,FR1,ligue-1,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,FRCH,trophee-des-champions,15,15,1.0,15,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,FRCH,trophee-des-champions,15,15,1.0,15,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Top5_EU,GB1,premier-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Top5_EU,GB1,premier-league,50,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,GBCS,community-shield,15,15,1.0,15,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,GBCS,community-shield,15,15,1.0,15,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,GR1,super-league-1,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,GR1,super-league-1,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,GRP,kypello-elladas,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,GRP,kypello-elladas,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,ASEAN,IN1L,super-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,ASEAN,IN1L,super-league,50,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Top5_EU,IT1,serie-a,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Top5_EU,IT1,serie-a,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,JAP1,j1-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,JAP1,j1-league,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,KLUB,KLUB,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,KLUB,KLUB,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,KR1,supersport-hnl,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,KR1,supersport-hnl,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Top5_EU,L1,bundesliga,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Top5_EU,L1,bundesliga,50,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,MEX1,liga-mx-clausura,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,MEX1,liga-mx-clausura,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,MLS1,major-league-soccer,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,MLS1,major-league-soccer,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,ASEAN,MYS1,malaysia-super-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,ASEAN,MYS1,malaysia-super-league,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,NL1,eredivisie,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,NL1,eredivisie,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,NLP,knvb-beker,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,NLP,knvb-beker,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,NLSC,johan-cruijff-schaal,14,14,1.0,14,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,NLSC,johan-cruijff-schaal,14,14,1.0,14,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,NO1,eliteserien,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,NO1,eliteserien,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,PL1,pko-bp-ekstraklasa,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,PL1,pko-bp-ekstraklasa,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,PO1,liga-portugal,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,PO1,liga-portugal,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,POBE,jupiler-pro-league-europe-play-offs,30,30,1.0,30,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,POBE,jupiler-pro-league-europe-play-offs,30,30,1.0,30,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,POCP,POCP,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,POCP,POCP,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,POSU,supercup-candido-de-oliveira,15,15,1.0,15,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,POSU,supercup-candido-de-oliveira,15,15,1.0,15,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,RO1,superliga,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,RO1,superliga,50,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,RSK1,k-league-1,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,RSK1,k-league-1,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,RU1,premier-liga,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,RU1,premier-liga,50,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,RUP,russian-cup,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,RUP,russian-cup,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,RUSS,russian-super-cup,15,15,1.0,15,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,RUSS,russian-super-cup,15,15,1.0,9,0.6
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,SA1,saudi-pro-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,SA1,saudi-pro-league,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,SC1,scottish-premiership,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,SC1,scottish-premiership,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,SCI,supercoppa-italiana,20,20,1.0,20,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,SCI,supercoppa-italiana,20,20,1.0,20,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,SE1,allsvenskan,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,SE1,allsvenskan,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,SER1,super-liga-srbije,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,SER1,super-liga-srbije,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,SFA,scottish-fa-cup,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,SFA,scottish-fa-cup,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,ASEAN,SIN1,singapore-premier-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,ASEAN,SIN1,singapore-premier-league,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,SUC,supercopa,34,34,1.0,34,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,SUC,supercopa,34,34,1.0,34,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,ASEAN,THA1,thai-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,ASEAN,THA1,thai-league,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,TR1,super-lig,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,TR1,super-lig,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,TS1,chance-liga,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,TS1,chance-liga,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,UEFA_Continental,UCOL,uefa-conference-league,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,UEFA_Continental,UCOL,uefa-conference-league,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,UKR1,premier-liga,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,UKR1,premier-liga,50,0,0.0,0,0.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,UKRP,ukrainian-cup,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,UKRP,ukrainian-cup,50,50,1.0,50,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,Other_Tracked,UKRS,UKRS,10,10,1.0,10,1.0
+history_name_fallback_75comps,name_fallback_without_code,Other_Tracked,UKRS,UKRS,10,10,1.0,10,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,UEFA_Continental,USC,uefa-super-cup,15,15,1.0,15,1.0
+history_name_fallback_75comps,name_fallback_without_code,UEFA_Continental,USC,uefa-super-cup,15,15,1.0,15,1.0
+synthetic_parser_check_75comps,parser_roundtrip_only_not_real_tmapi,ASEAN,VIE1,v-league-1,50,50,1.0,50,1.0
+history_name_fallback_75comps,name_fallback_without_code,ASEAN,VIE1,v-league-1,50,50,1.0,50,1.0

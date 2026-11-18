@@ -46,7 +46,8 @@ The `v3-frozen-bundle` tag remains unmoved at `2cd1581`. Only harness/serving/re
 |---|---|---|
 | `2cd1581` | Merge `exp/v3-elo-fix` -> `main` (`v3-frozen-bundle` tag) | Merged v3 continuous Elo + Part 2 prerequisites (venue UI, missing-league `0.95` tier, rest-days calc, flag-on CI). |
 | `60f3c14` | Harness-only | Removed `season_regress` from `retrain.py` & deprecated `build_history_and_states.py`, paginated Supabase fetches + cap guard, UTC rest date default, fixture unchecks neutral, added `base_state` & `equivalence_200` to `freeze_sha256`, committed evidence CSVs. |
-| `Post-60f3c14` | Harness-only | Expanded `mapper_validation_by_competition.csv` across all 75 history competitions (`>= 10` matches each) + all 208 pre-cutoff / 445 post-cutoff Supabase rows, fixed `FIWC`/`COPA` aliases, added replay domain note + per-competition breakdown, and recorded this table. |
+| `Post-60f3c14` (`7359680`) | Harness-only | Expanded `mapper_validation_by_competition.csv` across all 75 history competitions + all 208 pre-cutoff / 445 post-cutoff Supabase rows, fixed `FIWC`/`COPA` aliases, added replay domain note + per-competition breakdown, and recorded this table. |
+| `Post-7359680` | Harness-only | Blocked ambiguous league slugs (`premier league`, `bundesliga`, `super league`, `liga 1`, `superliga`, `premier liga`, etc.) from name-only fallback without a competition code + unit tests, relabeled synthetic 75-comp CSV rows as `synthetic_parser_check_75comps` (real coverage evidence is `supabase_pre_cutoff` + post-cutoff `UNLA/B/C/D`). |
 
 ## Part 2 Flag-Flip Prerequisites (Before `PITCHPULSE_USE_BUNDLE=1`)
 In addition to the replay decision rules above, the following serving/CI fixes must land before flipping `PITCHPULSE_USE_BUNDLE=1` in production (status: implemented & tested; v3 prospective replay gate `>= 2026-12-16` and `>= 500` lineup matches remains required):

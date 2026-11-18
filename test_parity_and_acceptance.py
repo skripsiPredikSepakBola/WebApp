@@ -366,12 +366,12 @@ def test_rebuild_state_equivalence_and_freeze_hashes():
         },
         {
             'match_id': 'apifootball:999002',
-            'home_team': 'Arsenal FC',
-            'away_team': 'Chelsea FC',
+            'home_team': 'Real Madrid',
+            'away_team': 'FC Barcelona',
             'home_goals': 1,
             'away_goals': 1,
             'match_date': '2026-11-18',
-            'league': 'Premier League',
+            'league': 'LaLiga',
             'raw_json': {},
         },
         {
@@ -399,9 +399,19 @@ def test_rebuild_state_equivalence_and_freeze_hashes():
     comp_n2i = base.get('comp_name_to_id') or {}
     known_cids = set((base.get('leagues') or {}).keys())
     assert map_match_ids(batch[0], club_n2i, comp_n2i, known_cids=known_cids) == (3262, 3375, 'UNLA')
-    assert map_match_ids(batch[1], club_n2i, comp_n2i, known_cids=known_cids)[2] == 'GB1'
+    assert map_match_ids(batch[1], club_n2i, comp_n2i, known_cids=known_cids)[2] == 'ES1'
     assert map_match_ids(batch[2], club_n2i, comp_n2i, known_cids=known_cids)[2] == 'IN1L'
     assert map_match_ids(batch[3], club_n2i, comp_n2i, known_cids=known_cids) == (None, None, None)
+
+    # Ambiguous slugs without a competition code must remain unmapped (never misattributed across countries)
+    ambig_cases = [
+        {'home_team': 'Red Bull Salzburg', 'away_team': 'SK Sturm Graz', 'league': 'Bundesliga', 'raw_json': {}},
+        {'home_team': 'BSC Young Boys', 'away_team': 'FC Basel 1893', 'league': 'Super League', 'raw_json': {}},
+        {'home_team': 'Arsenal FC', 'away_team': 'Chelsea FC', 'league': 'Premier League', 'raw_json': {}},
+        {'home_team': 'PERSIB Bandung', 'away_team': 'Persija Jakarta', 'league': 'Liga 1', 'raw_json': {}},
+    ]
+    for am in ambig_cases:
+        assert map_match_ids(am, club_n2i, comp_n2i, known_cids=known_cids) == (None, None, None), am
 
     r1 = rebuild(batch, write_files=False)
     r2 = rebuild(batch, write_files=False)
