@@ -46,10 +46,22 @@
     <span class="brand-badge">MATCH ENGINE</span>
   </div>
   <nav class="main-nav" role="tablist" aria-label="Workspace views">
-    <button class="nav-tab active" role="tab" id="tab-predictor" data-view="predictor" aria-selected="true" aria-controls="view-predictor" type="button">Match Predictor</button>
-    <button class="nav-tab" role="tab" id="tab-leagues" data-view="leagues" aria-selected="false" aria-controls="view-leagues" type="button">League Standings &amp; Stats</button>
-    <button class="nav-tab" role="tab" id="tab-calendar" data-view="calendar" aria-selected="false" aria-controls="view-calendar" type="button">Match Calendar</button>
-    <button class="nav-tab" role="tab" id="tab-explorer" data-view="explorer" aria-selected="false" aria-controls="view-explorer" type="button">Scouting &amp; Inspector</button>
+    <button class="nav-tab active" role="tab" id="tab-predictor" data-view="predictor" aria-selected="true" aria-controls="view-predictor" aria-label="Match Predictor" type="button">
+      <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="4" x2="12" y2="20"/><circle cx="12" cy="12" r="3"/></svg></span>
+      <span class="nav-lbl">Predictor</span>
+    </button>
+    <button class="nav-tab" role="tab" id="tab-leagues" data-view="leagues" aria-selected="false" aria-controls="view-leagues" aria-label="League Standings &amp; Stats" type="button">
+      <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span>
+      <span class="nav-lbl">Leagues</span>
+    </button>
+    <button class="nav-tab" role="tab" id="tab-calendar" data-view="calendar" aria-selected="false" aria-controls="view-calendar" aria-label="Match Calendar" type="button">
+      <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+      <span class="nav-lbl">Calendar</span>
+    </button>
+    <button class="nav-tab" role="tab" id="tab-explorer" data-view="explorer" aria-selected="false" aria-controls="view-explorer" aria-label="Scouting &amp; Inspector" type="button">
+      <span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+      <span class="nav-lbl">Scouting</span>
+    </button>
   </nav>
   <div class="header-right">
     <button type="button" class="sync-pill" id="header-sync-pill" title="Inspect Auto-Sync &amp; Model Validation status">
@@ -160,15 +172,45 @@
         <div class="picker away" id="pick-away"></div>
       </div>
 
-      <div class="whatif-bar" id="whatif-bar">
-        <label>Home Form (pts/g): <b id="wi-hf-val">2.0</b><input type="range" id="wi-hf" min="0" max="3" step="0.2" value="2.0"></label>
-        <label>Away Form (pts/g): <b id="wi-af-val">2.0</b><input type="range" id="wi-af" min="0" max="3" step="0.2" value="2.0"></label>
-        <label>Competition Tier: <b id="wi-tier-val">0.95</b><input type="range" id="wi-tier" min="0.70" max="1.00" step="0.05" value="0.95"></label>
-        <label>Match / Report Date: <input type="month" id="wi-date" min="2020-01" max="2026-11" value="2026-11"></label>
-        <label class="switch"><input type="checkbox" id="wi-hist-xi" checked><i></i>Auto-load historical XI</label>
+      <div class="whatif-wrap">
+        <button type="button" class="whatif-toggle-btn" id="whatif-toggle" aria-expanded="false" aria-controls="whatif-bar">
+          <span>Match Context &amp; Date Settings</span>
+          <span class="whatif-summary" id="whatif-summary">2026-11 · Tier 0.95</span>
+        </button>
+        <div class="whatif-bar" id="whatif-bar">
+          <label>Home Form (pts/g): <b id="wi-hf-val">2.0</b><input type="range" id="wi-hf" min="0" max="3" step="0.2" value="2.0"></label>
+          <label>Away Form (pts/g): <b id="wi-af-val">2.0</b><input type="range" id="wi-af" min="0" max="3" step="0.2" value="2.0"></label>
+          <label>Competition Tier: <b id="wi-tier-val">0.95</b><input type="range" id="wi-tier" min="0.70" max="1.00" step="0.05" value="0.95"></label>
+          <label>Match / Report Date: <input type="month" id="wi-date" min="2020-01" max="2026-11" value="2026-11"></label>
+          <label class="switch"><input type="checkbox" id="wi-hist-xi" checked><i></i>Auto-load historical XI</label>
+        </div>
       </div>
 
       <div class="tactical-lineup-section">
+        <div class="pitch-toolbar" id="pitch-toolbar">
+          <div class="pill-bar inline pitch-view-tabs" id="pitch-view-tabs" role="tablist" aria-label="Pitch view mode">
+            <button type="button" class="filter-pill" data-pitch-view="both" id="pv-both">Both Teams (22)</button>
+            <button type="button" class="filter-pill" data-pitch-view="home" id="pv-home">Home XI</button>
+            <button type="button" class="filter-pill" data-pitch-view="away" id="pv-away">Away XI</button>
+          </div>
+          <div class="pitch-quick-tools">
+            <div class="pitch-team-tool home" id="ptool-home">
+              <span class="ptool-tag home">Home</span>
+              <select class="field field-xs" id="ptool-home-f" aria-label="Home formation quick select"></select>
+              <button type="button" class="btn ghost btn-xs" id="home-autofit">Auto-Fit XI</button>
+            </div>
+            <div class="pitch-team-tool away" id="ptool-away">
+              <span class="ptool-tag away">Away</span>
+              <select class="field field-xs" id="ptool-away-f" aria-label="Away formation quick select"></select>
+              <button type="button" class="btn ghost btn-xs" id="away-autofit">Auto-Fit XI</button>
+            </div>
+            <button type="button" class="filter-pill sm" id="pitch-swap-mode-btn" aria-pressed="false">Quick Swap</button>
+          </div>
+        </div>
+        <div class="swap-banner" id="swap-banner" hidden>
+          <span id="swap-banner-text"></span>
+          <button type="button" class="btn ghost btn-xs" id="swap-banner-cancel">Cancel</button>
+        </div>
         <div class="pitch" id="pitch"></div>
         <div class="benches"><div id="bench-home"></div><div id="bench-away"></div></div>
         <p class="hint">Tap any pitch card to replace or inspect, or drag and drop across pitch and bench to swap live. Slight role mismatches show an amber badge (-1 to -3); severe out-of-position starters show a crimson alert ring (-4+).</p>
@@ -487,13 +529,26 @@
 
 <div class="actionbar" id="actionbar">
   <span id="status">Select 11 starters for each squad</span>
-  <label class="switch"><input type="checkbox" id="knockout"><i></i>Knockout match (penalties if level)</label>
-  <label class="switch"><input type="checkbox" id="neutral" checked><i></i>Neutral venue</label>
+  <label class="switch"><input type="checkbox" id="knockout"><i></i><span>Knockout<span class="hide-mobile"> match (penalties if level)</span></span></label>
+  <label class="switch"><input type="checkbox" id="neutral" checked><i></i><span>Neutral<span class="hide-mobile"> venue</span></span></label>
   <button class="btn" id="predict-btn" type="button">Predict Match</button>
 </div>
 
 <dialog id="dlg">
+  <div class="dlg-sheet-handle" aria-hidden="true"></div>
   <form method="dialog" class="dlg-head"><h3 id="dlg-title"></h3><button class="x" aria-label="Close">Close</button></form>
+  <div class="dlg-player-summary" id="dlg-player-summary" hidden>
+    <div id="dlg-sum-body"></div>
+    <div class="dlg-sum-actions">
+      <button type="button" class="btn btn-sm" id="dlg-quick-swap">Swap on Pitch/Bench</button>
+      <button type="button" class="btn ghost btn-sm" id="dlg-inspect">Full Profile</button>
+      <button type="button" class="btn ghost btn-sm btn-danger-ghost" id="dlg-clear">Remove</button>
+    </div>
+  </div>
+  <div class="seg-tabs dlg-source-tabs" id="dlg-source-tabs" role="tablist" aria-label="Candidate source">
+    <button type="button" class="seg-btn active" id="dlg-src-squad" data-source="squad">Current Squad &amp; Bench</button>
+    <button type="button" class="seg-btn" id="dlg-src-global" data-source="global">Global 71k Database</button>
+  </div>
   <input id="dlg-q" class="field" placeholder="Search by player, club or country" autocomplete="off">
   <div class="dlg-filters" id="dlg-filters">
     <div class="pill-bar inline" id="dlg-role-pills" role="group" aria-label="Filter candidates by role">
@@ -507,10 +562,6 @@
     </label>
   </div>
   <ul id="dlg-list"></ul>
-  <div class="dlg-actions">
-    <button class="btn ghost btn-sm" id="dlg-clear" type="button">Remove player</button>
-    <button class="btn ghost btn-sm" id="dlg-inspect" type="button" hidden>Inspect current player</button>
-  </div>
 </dialog>
 
 <dialog id="sync-dlg">

@@ -162,6 +162,12 @@ let currentCountryDetail = null;
 let activeChartMetric = 'rating';
 let dlgFilterMode = 'exact';
 let dlgUserPickedFilter = false;
+let dlgSourceMode = 'squad';
+let dlgSummaryReqId = 0;
+let pitchViewMode = matchMedia('(max-width:760px)').matches ? 'home' : 'both';
+let pitchViewUserPicked = false;
+let pitchSwapMode = false;
+let swapArmed = null;
 let syncStatusData = null;
 let calCache = new Map();
 let calActiveMonth = new Date().toISOString().slice(0, 7);
@@ -320,24 +326,109 @@ async function init() {
   TEAMS.forEach(buildPicker);
   wireQuickChips();
 
+  TEAMS.forEach(t => {
+    const pSel = $('ptool-' + t + '-f');
+    if (pSel) {
+      pSel.innerHTML = FORMATIONS.map(f => `<option>${f}</option>`).join('');
+      pSel.onchange = e => {
+        rearrangeLineupForFormation(t, e.target.value, { useBench: false });
+        render();
+        predict();
+      };
+    }
+    const autoBtn = $(t + '-autofit');
+    if (autoBtn) {
+      autoBtn.onclick = () => {
+        rearrangeLineupForFormation(t, T[t].formation, { useBench: true });
+        render();
+        predict();
+      };
+    }
+  });
+
+  if ($('pitch-view-tabs')) {
+    $('pitch-view-tabs').onclick = e => {
+      const b = e.target.closest('button[data-pitch-view]');
+      if (!b) return;
+      pitchViewMode = b.dataset.pitchView;
+      pitchViewUserPicked = true;
+      render();
+    };
+  }
+  if ($('pitch-swap-mode-btn')) {
+    $('pitch-swap-mode-btn').onclick = () => {
+      pitchSwapMode = !pitchSwapMode;
+      if (!pitchSwapMode) swapArmed = null;
+      updateSwapUI();
+      renderPitch();
+      renderBench();
+    };
+  }
+  if ($('swap-banner-cancel')) $('swap-banner-cancel').onclick = cancelSwapMode;
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && (swapArmed || pitchSwapMode)) cancelSwapMode();
+  });
+
   $('swap-sides-btn').onclick = swapSides;
 
-  $('pitch').onclick = e => { const b = e.target.closest('.tok'); if (b) openDlg(b.dataset.t, 'slot', +b.dataset.i); };
+  $('pitch').onclick = e => {
+    const b = e.target.closest('.tok');
+    if (!b) return;
+    const t = b.dataset.t, i = +b.dataset.i;
+    if (handleSwapTap(t, 'slot', i)) return;
+    openDlg(t, 'slot', i);
+  };
   TEAMS.forEach(t => $('bench-' + t).onclick = e => {
     const ins = e.target.closest('button[data-inspect]');
     if (ins) { openPlayerInspector(+ins.dataset.inspect); return; }
     const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.rm !== undefined) { T[t].subs.splice(+b.dataset.rm, 1); render(); predict(); }
-    else openDlg(t, 'sub', b.dataset.i === undefined ? -1 : +b.dataset.i);
+    if (b.dataset.rm !== undefined) {
+      if (swapArmed && swapArmed.t === t && swapArmed.kind === 'sub' && swapArmed.i === +b.dataset.rm) swapArmed = null;
+      T[t].subs.splice(+b.dataset.rm, 1);
+      render();
+      predict();
+      return;
+    }
+    const idx = b.dataset.i === undefined ? -1 : +b.dataset.i;
+    if (idx >= 0 && handleSwapTap(t, 'sub', idx)) return;
+    openDlg(t, 'sub', idx);
   });
 
   document.addEventListener('click', e => {
     if (!e.target.closest('.pk-search')) document.querySelectorAll('.pk-list:not(.g-search-list)').forEach(l => l.hidden = true);
     if (!e.target.closest('.g-search') && $('global-search-results')) $('global-search-results').hidden = true;
   });
-  matchMedia('(max-width:760px)').onchange = renderPitch;
+  matchMedia('(max-width:760px)').onchange = () => {
+    if (!pitchViewUserPicked) {
+      pitchViewMode = matchMedia('(max-width:760px)').matches ? 'home' : 'both';
+    }
+    render();
+  };
   $('predict-btn').onclick = predict;
   $('dlg-q').oninput = fillDlg;
+  if ($('dlg-source-tabs')) {
+    $('dlg-source-tabs').onclick = e => {
+      const b = e.target.closest('button[data-source]');
+      if (!b) return;
+      dlgSourceMode = b.dataset.source;
+      document.querySelectorAll('#dlg-source-tabs .seg-btn').forEach(x => x.classList.toggle('active', x === b));
+      fillDlg();
+    };
+  }
+  if ($('dlg-quick-swap')) {
+    $('dlg-quick-swap').onclick = () => {
+      if (!ctx) return;
+      const target = { t: ctx.t, kind: ctx.kind, i: ctx.i };
+      $('dlg').close();
+      swapArmed = target;
+      updateSwapUI();
+      renderPitch();
+      renderBench();
+    };
+  }
+  if ($('dlg')) {
+    $('dlg').addEventListener('close', () => { dlgSummaryReqId++; });
+  }
   if ($('dlg-role-pills')) {
     $('dlg-role-pills').onclick = e => {
       const b = e.target.closest('button[data-mode]');
@@ -725,11 +816,13 @@ function fitScore(p, role) {
   return eff(p, role) + sameLine + exact + gkPenalty;
 }
 
-function rearrangeLineupForFormation(t, newFormation) {
+function rearrangeLineupForFormation(t, newFormation, opts = { useBench: false }) {
   T[t].formation = FORMATIONS.includes(newFormation) ? newFormation : '4-3-3';
+  const useBench = Boolean(opts && opts.useBench);
   const roles = layout(T[t].formation).map(x => x.role);
   const seen = new Set();
-  const pool = [...T[t].slots, ...T[t].subs].filter(p => {
+  const rawPool = useBench ? [...T[t].slots, ...T[t].subs] : [...T[t].slots];
+  const pool = rawPool.filter(p => {
     if (!p || seen.has(p.id)) return false;
     seen.add(p.id);
     return true;
@@ -758,8 +851,8 @@ function rearrangeLineupForFormation(t, newFormation) {
     if (best) { slots[idx] = best; used.add(best.id); }
   });
 
-  // Pass 3: pairwise swap refinement across starters and bench to maximize total fitScore
-  const bench = byRtg.filter(p => !used.has(p.id));
+  // Pass 3: pairwise swap refinement across starters (and bench only when useBench is true)
+  const bench = useBench ? byRtg.filter(p => !used.has(p.id)) : [];
   for (let pass = 0; pass < 4; pass++) {
     let improved = false;
     for (let i = 0; i < 11; i++) {
@@ -774,15 +867,17 @@ function rearrangeLineupForFormation(t, newFormation) {
           improved = true;
         }
       }
-      for (let k = 0; k < bench.length; k++) {
-        const pi = slots[i], pk = bench[k];
-        const cur = pi ? fitScore(pi, roles[i]) : -999;
-        const swp = fitScore(pk, roles[i]);
-        if (swp > cur + 0.01) {
-          slots[i] = pk;
-          if (pi) bench[k] = pi;
-          else bench.splice(k, 1);
-          improved = true;
+      if (useBench) {
+        for (let k = 0; k < bench.length; k++) {
+          const pi = slots[i], pk = bench[k];
+          const cur = pi ? fitScore(pi, roles[i]) : -999;
+          const swp = fitScore(pk, roles[i]);
+          if (swp > cur + 0.01) {
+            slots[i] = pk;
+            if (pi) bench[k] = pi;
+            else bench.splice(k, 1);
+            improved = true;
+          }
         }
       }
     }
@@ -790,7 +885,9 @@ function rearrangeLineupForFormation(t, newFormation) {
   }
 
   T[t].slots = slots;
-  T[t].subs = bench.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  if (useBench) {
+    T[t].subs = bench.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  }
 }
 
 function buildLineupFromRoster(roster, formation = '4-3-3') {
@@ -879,6 +976,111 @@ async function applySnapshot(side = null, forceKeepLineup = false) {
   } catch (e) { console.error(e); }
 }
 
+function shortTeamLabel(t) {
+  const raw = (T[t].name || t).replace(/ \(National Team\)/i, '').trim();
+  const s = short(raw);
+  return s.length > 14 ? raw.slice(0, 13) + '…' : (raw.length <= 14 ? raw : s);
+}
+
+function playerAt(ref) {
+  if (!ref) return null;
+  return ref.kind === 'slot' ? T[ref.t].slots[ref.i] : T[ref.t].subs[ref.i];
+}
+
+function updateSwapUI() {
+  const btn = $('pitch-swap-mode-btn');
+  if (btn) {
+    btn.classList.toggle('active', pitchSwapMode);
+    btn.setAttribute('aria-pressed', pitchSwapMode ? 'true' : 'false');
+  }
+  const banner = $('swap-banner'), txt = $('swap-banner-text');
+  if (!banner || !txt) return;
+  if (!swapArmed && !pitchSwapMode) {
+    banner.hidden = true;
+    return;
+  }
+  banner.hidden = false;
+  if (swapArmed) {
+    const p = playerAt(swapArmed);
+    const pName = p ? short(p.name) : 'Empty slot';
+    const teamNm = (T[swapArmed.t].name || swapArmed.t).replace(/ \(National Team\)/i, '');
+    txt.textContent = `Tap another ${teamNm} starter or sub to swap with ${pName}.`;
+  } else {
+    txt.textContent = 'Quick Swap active: tap any starter or sub to select.';
+  }
+}
+
+function cancelSwapMode() {
+  pitchSwapMode = false;
+  swapArmed = null;
+  updateSwapUI();
+  renderPitch();
+  renderBench();
+}
+
+function handleSwapTap(t, kind, i) {
+  if (!pitchSwapMode && !swapArmed) return false;
+  if (!swapArmed) {
+    swapArmed = { t, kind, i };
+    updateSwapUI();
+    renderPitch();
+    renderBench();
+    return true;
+  }
+  if (swapArmed.t === t && swapArmed.kind === kind && swapArmed.i === i) {
+    swapArmed = null;
+    updateSwapUI();
+    renderPitch();
+    renderBench();
+    return true;
+  }
+  if (swapArmed.t !== t) {
+    const teamNm = (T[swapArmed.t].name || swapArmed.t).replace(/ \(National Team\)/i, '');
+    if ($('swap-banner-text')) {
+      $('swap-banner-text').textContent = `Swap must stay within ${teamNm} — tap a ${teamNm} starter or sub.`;
+    }
+    return true;
+  }
+
+  const a = swapArmed;
+  if (a.kind === 'slot' && kind === 'slot') {
+    const tmp = T[t].slots[i];
+    T[t].slots[i] = T[t].slots[a.i];
+    T[t].slots[a.i] = tmp;
+  } else if (a.kind === 'sub' && kind === 'sub') {
+    const tmp = T[t].subs[i];
+    T[t].subs[i] = T[t].subs[a.i];
+    T[t].subs[a.i] = tmp;
+  } else {
+    const slotIdx = a.kind === 'slot' ? a.i : i;
+    const subIdx = a.kind === 'sub' ? a.i : i;
+    const slotP = T[t].slots[slotIdx];
+    const subP = T[t].subs[subIdx];
+    T[t].slots[slotIdx] = subP || null;
+    if (slotP) T[t].subs[subIdx] = slotP;
+    else T[t].subs.splice(subIdx, 1);
+  }
+  swapArmed = null;
+  updateSwapUI();
+  render();
+  predict();
+  return true;
+}
+
+function updatePitchToolbar() {
+  const pvHome = $('pv-home'), pvAway = $('pv-away');
+  if (pvHome) pvHome.textContent = `${shortTeamLabel('home')} (${T.home.formation})`;
+  if (pvAway) pvAway.textContent = `${shortTeamLabel('away')} (${T.away.formation})`;
+  document.querySelectorAll('#pitch-view-tabs [data-pitch-view]').forEach(b => {
+    b.classList.toggle('active', b.dataset.pitchView === pitchViewMode);
+  });
+  if ($('bench-home')) $('bench-home').classList.toggle('bench-focus-hidden', pitchViewMode === 'away');
+  if ($('bench-away')) $('bench-away').classList.toggle('bench-focus-hidden', pitchViewMode === 'home');
+  if ($('ptool-home')) $('ptool-home').classList.toggle('is-dimmed', pitchViewMode === 'away');
+  if ($('ptool-away')) $('ptool-away').classList.toggle('is-dimmed', pitchViewMode === 'home');
+  updateSwapUI();
+}
+
 function render() {
   TEAMS.forEach(t => {
     const nm = T[t].name.replace(' (National Team)', '') || 'Custom squad';
@@ -887,8 +1089,12 @@ function render() {
     $(t + '-name').innerHTML = `${crestHtml(cUrl, nm, 'crest-sm')}<span>${escRaw(nm)}</span>${isLeg ? '<span class="legend-tag">LEGEND</span>' : ''}`;
     $(t + '-f').value = T[t].formation;
     $(t + '-form').value = T[t].form;
+    if ($('ptool-' + t + '-f')) $('ptool-' + t + '-f').value = T[t].formation;
   });
-  renderPitch(); renderBench(); status();
+  updatePitchToolbar();
+  renderPitch();
+  renderBench();
+  status();
 }
 
 function pitchSVG(v) {
@@ -898,14 +1104,29 @@ function pitchSVG(v) {
 
 function renderPitch() {
   const v = matchMedia('(max-width:760px)').matches, el = $('pitch');
+  const single = pitchViewMode === 'home' || pitchViewMode === 'away';
   el.classList.toggle('vert', v);
+  el.classList.toggle('single-team', single);
   let h = pitchSVG(v);
-  TEAMS.forEach(t => {
-    const home = t === 'home', wm = v ? `left:50%;top:${home ? 78 : 22}%` : `left:${home ? 26 : 74}%;top:50%`;
+  const visibleTeams = single ? [pitchViewMode] : TEAMS;
+  visibleTeams.forEach(t => {
+    const home = t === 'home';
+    const wm = single
+      ? 'left:50%;top:50%'
+      : (v ? `left:50%;top:${home ? 78 : 22}%` : `left:${home ? 26 : 74}%;top:50%`);
     h += `<div class="wm" style="${wm}">${esc(short(T[t].name.replace(/ \(National Team\)/, '')) || '')}</div>`;
     layout(T[t].formation).forEach((pt, i) => {
-      const u = home ? pt.u : 1 - pt.u, w = home ? pt.v : 1 - pt.v, p = T[t].slots[i];
-      const left = v ? w : u, top = v ? 1 - u : w;
+      let left, top;
+      if (single) {
+        const norm = (pt.u - 0.04) / 0.40;
+        left = v ? pt.v : (0.10 + norm * 0.80);
+        top = v ? (0.88 - norm * 0.74) : pt.v;
+      } else {
+        const u = home ? pt.u : 1 - pt.u, w = home ? pt.v : 1 - pt.v;
+        left = v ? w : u;
+        top = v ? 1 - u : w;
+      }
+      const p = T[t].slots[i];
       const pen = p ? oopPenalty(p, pt.role) : 0;
       const e = p ? eff(p, pt.role) : 0;
       const natRole = p ? playerRole(p) : pt.role;
@@ -920,17 +1141,18 @@ function renderPitch() {
       const deltaBadge = Math.abs(fd) >= 0.05
         ? `<span class="fut-delta ${fd > 0 ? 'pos' : 'neg'}">${fd > 0 ? '+' : ''}${fd.toFixed(1)}</span>`
         : '';
+      const armedCls = (swapArmed && swapArmed.kind === 'slot' && swapArmed.t === t && swapArmed.i === i) ? ' swap-selected' : '';
       if (p) {
         const imgUrl = p.image_url || byId.get(p.id)?.image_url || '';
         const tierCls = ratingTier(e);
-        h += `<button draggable="true" type="button" class="tok ${t} ${tierCls} ${cardCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
+        h += `<button draggable="true" type="button" class="tok ${t} ${tierCls} ${cardCls}${armedCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
           ${deltaBadge}
           <span class="fut-top"><span class="fut-rtg">${Math.round(e)}</span><span class="fut-pos ${posCls}">${escRaw(posLabel)}</span></span>
           <span class="fut-pic ${tierCls}">${avatarHtml(imgUrl, p.name, 'av-sm', e)}</span>
           <em>${esc(short(p.name))}</em>
         </button>`;
       } else {
-        h += `<button draggable="true" type="button" class="tok ${t} empty" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
+        h += `<button draggable="true" type="button" class="tok ${t} empty${armedCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
           <span class="fut-plus">+</span>
           <em>${pt.role}</em>
         </button>`;
@@ -941,13 +1163,17 @@ function renderPitch() {
 }
 
 function renderBench() {
-  TEAMS.forEach(t => $('bench-' + t).innerHTML = `<div class="bench"><b>${esc(T[t].name.replace(' (National Team)', '') || 'Team')} bench</b>` +
-    T[t].subs.map((p, i) => {
-      const imgUrl = p.image_url || byId.get(p.id)?.image_url || '';
-      const r = playerRole(p);
-      return `<span class="bn ${ratingTier(p.rating)}"><button type="button" draggable="true" data-i="${i}">${avatarHtml(imgUrl, p.name, 'av-xs', p.rating)}<span class="pos-mini">${escRaw(r)}</span><span>${esc(short(p.name))} ${p.rating}</span></button><button type="button" data-inspect="${p.id}" title="Inspect ${escRaw(p.name)}" aria-label="Inspect ${escRaw(p.name)}">Info</button><button type="button" data-rm="${i}" aria-label="Remove ${escRaw(p.name)}">&times;</button></span>`;
-    }).join('') +
-    `<button type="button" class="add">+ Add substitute</button></div>`);
+  TEAMS.forEach(t => {
+    const teamName = (T[t].name || 'Team').replace(' (National Team)', '');
+    $('bench-' + t).innerHTML = `<div class="bench"><div class="bench-head"><b>${esc(teamName)} Bench (${T[t].subs.length})</b><button type="button" class="add">+ Add sub</button></div><div class="bench-list">` +
+      T[t].subs.map((p, i) => {
+        const imgUrl = p.image_url || byId.get(p.id)?.image_url || '';
+        const r = playerRole(p);
+        const isArmed = swapArmed && swapArmed.kind === 'sub' && swapArmed.t === t && swapArmed.i === i;
+        return `<span class="bn ${ratingTier(p.rating)}${isArmed ? ' swap-selected' : ''}"><button type="button" class="bn-card-btn" draggable="true" data-i="${i}">${avatarHtml(imgUrl, p.name, 'av-sm', p.rating)}<span class="bn-rtg">${p.rating}</span><span class="pos-mini">${escRaw(r)}</span><span class="bn-name">${esc(short(p.name))}</span></button><button type="button" data-inspect="${p.id}" title="Inspect ${escRaw(p.name)}" aria-label="Inspect ${escRaw(p.name)}">Info</button><button type="button" data-rm="${i}" aria-label="Remove ${escRaw(p.name)}">&times;</button></span>`;
+      }).join('') +
+      `</div></div>`;
+  });
 }
 
 function status() {
@@ -955,6 +1181,49 @@ function status() {
   const ok = n('home') && n('away');
   $('status').textContent = ok ? `${nm('home')} ${n('home')}/11 · ${nm('away')} ${n('away')}/11 starters` : 'Pick at least one starter for each team';
   $('predict-btn').disabled = busy || !ok;
+}
+
+function renderDlgSummary(currentP, kind, role) {
+  const sumWrap = $('dlg-player-summary');
+  const sumBody = $('dlg-sum-body');
+  if (!sumWrap || !sumBody) return;
+  if (!currentP) {
+    sumWrap.hidden = true;
+    sumBody.innerHTML = '';
+    return;
+  }
+  const p = byId.get(currentP.id) ? { ...byId.get(currentP.id), ...currentP } : currentP;
+  const nr = playerRole(p);
+  const pen = kind === 'slot' ? oopPenalty(p, role) : 0;
+  const e = kind === 'slot' ? eff(p, role) : p.rating;
+  const imgUrl = p.image_url || '';
+  const clubText = p.is_former ? (p.former_club || p.club || 'Retired') : (p.club || 'Free Agent');
+  const legTag = p.is_former ? ' <span class="legend-tag">LEGEND</span>' : '';
+  const fitText = kind === 'slot'
+    ? (pen > 0 ? `Eff ${Math.round(e)} (-${pen} OOP)` : `Natural ${role}`)
+    : 'Bench Sub';
+
+  sumBody.innerHTML = `
+    <div class="dlg-sum-top">
+      <div class="dlg-sum-ident">
+        ${avatarHtml(imgUrl, p.name, 'av-md', e)}
+        <div class="dlg-sum-meta">
+          <div class="dlg-sum-name">${escRaw(p.full_name || p.name)}${legTag}</div>
+          <div class="dlg-sum-sub">${escRaw(nr)} · ${escRaw(clubText)} · ${escRaw(p.nat || '-')}</div>
+        </div>
+      </div>
+      <div class="dlg-sum-rtg">
+        <b>${p.rating ?? '-'}</b>
+        <small class="${pen > 0 ? 'warn' : 'ok'}">${escRaw(fitText)}</small>
+      </div>
+    </div>
+    <div class="dlg-sum-stats" id="dlg-sum-stats">
+      <div class="dlg-sum-stat"><span>Age</span><b>${p.age ?? '-'}</b></div>
+      <div class="dlg-sum-stat"><span>Value</span><b>${fmtVal(p.val ?? p.market_val)}</b></div>
+      <div class="dlg-sum-stat"><span>Career G/A</span><b>${p.total_goals ?? p.goals ?? '-'} / ${p.total_assists ?? p.assists ?? '-'}</b></div>
+      <div class="dlg-sum-stat"><span>Foot</span><b>${escRaw(p.foot || '-')}</b></div>
+    </div>`;
+  sumWrap.hidden = false;
 }
 
 function openDlg(t, kind, i) {
@@ -965,6 +1234,11 @@ function openDlg(t, kind, i) {
   $('dlg-q').value = '';
   dlgUserPickedFilter = false;
   dlgFilterMode = role === 'SUB' ? 'all' : 'exact';
+  dlgSourceMode = 'squad';
+
+  document.querySelectorAll('#dlg-source-tabs .seg-btn').forEach(x => {
+    x.classList.toggle('active', x.dataset.source === dlgSourceMode);
+  });
 
   const bExact = $('dlg-f-exact'), bLine = $('dlg-f-line'), bAll = $('dlg-f-all');
   if (bExact && bLine && bAll) {
@@ -987,58 +1261,207 @@ function openDlg(t, kind, i) {
   const currentP = kind === 'slot' ? T[t].slots[i] : (i >= 0 ? T[t].subs[i] : null);
   $('dlg-clear').hidden = kind === 'slot' ? !T[t].slots[i] : i < 0;
   if ($('dlg-inspect')) $('dlg-inspect').hidden = !currentP?.id;
+  if ($('dlg-quick-swap')) $('dlg-quick-swap').hidden = !currentP;
+
+  const reqId = ++dlgSummaryReqId;
+  renderDlgSummary(currentP, kind, role);
+  if (currentP?.id) {
+    fetch(`/api/explore/player/${currentP.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (reqId !== dlgSummaryReqId || !$('dlg')?.open || !ctx) return;
+        const det = d?.player || d;
+        if (!det || typeof det !== 'object') return;
+        const statsEl = $('dlg-sum-stats');
+        if (!statsEl) return;
+        const g = det.total_goals ?? det.career_goals ?? det.goals ?? currentP.total_goals ?? currentP.goals;
+        const a = det.total_assists ?? det.career_assists ?? det.assists ?? currentP.total_assists ?? currentP.assists;
+        const g90 = det.goals_per_90 ?? det.g90;
+        const gaStr = `${g ?? '-'} / ${a ?? '-'}${g90 !== undefined && g90 !== null ? ` (${Number(g90).toFixed(2)}/90)` : ''}`;
+        statsEl.innerHTML = `
+          <div class="dlg-sum-stat"><span>Age</span><b>${det.age ?? currentP.age ?? '-'}</b></div>
+          <div class="dlg-sum-stat"><span>Value</span><b>${fmtVal(det.val ?? det.market_val ?? det.market_value ?? currentP.val ?? currentP.market_val)}</b></div>
+          <div class="dlg-sum-stat"><span>Career G/A</span><b>${escRaw(gaStr)}</b></div>
+          <div class="dlg-sum-stat"><span>Foot</span><b>${escRaw(det.foot || det.preferred_foot || currentP.foot || '-')}</b></div>`;
+      })
+      .catch(() => {});
+  }
+
   fillDlg(); $('dlg').showModal(); $('dlg-q').focus();
 }
 
-function fillDlg() {
-  const s = $('dlg-q').value.trim().toLowerCase(), { role } = ctx;
-  const showLegends = $('dlg-legends')?.checked ?? false;
-  let pool = showLegends ? byRating : byRating.filter(p => !p.is_former);
+function gatherSquadCandidates(t, kind, idx, activeId) {
+  const out = [];
+  const seen = new Set();
+  if (activeId) seen.add(activeId);
 
-  if (s.length >= 2) {
-    pool = pool.filter(p => `${p.name} ${p.full_name} ${p.club} ${p.nat} ${playerRole(p)} ${p.pos}`.toLowerCase().includes(s));
-    if (dlgUserPickedFilter && role !== 'SUB') {
-      if (dlgFilterMode === 'exact') pool = pool.filter(p => playerRole(p) === role);
-      else if (dlgFilterMode === 'line') pool = pool.filter(p => roleToGroup(playerRole(p)) === roleToGroup(role));
-    }
-  } else if (role !== 'SUB') {
-    if (dlgFilterMode === 'exact') pool = pool.filter(p => playerRole(p) === role);
-    else if (dlgFilterMode === 'line') pool = pool.filter(p => roleToGroup(playerRole(p)) === roleToGroup(role));
-  }
-
-  // Order candidates by natural slot fit first (lowest OOP penalty, then highest effective rating)
-  const ranked = [...pool].sort((a, b) => {
-    const pa = oopPenalty(a, role), pb = oopPenalty(b, role);
-    if (pa !== pb) return pa - pb;
-    const ea = eff(a, role), eb = eff(b, role);
-    if (eb !== ea) return eb - ea;
-    return (b.rating || 0) - (a.rating || 0);
+  T[t].subs.forEach((p, si) => {
+    if (!p || (kind === 'sub' && si === idx) || seen.has(p.id)) return;
+    seen.add(p.id);
+    out.push({ p, srcBadge: { cls: 'bench', text: 'ON BENCH' }, order: 0 });
   });
 
-  $('dlg-list').innerHTML = ranked.slice(0, 35).map(p => {
-    const nr = playerRole(p);
-    const pen = oopPenalty(p, role);
-    const e = eff(p, role);
-    const penCls = pen >= 4 ? 'pen-severe' : 'pen-warn';
-    const legTag = p.is_former ? ' <span class="legend-tag">LEGEND</span>' : '';
-    const subMeta = p.is_former
-      ? `Former: ${escRaw(p.former_club || p.club || 'Retired')} (Last: ${escRaw(p.last_season || '-')}) · ${escRaw(p.nat)}`
-      : `${escRaw(p.club)} · ${escRaw(p.nat)}`;
-    return `<li><button type="button" data-id="${p.id}">
-      <span class="pos">${escRaw(nr)}</span>
-      ${avatarHtml(p.image_url, p.name, 'av-sm', p.rating)}
-      <span>${escRaw(p.full_name || p.name)}${legTag}<br><small>${subMeta}</small></span>
-      <b class="r">${p.rating}${pen > 0 ? ` <small class="${penCls}">&rarr; ${Math.round(e)}</small>` : ''}</b>
-    </button></li>`;
-  }).join('') || '<li><small style="padding:8px 4px;display:block">No matching players found. Try switching to Line or All, or enable Show Legends.</small></li>';
+  const roles = layout(T[t].formation).map(x => x.role);
+  T[t].slots.forEach((p, si) => {
+    if (!p || (kind === 'slot' && si === idx) || seen.has(p.id)) return;
+    seen.add(p.id);
+    out.push({ p, srcBadge: { cls: 'pitch', text: `ON PITCH · ${roles[si] || ''}` }, order: 1 });
+  });
+
+  const teamName = T[t].name || '';
+  const preset = presets[teamName];
+  if (preset) {
+    [...(preset.starters || []), ...(preset.subs || [])].forEach(nm => {
+      const p = find(nm);
+      if (p && !seen.has(p.id)) {
+        seen.add(p.id);
+        out.push({ p, srcBadge: { cls: 'squad', text: 'SQUAD' }, order: 2 });
+      }
+    });
+  }
+
+  const isNat = / \(National Team\)$/i.test(teamName);
+  const isLeg = /legends$/i.test(teamName);
+  const baseClean = clean(teamName.replace(/ \(National Team\)$/i, '').replace(/\s+legends$/i, ''));
+  if (baseClean) {
+    for (const p of byRating) {
+      if (seen.has(p.id)) continue;
+      let match = false;
+      if (isNat) match = clean(p.nat) === baseClean;
+      else if (isLeg) match = Boolean(p.is_former) && (clean(p.former_club || p.club) === baseClean || clean(p.nat) === baseClean);
+      else match = !p.is_former && clean(p.club) === baseClean;
+      if (match) {
+        seen.add(p.id);
+        out.push({ p, srcBadge: { cls: 'squad', text: 'SQUAD' }, order: 2 });
+      }
+    }
+  }
+  return { items: out, seen };
+}
+
+function renderDlgCandidateItem(p, role, srcBadge) {
+  const nr = playerRole(p);
+  const pen = oopPenalty(p, role);
+  const e = eff(p, role);
+  const penCls = pen >= 4 ? 'pen-severe' : 'pen-warn';
+  const legTag = p.is_former ? ' <span class="legend-tag">LEGEND</span>' : '';
+  const badgeHtml = srcBadge ? `<span class="src-badge ${escRaw(srcBadge.cls)}">${escRaw(srcBadge.text)}</span>` : '';
+  const subMeta = p.is_former
+    ? `Former: ${escRaw(p.former_club || p.club || 'Retired')} (Last: ${escRaw(p.last_season || '-')}) · ${escRaw(p.nat)}`
+    : `${escRaw(p.club)} · ${escRaw(p.nat)}`;
+  return `<li><button type="button" data-id="${p.id}">
+    <span class="pos">${escRaw(nr)}</span>
+    ${avatarHtml(p.image_url, p.name, 'av-sm', p.rating)}
+    <span>${escRaw(p.full_name || p.name)}${legTag}${badgeHtml}<br><small>${subMeta}</small></span>
+    <b class="r">${p.rating}${pen > 0 ? ` <small class="${penCls}">&rarr; ${Math.round(e)}</small>` : ''}</b>
+  </button></li>`;
+}
+
+function fillDlg() {
+  const s = $('dlg-q').value.trim().toLowerCase(), { t, kind, i, role } = ctx;
+  const showLegends = $('dlg-legends')?.checked ?? false;
+  const currentP = kind === 'slot' ? T[t].slots[i] : (i >= 0 ? T[t].subs[i] : null);
+
+  const matchesSearchAndRole = p => {
+    if (!showLegends && p.is_former) return false;
+    if (role !== 'SUB') {
+      if (dlgFilterMode === 'exact' && playerRole(p) !== role) return false;
+      if (dlgFilterMode === 'line' && roleToGroup(playerRole(p)) !== roleToGroup(role)) return false;
+    }
+    if (s.length >= 1) {
+      const hay = `${p.name} ${p.full_name} ${p.club} ${p.nat} ${playerRole(p)} ${p.pos}`.toLowerCase();
+      if (!hay.includes(s)) return false;
+    }
+    return true;
+  };
+
+  const sortRanked = (arr) => [...arr].sort((a, b) => {
+    const pa = oopPenalty(a.p, role), pb = oopPenalty(b.p, role);
+    if (pa !== pb) return pa - pb;
+    const ea = eff(a.p, role), eb = eff(b.p, role);
+    if (eb !== ea) return eb - ea;
+    return (b.p.rating || 0) - (a.p.rating || 0);
+  });
+
+  if (dlgSourceMode === 'squad') {
+    const { items, seen } = gatherSquadCandidates(t, kind, i, currentP?.id);
+    const squadHits = items.filter(it => matchesSearchAndRole(it.p)).sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      const pa = oopPenalty(a.p, role), pb = oopPenalty(b.p, role);
+      if (pa !== pb) return pa - pb;
+      return (eff(b.p, role) || 0) - (eff(a.p, role) || 0);
+    });
+
+    let html = squadHits.slice(0, 45).map(it => renderDlgCandidateItem(it.p, role, it.srcBadge)).join('');
+
+    if (s.length >= 2) {
+      const globalHits = sortRanked(
+        byRating
+          .filter(p => !seen.has(p.id) && matchesSearchAndRole(p))
+          .slice(0, 120)
+          .map(p => ({ p, srcBadge: { cls: 'global', text: 'GLOBAL' } }))
+      ).slice(0, 25);
+      if (globalHits.length) {
+        html += `<li class="dlg-sec-hdr">Global 71k Matches</li>` + globalHits.map(it => renderDlgCandidateItem(it.p, role, it.srcBadge)).join('');
+      }
+    }
+
+    if (!html) {
+      const exactHint = (role !== 'SUB' && dlgFilterMode === 'exact')
+        ? `No exact ${role} candidates in this squad. Try switching to Line (${roleToGroup(role)}), All, or Global 71k Database.`
+        : 'No matching squad candidates found. Try switching to Global 71k Database or clearing your search.';
+      html = `<li><small style="padding:10px 6px;display:block;color:var(--muted)">${escRaw(exactHint)}</small></li>`;
+    } else if (role !== 'SUB' && dlgFilterMode === 'exact' && squadHits.length === 0) {
+      html = `<li><small style="padding:6px;display:block;color:var(--muted)">No exact ${escRaw(role)} in squad — showing Global 71k matches. Switch to Line or All to see other squad players.</small></li>` + html;
+    }
+
+    $('dlg-list').innerHTML = html;
+    return;
+  }
+
+  // Global 71k Database mode
+  const pool = byRating.filter(p => (!currentP || p.id !== currentP.id) && matchesSearchAndRole(p));
+  const ranked = sortRanked(pool.slice(0, 250).map(p => ({ p, srcBadge: null }))).slice(0, 35);
+
+  $('dlg-list').innerHTML = ranked.map(it => renderDlgCandidateItem(it.p, role, null)).join('')
+    || `<li><small style="padding:10px 6px;display:block;color:var(--muted)">${role !== 'SUB' && dlgFilterMode === 'exact' ? `No exact ${escRaw(role)} players found. Try switching to Line or All, or enable Show Legends.` : 'No matching players found. Try switching to Line or All, or enable Show Legends.'}</small></li>`;
 }
 
 async function assign(p) {
   const { t, kind, i } = ctx;
-  if (kind === 'slot') T[t].slots[i] = p;
-  else if (!p) T[t].subs.splice(i, 1);
-  else if (i < 0) T[t].subs.push(p); else T[t].subs[i] = p;
-  $('dlg').close(); render();
+  const prevSlotIdx = p ? T[t].slots.findIndex(x => x && x.id === p.id) : -1;
+  const prevSubIdx = p ? T[t].subs.findIndex(x => x && x.id === p.id) : -1;
+
+  if (kind === 'slot') {
+    const oldPlayer = T[t].slots[i];
+    T[t].slots[i] = p;
+    if (p) {
+      if (prevSlotIdx >= 0 && prevSlotIdx !== i) {
+        T[t].slots[prevSlotIdx] = oldPlayer;
+      } else if (prevSubIdx >= 0) {
+        if (oldPlayer) T[t].subs[prevSubIdx] = oldPlayer;
+        else T[t].subs.splice(prevSubIdx, 1);
+      }
+    }
+  } else {
+    const oldPlayer = i >= 0 ? T[t].subs[i] : null;
+    if (!p) {
+      if (i >= 0) T[t].subs.splice(i, 1);
+    } else {
+      if (i < 0) T[t].subs.push(p);
+      else T[t].subs[i] = p;
+
+      if (prevSlotIdx >= 0) {
+        T[t].slots[prevSlotIdx] = oldPlayer;
+      } else if (prevSubIdx >= 0 && prevSubIdx !== i) {
+        if (oldPlayer) T[t].subs[prevSubIdx] = oldPlayer;
+        else T[t].subs.splice(prevSubIdx, 1);
+      }
+    }
+  }
+
+  $('dlg').close();
+  render();
   if (p && ($('wi-date')?.value || '2026-11') !== '2026-11') await applySnapshot(t, true);
   predict();
 }
@@ -1418,6 +1841,19 @@ function enableDragAndDrop() {
 
 function wireWhatIf() {
   const hf = $('wi-hf'), af = $('wi-af'), tr = $('wi-tier'), dt = $('wi-date'), hx = $('wi-hist-xi');
+  const toggleBtn = $('whatif-toggle'), bar = $('whatif-bar'), summary = $('whatif-summary');
+  const updateSummary = () => {
+    if (!summary) return;
+    const dStr = dt?.value || '2026-11';
+    const tStr = (+(tr?.value || 0.95)).toFixed(2);
+    summary.textContent = `${dStr} · Tier ${tStr}`;
+  };
+  if (toggleBtn && bar) {
+    toggleBtn.onclick = () => {
+      const open = bar.classList.toggle('is-open');
+      toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+  }
   if (hf && af && tr) {
     const sync = () => {
       T.home.form = +hf.value; $('wi-hf-val').textContent = (+hf.value).toFixed(1);
@@ -1425,6 +1861,7 @@ function wireWhatIf() {
       $('wi-tier-val').textContent = (+tr.value).toFixed(2);
       if ($('home-form')) $('home-form').value = hf.value;
       if ($('away-form')) $('away-form').value = af.value;
+      updateSummary();
       clearTimeout(wiTimer);
       wiTimer = setTimeout(predict, 180);
     };
@@ -1433,6 +1870,7 @@ function wireWhatIf() {
   if (dt) {
     dt.addEventListener('change', async () => {
       if (!dt.value) dt.value = '2026-11';
+      updateSummary();
       await applySnapshot();
       predict();
     });
@@ -1445,6 +1883,7 @@ function wireWhatIf() {
       }
     });
   }
+  updateSummary();
 }
 
 function wireHeatMap() {
