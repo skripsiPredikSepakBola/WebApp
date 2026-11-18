@@ -1,0 +1,125 @@
+name: Weekly Prospective Replay (Monitoring Only)
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: model-state-push
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  weekly-replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+
+      - name: Guard team_state.json freshness (<= 2 days behind report date)
+        id: guard
+        run: |
+          python - <<'PY'
+          import datetime as dt, json, os, sys
+          today = dt.datetime.now(dt.timezone.utc).date()
+          ts = json.load(open('models/team_state.json', 'r', encoding='utf-8'))
+          as_of_str = str(ts.get('as_of') or '')
+          print(f'team_state.json as_of={as_of_str} report_date={today.isoformat()}')
+          if not as_of_str:
+              print('ERROR: models/team_state.json missing as_of', file=sys.stderr)
+              sys.exit(1)
+          as_of_date = dt.date.fromisoformat(as_of_str[:10])
+          lag = (today - as_of_date).days
+          if lag > 2:
+              print(f'ERROR: team_state.json as_of={as_of_str} is {lag} days behind {today.isoformat()} (> 2 days)', file=sys.stderr)
+              sys.exit(1)
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
+              out.write(f'report_date={today.isoformat()}\n')
+              out.write(f'as_of={as_of_str}\n')
+          PY
+
+      - name: Run prospective_replay.py (monitoring only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          PITCHPULSE_USE_BUNDLE: '1'
+          REPORT_DATE: ${{ steps.guard.outputs.report_date }}
+          STATE_AS_OF: ${{ steps.guard.outputs.as_of }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from prospective_replay import run_prospective_replay
+
+          report_date = os.environ['REPORT_DATE']
+          state_as_of = os.environ['STATE_AS_OF']
+          meta = json.load(open('models/model_meta.json', 'r', encoding='utf-8'))
+          hashes = {}
+          for rel in (meta.get('freeze_sha256') or {}):
+              raw = open(rel, 'rb').read()
+              if rel.endswith('.py'):
+                  raw = raw.replace(b'\r\n', b'\n')
+              hashes[rel] = hashlib.sha256(raw).hexdigest()
+
+          res = run_prospective_replay()
+          monitoring_only = (report_date < '2026-12-15') or (int(res.get('scored_matches') or 0) < 500)
+          payload = {
+              'report_date': report_date,
+              'label': 'MONITORING ONLY (do not flip until >= 2026-12-15 and >= 500 lineup matches)' if monitoring_only else 'DECISION_ELIGIBLE',
+              'team_state_as_of': state_as_of,
+              'model_hashes': hashes,
+              'replay': res,
+          }
+          os.makedirs('reports', exist_ok=True)
+          json_path = f'reports/replay_{report_date}.json'
+          log_path = f'reports/replay_{report_date}.log'
+          md_path = f'reports/replay_{report_date}.md'
+          with open(json_path, 'w', encoding='utf-8', newline='\n') as f:
+              json.dump(payload, f, indent=2)
+          with open(log_path, 'w', encoding='utf-8', newline='\n') as f:
+              f.write(f"report_date={report_date} label={payload['label']} team_state_as_of={state_as_of}\n")
+              f.write(json.dumps(res, indent=2) + '\n')
+          lines = [
+              f'# Weekly Prospective Replay ({report_date})',
+              '',
+              f"**Status:** {payload['label']}",
+              f"- **team_state.json `as_of`:** `{state_as_of}`",
+              f"- **All finished matches (> 2026-11-17):** `{res.get('all_finished_matches', 0)}`",
+              f"- **Scored matches with lineups:** `{res.get('scored_matches', 0)}`",
+              f"- **Coverage:** `{res.get('coverage', 0.0)}`",
+              f"- **Bootstrap mean gain / p5 / p95 / P(>0):** `{res.get('boot_mean_gain')}` / `{res.get('boot_p5')}` / `{res.get('boot_p95')}` / `{res.get('P_new_better')}`",
+              f"- **Log-loss (legacy vs new):** `{res.get('legacy_ll')}` vs `{res.get('new_ll')}`",
+              f"- **RPS (legacy vs new):** `{res.get('legacy_rps')}` vs `{res.get('new_rps')}`",
+              f"- **Bundle SHA-256 (`models/model_bundle.joblib`):** `{hashes.get('models/model_bundle.joblib')}`",
+              '',
+              '## Model Hashes',
+              *[f'- `{k}`: `{v}`' for k, v in hashes.items()],
+              '',
+          ]
+          with open(md_path, 'w', encoding='utf-8', newline='\n') as f:
+              f.write('\n'.join(lines))
+          print(open(log_path, 'r', encoding='utf-8').read())
+          PY
+
+      - name: Guard models/ untouched and commit reports/replay_* only
+        env:
+          REPORT_DATE: ${{ steps.guard.outputs.report_date }}
+        run: |
+          if [ -n "$(git status --porcelain models/)" ]; then
+            echo "ERROR: weekly-replay modified models/ unexpectedly" >&2
+            git status --porcelain models/ >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "reports/replay_${REPORT_DATE}.json" "reports/replay_${REPORT_DATE}.md" "reports/replay_${REPORT_DATE}.log"
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(replay): weekly monitoring report ${REPORT_DATE}"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+            git push origin "${GITHUB_REF_NAME}"
+          fi

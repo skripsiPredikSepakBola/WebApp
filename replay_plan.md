@@ -25,6 +25,17 @@
   6. Explicit user approval.
 - **Stop rule:** If paired bootstrap `gain_p95 < 0` at any weekly look, stop replay and investigate immediately.
 
+## Provenance
+- **Training data cutoff:** `2026-11-12`
+- **Frozen bundle SHA-256 (`models/model_bundle.joblib`):** `41d585567186d3833611330640245353af97fca56be3f219fede65605c1da89e`
+- **Scored replay window:** strictly `match_date > 2026-11-17` (no overlap with training or the 5-hour commit gap below)
+
+| Commit | Time (+0700) | What |
+|---|---|---|
+| `f218079` | `2026-11-17 19:32` | Freeze recipe (features, params, tier map) |
+| `65f14a0` | `2026-11-18 00:45` | `model_bundle.joblib` and its SHA-256 hash committed |
+| `4459c59` | `2026-11-18 01:37` | CI fix where `freeze-2026-11-17` tag points (kept unmoved) |
+
 ## Part 2 Flag-Flip Prerequisites (Before `PITCHPULSE_USE_BUNDLE=1`)
 In addition to the replay decision rules above, the following serving/CI fixes must land before flipping `PITCHPULSE_USE_BUNDLE=1` in production:
 1. **Home/Neutral venue selector & custom lineup default:** Add a Home/Neutral venue selector in the UI, and default custom lineups to `neutral=True` (legacy model is order-symmetric, whereas the bundle gives the first-listed team home advantage unless `neutral=True`).
