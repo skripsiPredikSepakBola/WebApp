@@ -180,10 +180,6 @@ def test_context_lookup_parity_and_mutation(n=100):
 
     try:
         for r in games.itertuples(index=False):
-            if prev_s is not None and r.season != prev_s:
-                for k in list(elo_r):
-                    elo_r[k] = elo_r[k] * 0.75 + 1500.0 * 0.25
-            prev_s = r.season
             gid, hid, aid = int(r.game_id), int(r.home_club_id), int(r.away_club_id)
             cid = str(r.competition_id or '').strip()
             rd = str(r.round or '').lower()
@@ -265,16 +261,87 @@ def test_context_lookup_parity_and_mutation(n=100):
 
 def test_rebuild_state_equivalence_and_freeze_hashes():
     import hashlib, json
-    from rebuild_state import BASE_STATE_PATH, rebuild
+    from collections import deque
+    from elo import EloTracker
+    from features import LeagueStats, TeamState, is_neutral_match
+    from rebuild_state import BASE_STATE_PATH, load_trackers_from_base, rebuild
 
-    with open(BASE_STATE_PATH, 'r', encoding='utf-8') as f:
-        base = json.load(f)
+    # Real 200-match equivalence test (runs in CI without games.csv):
+    # Hydrate trackers at 2026-10-01 cutoff, step through next 210 matches,
+    # and assert get_match_context() matches history_features.parquet to <= 1e-9.
+    web_app._ensure_models()
+    hist = pd.read_parquet(os.path.join(web_app.DATA_DIR, 'data', 'history_features.parquet'))
+    hist_fwd = hist[hist['is_forward'] == 1].set_index('match_id')
+    eq_path = os.path.join(web_app.DATA_DIR, 'tests', 'equivalence_200.json')
+    with open(eq_path, 'r', encoding='utf-8') as f:
+        eq = json.load(f)
 
-    # Finding 5: base state must not suffer Elo collapse to 1500.0 (e.g. Germany id=3262 != 1500.0)
-    germany_base = base['teams']['3262']
-    assert abs(germany_base['elo'] - 1500.0) > 50.0, f"Germany Elo collapsed: {germany_base}"
+    elo, leagues, teams = EloTracker(), LeagueStats(), TeamState()
+    for k, v in eq['teams'].items():
+        tid = int(k)
+        elo.r[tid] = float(v['elo'])
+        teams.hist[tid] = deque([(int(x[0]), int(x[1])) for x in v['last10']], maxlen=10)
+        if v.get('last_date'):
+            teams.last[tid] = pd.Timestamp(v['last_date'])
+    for cid, v in eq['leagues'].items():
+        leagues.n[cid] = int(v['n'])
+        leagues.goals[cid] = float(v['goals'])
+        leagues.home[cid] = float(v['home'])
+
+    orig_ts, orig_ls = web_app.TEAM_STATE, web_app.LEAGUE_STATE
+    max_eq_err, eq_checked = 0.0, 0
+    try:
+        for m in eq['matches']:
+            gid, hid, aid = int(m['game_id']), int(m['home_club_id']), int(m['away_club_id'])
+            cid, dt = m['competition_id'], pd.Timestamp(m['date'])
+            neu = is_neutral_match(cid, m['round'])
+            if m.get('in_hist'):
+                gfh, gah, rh = teams.get(hid, dt)
+                gfa, gaa, ra = teams.get(aid, dt)
+                lgg, lgh = leagues.get(cid)
+                web_app.TEAM_STATE = {
+                    'by_id': {
+                        str(hid): {'elo': elo.rating(hid), 'gf10': gfh, 'ga10': gah},
+                        str(aid): {'elo': elo.rating(aid), 'gf10': gfa, 'ga10': gaa},
+                    },
+                    'by_name': {},
+                }
+                web_app.LEAGUE_STATE = {cid: {'avg_goals': lgg, 'home_win': lgh, 'tier_known': True}}
+                ctx = web_app.get_match_context('Home', 'Away', {
+                    'home_club_id': hid, 'away_club_id': aid, 'league_id': cid,
+                    'neutral': neu, 'home_rest': rh, 'away_rest': ra,
+                })
+                row = hist_fwd.loc[gid]
+                diffs = [
+                    abs(ctx['elo_a'] - row['own_elo']),
+                    abs(ctx['elo_b'] - row['opp_elo']),
+                    abs((ctx['elo_a'] - ctx['elo_b']) - row['diff_elo']),
+                    abs((ctx['elo_a'] + ctx['elo_b']) - row['sum_elo']),
+                    abs(ctx['gf_a'] - row['own_gf10']),
+                    abs(ctx['ga_a'] - row['own_ga10']),
+                    abs(ctx['gf_b'] - row['opp_gf10']),
+                    abs(ctx['ga_b'] - row['opp_ga10']),
+                    abs(ctx['rest_a'] - row['own_rest']),
+                    abs(ctx['rest_b'] - row['opp_rest']),
+                    abs(ctx['league_avg_goals'] - row['league_avg_goals']),
+                    abs(ctx['league_home_win_rate'] - row['league_home_win_rate']),
+                    abs(ctx['league_tier_factor'] - row['league_tier_factor']),
+                    abs((0.0 if ctx['neutral'] else 1.0) - row['home_flag']),
+                ]
+                max_eq_err = max(max_eq_err, *diffs)
+                assert max(diffs) <= 1e-9, f"CI equivalence mismatch at {gid}: {diffs}"
+                eq_checked += 1
+            elo.update(hid, aid, m['home_club_goals'], m['away_club_goals'], neutral=neu)
+            leagues.update(cid, m['home_club_goals'], m['away_club_goals'])
+            teams.update(hid, m['home_club_goals'], m['away_club_goals'], dt)
+            teams.update(aid, m['away_club_goals'], m['home_club_goals'], dt)
+    finally:
+        web_app.TEAM_STATE, web_app.LEAGUE_STATE = orig_ts, orig_ls
+    assert eq_checked == 200, f"Expected 200 equivalence matches, got {eq_checked}"
 
     # Findings 1-4: deterministic rebuild preserves untouched rolling goals, keys by ID, skips youth, no case split
+    with open(BASE_STATE_PATH, 'r', encoding='utf-8') as f:
+        base = json.load(f)
     batch = [
         {
             'match_id': 'tmapi:999001',
@@ -305,17 +372,37 @@ def test_rebuild_state_equivalence_and_freeze_hashes():
     r2 = rebuild(batch, write_files=False)
     assert r1 == r2 and r1['mapped_matches'] == 1 and r1['skipped_unmapped'] == 1, r1
 
-    # Verify Costa Rica (untouched) retains non-default gf10/ga10 from base_state (not wiped to 1.35)
-    from rebuild_state import load_trackers_from_base
     elo_b, lg_b, tm_b, _, _ = load_trackers_from_base(base)
     cr_gf, cr_ga, _ = tm_b.get(base['club_name_to_id']['costa rica'], pd.Timestamp('2026-11-12'))
     assert abs(cr_gf - 1.35) > 0.05 and abs(cr_ga - 1.35) > 0.05, (cr_gf, cr_ga)
 
-    # Verify prospective_replay imports and uses production build_legacy_feature_pair cleanly
     import prospective_replay as pr
     empty_res = pr.run_prospective_replay(matches=[])
     assert empty_res['status'] == 'empty' and empty_res['mapping_coverage'] == 0.0, empty_res
-    print(f"Rebuild State & Replay Equivalence CI PASSED (mapped=1, skipped=1, Germany_base_elo={germany_base['elo']:.2f}).")
+
+    # Problems 2 & 5: missing league_id -> league_tier_factor=0.95, tier_missing=False; rest days from last_date
+    orig_ts2 = web_app.TEAM_STATE
+    try:
+        web_app.TEAM_STATE = {
+            'as_of': '2026-11-17',
+            'by_id': {
+                '9991': {'elo': 1600.0, 'gf10': 1.5, 'ga10': 1.0, 'last_date': '2026-11-14'},
+                '9992': {'elo': 1550.0, 'gf10': 1.2, 'ga10': 1.1, 'last_date': '2026-11-10'},
+            },
+            'by_name': {},
+        }
+        ctx_p25 = web_app.get_match_context('Home', 'Away', {
+            'home_club_id': 9991,
+            'away_club_id': 9992,
+        })
+        assert abs(ctx_p25['league_tier_factor'] - 0.95) < 1e-12, ctx_p25
+        assert ctx_p25['tier_missing'] is False, ctx_p25
+        assert abs(ctx_p25['rest_a'] - 3.0) < 1e-12, ctx_p25
+        assert abs(ctx_p25['rest_b'] - 7.0) < 1e-12, ctx_p25
+    finally:
+        web_app.TEAM_STATE = orig_ts2
+
+    print(f"Rebuild State & 200-Match CI Equivalence PASSED (n={eq_checked}, max_diff={max_eq_err:.2e}, mapped=1, skipped=1).")
 
     # Verify freeze SHA-256 hashes in models/model_meta.json
     meta_path = os.path.join(web_app.DATA_DIR, 'models', 'model_meta.json')

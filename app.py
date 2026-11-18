@@ -624,6 +624,8 @@ def _bg_supabase_delta_sync():
         remaining = 2.0 - (time.perf_counter() - _BOOT_T0)
         if remaining > 0:
             time.sleep(remaining)
+        if app.testing or (sys.argv and sys.argv[0] == '-c'):
+            return
         url, _ = _sb_cfg()
         if not url:
             return
@@ -1440,6 +1442,22 @@ def _lookup_team_state(team_name, club_id=None):
     return by_nm.get(team_name) or by_nm.get(clean) or by_nm.get(clean.lower())
 
 
+def _compute_rest_days(explicit_val, state_entry, ref_date_str):
+    if explicit_val is not None:
+        return float(explicit_val)
+    last_date_str = (state_entry or {}).get('last_date')
+    if last_date_str and ref_date_str:
+        try:
+            d_last = datetime.strptime(str(last_date_str)[:10], '%Y-%m-%d').date()
+            d_ref = datetime.strptime(str(ref_date_str)[:10], '%Y-%m-%d').date()
+            days = (d_ref - d_last).days
+            if days >= 1:
+                return float(max(1, min(days, 14)))
+        except (ValueError, TypeError):
+            pass
+    return 7.0
+
+
 def get_match_context(team_a, team_b, data):
     from league_tiers import resolve_league_tier
     from features import is_neutral_match
@@ -1448,10 +1466,15 @@ def get_match_context(team_a, team_b, data):
     sb_state = _lookup_team_state(team_b, data.get('away_club_id'))
     cid = str(data.get('league_id') or data.get('competition_id') or '').strip()
     lg = LEAGUE_STATE.get(cid, {'avg_goals': 2.7, 'home_win': 0.45})
-    tier_val, tier_known = resolve_league_tier(cid)
-    if cid and cid in LEAGUE_STATE and LEAGUE_STATE[cid].get('tier_known') is not None:
-        tier_known = bool(LEAGUE_STATE[cid]['tier_known'])
+    if not cid:
+        tier_val = float(data.get('league_tier_factor', 0.95))
+        tier_known = True
+    else:
+        tier_val, tier_known = resolve_league_tier(cid)
+        if cid in LEAGUE_STATE and LEAGUE_STATE[cid].get('tier_known') is not None:
+            tier_known = bool(LEAGUE_STATE[cid]['tier_known'])
     neutral = bool(data.get('neutral', False)) or is_neutral_match(cid)
+    ref_date_str = data.get('match_date') or (TEAM_STATE or {}).get('as_of')
     return {
         'neutral': neutral,
         'elo_a': (sa_state or {}).get('elo', 1500.0),
@@ -1460,8 +1483,8 @@ def get_match_context(team_a, team_b, data):
         'ga_a': (sa_state or {}).get('ga10', 1.35),
         'gf_b': (sb_state or {}).get('gf10', 1.35),
         'ga_b': (sb_state or {}).get('ga10', 1.35),
-        'rest_a': float(data.get('home_rest', 7.0)),
-        'rest_b': float(data.get('away_rest', 7.0)),
+        'rest_a': _compute_rest_days(data.get('home_rest'), sa_state, ref_date_str),
+        'rest_b': _compute_rest_days(data.get('away_rest'), sb_state, ref_date_str),
         'league_avg_goals': float(lg.get('avg_goals', 2.7)),
         'league_home_win_rate': float(lg.get('home_win', 0.45)),
         'league_tier_factor': float(tier_val),
@@ -1595,7 +1618,7 @@ def predict():
             scorers_a = compute_player_scorers(st_a, xg_a)
             scorers_b = compute_player_scorers(st_b, xg_b)
             over25 = round(float(sum(grid[i, j] for i in range(11) for j in range(11) if i + j > 2)) * 100, 1)
-            if ctx['elo_missing'] or ctx['tier_missing']:
+            if ctx['elo_missing']:
                 confidence_cap = 'Low'
         else:
             features_ab, features_ba = build_legacy_feature_pair(

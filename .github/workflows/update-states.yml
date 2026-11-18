@@ -1,9 +1,8 @@
 name: Daily Team & League State Update
 
 on:
-  # schedule paused pending state-builder & equivalence fix
-  # schedule:
-  #   - cron: '0 3 * * *'
+  schedule:
+    - cron: '0 3 * * *'
   workflow_dispatch:
 
 concurrency:
