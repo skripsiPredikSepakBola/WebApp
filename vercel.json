@@ -1,9 +1,9 @@
 {
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ':!reports/'",
   "services": {
     "web": {
       "root": ".",
-      "entrypoint": "app.py"
+      "entrypoint": "app.py",
+      "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ':!reports/'"
     }
   },
   "rewrites": [

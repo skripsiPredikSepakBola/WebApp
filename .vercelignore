@@ -10,3 +10,9 @@ preset_lineups.json
 preset_categories.json
 match_tracker.db
 data/local_sync_cache.json
+.python-version
+.pytest_cache/
+data/history_features.parquet
+tests/
+reports/
+offline/
