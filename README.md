@@ -45,34 +45,40 @@ Designed for both production sports analytics and rigorous academic thesis (*skr
 ### 5. Match Calendar & Online Automatic Sync + Retraining
 - **Interactive Match Calendar (`GET /api/calendar?month=YYYY-MM`)**: Tracks **Previous (`FT`)**, **Today (`LIVE` / scheduled)**, and **Upcoming** fixtures across European Top-5 leagues, UEFA Champions League, **UEFA Nations League A/B/C/D**, ASEAN leagues, and global API-Football fixtures, with one-click **Predict** simulation.
 - **Zero-Key Transfermarkt JSON API Sync (`tmapi-alpha`)**: `sync_matches.py` queries `https://tmapi-alpha.transfermarkt.technology` across `GB1`, `ES1`, `L1`, `IT1`, `FR1`, `CL`, `UNLA`, `UNLB`, `UNLC`, `UNLD`, `IN1L`, `MYS1`, `THA1`, `VIE1`, `SIN1`, plus optional `API_FOOTBALL_KEY` (yesterday + today UTC fixtures) and `FOOTBALL_DATA_KEY` feeds into Supabase (`finished_matches`, `players`) or local/serverless cache (`local_sync_cache.json` / `/tmp/local_sync_cache.json` on Vercel).
-- **GitHub Actions Automation**:
-  - `.github/workflows/sync-matches.yml`: Runs `python sync_matches.py` every 6 hours (`0 */6 * * *`) to update Supabase.
-  - `.github/workflows/update-states.yml`: Runs `python update_states.py` daily at `03:00 UTC` (`0 3 * * *`) to update `models/team_state.json` and `models/league_state.json` idempotently.
-  - `.github/workflows/retrain.yml`: Manual-only (`workflow_dispatch`, dry-run `contents: read`) gated retrain via `retrain_gate.py`.
-  - `.github/workflows/ci-smoke.yml`: Python `3.11` CI check running golden legacy regression, parity/gate checks, and symmetry smoke test.
+- **GitHub Actions Automation (shared `model-state-push` concurrency group)**:
+  - `.github/workflows/sync-matches.yml`: Runs `python sync_matches.py` every 6 hours (`0 */6 * * *`) to upsert recent finished matches into Supabase (`finished_matches`).
+  - `.github/workflows/update-states.yml`: Runs `python update_states.py` (`rebuild_state.rebuild()`) daily at `03:00 UTC` (`0 3 * * *`) to deterministically rebuild `models/team_state.json` (`elo`, `gf10`, `ga10`, `last_date` keyed by Transfermarkt ID) and `models/league_state.json` (keyed by `competition_id`) from `models/base_state_2026-11-12.json` plus paginated post-cutoff Supabase matches (`fetch_finished_matches_paginated` with truncation guard and `AMBIGUOUS_COMP_SLUGS` cross-country guard).
+  - `.github/workflows/weekly-replay.yml`: Runs Mondays at `06:00 UTC` (`0 6 * * 1`), asserts `team_state.json` `as_of` is within 2 days of the report date, runs `prospective_replay.py` (`freeze_date='2026-11-18'`), and commits only `reports/replay_YYYY-MM-DD.{json,md,log}` (skipped by Vercel `ignoreCommand`), labelled `MONITORING ONLY` until `>= 2026-12-16` and `>= 500` lineup matches.
+  - `.github/workflows/retrain.yml`: Manual-only (`workflow_dispatch`, `contents: read` dry-run) gated retrain via `retrain.py` and `retrain_gate.py`.
+  - `.github/workflows/ci-smoke.yml`: Python `3.11` CI running 50-payload golden legacy regression (`tests/test_golden_legacy.py`), 100-matchup F11 payload parity, 200-match CI context equivalence (`tests/equivalence_200.json`), 7-artifact Freeze SHA-256 integrity, rescaled grid & gate unit checks, legacy symmetry smoke test, and flag-on bundle smoke test (`PITCHPULSE_USE_BUNDLE=1, neutral=True`).
 
 ---
 
 ## End-to-End Data-to-Prediction Pipeline
 
 1. **Raw Data Ingestion**:
-   - Historical corpus from Transfermarkt CSVs (`games.csv`, `appearances.csv`, `game_lineups.csv`, `players.csv`, `competitions.csv`, `clubs.csv`) covering **79,060** matches and **71,161** players.
-   - Live incremental updates via `sync_matches.py` (`tmapi-alpha`, API-Football, football-data.org) into Supabase.
-2. **Player Rating Computation (`build_gameplay_ratings.py`)**:
-   - Aggregates per-player appearances with competition-tier weights (`1.00` Big-5/UCL, `0.86` Major, `0.74` ASEAN) and exponential recency decay (`0.52 ** (2025 - season)` for active players; `1.0` for Legends).
-   - Computes Bayesian-shrunk per-90 gameplay metrics per position (`GK`, `DEF`, `MID`, `ATT`): goals/90, assists/90, goals conceded/90, clean-sheet rate, competition-weighted minutes, win contribution, and cards/90 penalty, mapped onto `[52.0, 97.0]`.
+   - Historical corpus from Transfermarkt CSVs (`games.csv`, `appearances.csv`, `game_lineups.csv`, `players.csv`, `competitions.csv`, `clubs.csv`) covering **79,060** legacy matches (`74,483` matched v3 walk-forward history matches / `148,966` rows across **74** competitions) and **71,161** players.
+   - Live incremental updates via `sync_matches.py` (`tmapi-alpha`, API-Football, football-data.org) into Supabase, with deterministic ID mapping and paginated post-`2026-11-12` state rebuilds in `rebuild_state.py`.
+2. **Player Rating Computation (`offline/build_gameplay_ratings.py` & `offline/build_value_ratings.py`)**:
+   - Aggregates per-player appearances with competition-tier weights (`1.00` Big-5/UCL, `0.86` Major, `0.78` Standard, `0.74` ASEAN) and exponential recency decay (`0.52 ** (2025 - season)` for active players; `1.0` for Legends).
+   - Computes Bayesian-shrunk per-90 gameplay metrics per position (`GK`, `DEF`, `MID`, `ATT`): goals/90, assists/90, goals conceded/90, clean-sheet rate, competition-weighted minutes, win contribution, and cards/90 penalty, mapped onto `[52.0, 97.0]` (`49,822` gameplay-rated players; point-in-time historical lookup via `max_date`).
    - Outputs `players_lite.json` and precomputed binary caches (`startup_cache.joblib`, `explorer_bundle.joblib`).
 3. **Zero-Leakage Feature Engineering (`offline/build_features_from_value_ratings.py` & `features.py`)**:
    - **Legacy Live Model (`USE_BUNDLE=False`)**: Uses **16 pre-kickoff differential features** (`diff_overall_mean`, `diff_overall_max`, `diff_overall_min`, `diff_attack_vs_defense`, `diff_defense_vs_attack`, `diff_midfield`, `diff_sub_mean`, `diff_depth_gap`, `diff_market_val_log`, `diff_form_pts_5`, `diff_form_gd_5`, `diff_aerial_att_vs_def`, `diff_aerial_def_vs_att`, `diff_prime_score`, `diff_cohesion`, `league_tier_factor`).
-   - **Frozen v2 Candidate Bundle (`models/model_bundle.joblib`, `G6+tier`, 25 features)**: Prunes 10 low-signal features and adds `home_flag`, `diff_elo`, `sum_elo`, `league_avg_goals`, `league_home_win_rate`, and absolute own/opponent `ATT/DEF/GK/Elo/gf10/ga10/rest`, evaluated via `prospective_replay.py` per `replay_plan.md`.
-   - Enforces causal `shift(1)` on rolling 5-match form (`Win=3`, `Draw=1`, `Loss=0`) and symmetrical mirroring (`158,120` samples).
-4. **Chronological Model Training (`retrain_full_thesis_pipeline.py`)**:
-   - **Train (`<= 2021`)**: `86,400` samples | **Validation (`2022`)**: `11,826` samples (`tau_draw = 0.27` tuning) | **Unseen Hold-Out Test (`2023–2026`)**: `59,894` samples.
-   - Trains `HistGradientBoostingClassifier` (3-class Win/Draw/Loss: Test Acc `52.74%`, Tuned Macro-F1 `0.4666`, LogLoss `0.9845`; Binary ROC-AUC `0.7133`) and `HistGradientBoostingRegressor` (xG MAE `0.9704`).
+   - **Frozen v3 Candidate Bundle (`PITCHPULSE_USE_BUNDLE=1`, tag `v3-frozen-bundle`, `models/model_bundle.joblib`)**: Prunes 10 low-signal features and uses **25 `G6+tier` features**:
+     - `ANTISYMMETRIC` (7): `diff_overall_mean`, `diff_sub_mean`, `diff_market_val_log`, `diff_form_gd_5`, `diff_cohesion`, `diff_elo`, `home_flag` (`+1` Home, `0` Neutral, `-1` when mirrored Away)
+     - `SYMMETRIC` (4): `sum_elo`, `league_avg_goals`, `league_home_win_rate`, `league_tier_factor`
+     - `SWAP_PAIRS` (14): `own_att`/`opp_att`, `own_def`/`opp_def`, `own_gk`/`opp_gk`, `own_elo`/`opp_elo` (continuous no-pull `EloTracker`: `k=20`, `home_adv=65`, `base=1500`), `own_gf10`/`opp_gf10`, `own_ga10`/`opp_ga10` (shrunk 10-match rolling goals), `own_rest`/`opp_rest` (clamped `[1, 14]` days from `last_date` vs UTC date or explicit `match_date`).
+   - Evaluated prospectively against production legacy via `prospective_replay.py` per [`replay_plan.md`](replay_plan.md) (`>= 2026-12-16` and `>= 500` lineup matches gate).
+4. **Chronological Walk-Forward Training & Retraining (`retrain.py`, `retrain_gate.py`, `scoreline.py`)**:
+   - **Legacy Benchmark (`<= 2021` Train `86,400` / `2022` Val `11,826` / `2023–2026` Test `59,894`)**: `HistGradientBoostingClassifier` achieves Test Acc `52.74%`, Tuned Macro-F1 `0.4666` (`tau_draw = 0.27`), LogLoss `0.9845`, Binary ROC-AUC `0.7133`, xG MAE `0.9704`.
+   - **Frozen v3 Walk-Forward (`2023–2026`, `n = 29,947` pooled test matches across 4 expanding folds, `StrongReg` `max_depth=4`, `l2=6.0`, `min_samples_leaf=250`)**: Removing interleaved `season_regress` from training Elo improved LogLoss from `0.95418` (`v2`) to **`0.95212`** (`v3`, paired bootstrap `mean_gain = +0.00205`, `p5 = +0.00129`, `P(v3 > v2) = 1.000`) and RPS from `0.19873` to **`0.19801`**, with calibration `home_gap = +0.0053` and `draw_gap = -0.0077`.
+   - **Region-Rescaled `11×11` Dixon-Coles Scoreline Grid (`scoreline.py`)**: Scales Poisson + Dixon-Coles regions (`rho = 0.0`, `blend_w = 0.0`) so grid Win/Draw/Loss region sums match classifier probabilities to `< 1e-9`.
+   - **6-Rule Gated Promotion (`retrain_gate.py`)**: Requires `n_val_matches >= 300`, `mean_gain >= 0.002`, paired bootstrap `gain_p5 > 0.0`, `new_rps <= old_rps`, `home_gap <= 0.03`, and `draw_gap <= 0.03`.
 5. **Real-Time Inference (`POST /api/predict` in `app.py`)**:
-   - Resolves starters/subs (with optional historical `bisect_right` time-travel snapshot) and applies 13-role OOP penalties (`R_eff = max(35, R_base - Penalty)`).
-   - Evaluates both `X_ab` and `X_ba` and averages complementary probabilities for exact `0.0%` Home/Away symmetry.
-   - Computes dual-team `xG`, generates the `6×6` Bivariate Poisson scoreline matrix, and disaggregates team `xG` into player anytime goalscorer probabilities.
+   - Resolves starters/subs (with optional `bisect_right` historical time-travel snapshot) and applies 13-role OOP penalties (`R_eff = max(35, R - Penalty)`).
+   - Evaluates both `X_ab` and `X_ba` symmetrically (`0.0%` order bias when neutral or swapped on symmetrical arm).
+   - Custom lineups default to `#neutral` checked (`neutral: true`); selecting a fixture from Calendar/Explorer unchecks `#neutral` automatically (`simulateFixture()`). Under `PITCHPULSE_USE_BUNDLE=1`, omitting `league_id` defaults `league_tier_factor` to `0.95` without capping confidence (`confidence` caps to `'Low'` only when `elo_missing` is `True`).
 
 ---
 
@@ -126,6 +132,8 @@ python web_app_new_v2/build_startup_cache.py
 ### 5. Running Verification & Anti-Leakage Test Suites
 
 ```bash
+python tests/test_golden_legacy.py        # 50-payload legacy bit-for-bit parity (USE_BUNDLE=False)
+python test_parity_and_acceptance.py      # 100 payload parity, 200 history/CI equivalence, 7 freeze hashes, gate & grid
 python web_app_new_v2/test_dual_deck_e2e.py
 python test_no_leakage.py
 python test_value_ratings.py
@@ -155,6 +163,7 @@ PORT=5000
 | `FOOTBALL_DATA_KEY` | Optional | `""` | `football-data.org` v4 token for supplementary match and squad sync/backfill. |
 | `AUTO_SYNC_ENABLED` | Optional | `1` | Enables (`1`/`true`) or disables (`0`/`false`) the background auto-sync daemon thread in `app.py`. |
 | `AUTO_SYNC_INTERVAL_SEC` | Optional | `21600` | Interval in seconds between automatic background sync cycles (default `21600` = 6 hours). |
+| `PITCHPULSE_USE_BUNDLE` | Optional | `0` | Feature flag (`1` enables frozen v3 `G6+tier` bundle in `app.py`; kept unset/`0` during pre-registered replay). |
 | `PORT` | Optional | `5000` | HTTP port bound by `app.py` or Gunicorn. |
 
 ---
@@ -194,6 +203,9 @@ Runs symmetrical pre-kickoff match inference (`X_ab` and `X_ba` averaged), 13-ro
     "home_form_gd": 1.2,
     "away_form_gd": 0.9,
     "league_tier_factor": 0.95,
+    "neutral": false,
+    "league_id": "ES1",
+    "match_date": "2026-11-18",
     "report_date": "2026-11",
     "knockout": false,
     "threshold_mode": "tuned"
@@ -267,39 +279,61 @@ Health check endpoint returning `{"status": "ok", "players": 71161}`.
 
 ```text
 web_app_new_v2/
-├── app.py                          # Flask application, 13-role tactical engine, CORS & REST API routes
+├── app.py                          # Flask application, dual-arm serving (USE_BUNDLE flag), 13-role OOP engine & APIs
+├── elo.py                          # Continuous EloTracker (k=20, home_adv=65, base=1500, no season_regress)
+├── features.py                     # Single source of truth for G6+tier (25 features), TeamState & LeagueStats
+├── league_tiers.py                 # Competition quality tiers & fallback resolution
+├── scoreline.py                    # 11x11 Dixon-Coles grid & region-rescaled W/D/L matching + RPS
+├── retrain_gate.py                 # 6-rule chronological retrain gate (paired bootstrap p5 > 0, RPS, calibration)
+├── rebuild_state.py                # Deterministic ID-mapped state builder + paginated fetch + ambiguous-slug guard
+├── update_states.py                # Daily state entrypoint delegating to rebuild_state.rebuild()
+├── prospective_replay.py           # Pre-registered prospective replay evaluator (legacy arm vs v3 bundle)
 ├── sync_matches.py                 # Transfermarkt (tmapi-alpha), API-Football, football-data.org & Calendar sync
-├── retrain.py                      # Chronological retraining pipeline with validation log-loss gating
+├── retrain.py                      # Chronological retraining pipeline using ID-mapped base state & gate
 ├── build_startup_cache.py          # Builder for startup_cache.joblib (players, 13 roles, Legends split, snapshots)
-├── vercel.json                     # Vercel Flask service configuration
+├── vercel.json                     # Vercel Flask service configuration (skips reports/ commits)
 ├── .vercelignore                   # Excludes large raw CSVs & duplicate JSONs from Vercel bundle
 ├── apply_supabase_schema.py        # Supabase schema verifier & DDL helper
 ├── schema.sql                      # PostgreSQL / Supabase table definitions (5 tables)
 ├── academic_report_data.json       # Ground-truth evaluation metrics for thesis defense & /api/thesis-metrics
-├── model_advanced_3class.joblib    # Trained HistGradientBoostingClassifier (3-class Win/Draw/Loss)
-├── model_advanced_xg.joblib        # Trained HistGradientBoostingRegressor (Expected Goals xG)
-├── advanced_feature_cols.joblib    # Ordered list of the 16 pre-kickoff differential features
+├── model_advanced_3class.joblib    # Legacy HistGradientBoostingClassifier (16 features)
+├── model_advanced_xg.joblib        # Legacy HistGradientBoostingRegressor (xG)
+├── advanced_feature_cols.joblib    # Ordered list of the 16 pre-kickoff legacy features
+├── models/
+│   ├── model_bundle.joblib         # Frozen v3 candidate bundle (G6+tier 25 features, StrongReg, Dixon-Coles)
+│   ├── model_meta.json             # v3 metadata, walk-forward stats, 7 freeze SHA-256 hashes & limitations
+│   ├── base_state_2026-11-12.json  # Immutable pre-cutoff Elo/last10/league snapshot & ID maps
+│   ├── team_state.json             # Current Transfermarkt ID-keyed team Elo, gf10/ga10 & last_date
+│   └── league_state.json           # Current competition ID-keyed avg_goals, home_win & tier
+├── data/
+│   └── history_features.parquet    # 74,483 matches (148,966 forward+mirrored rows) with continuous v3 Elo
 ├── startup_cache.joblib            # Binary startup cache (~0.2s–0.7s cold boot)
 ├── explorer_bundle.joblib          # Precomputed leagues, standings, clubs, countries & player career logs
 ├── players_lite.json               # Local fallback player catalog (71,161 players with gameplay ratings)
 ├── preset_lineups.json             # Active club/national presets + All-Time Legends & Icons lineups
 ├── preset_categories.json          # Categorized preset index
 ├── historical_presets.json         # Monthly historical club & national team lineups (2020-01 to 2026-11)
-├── test_dual_deck_e2e.py           # End-to-end automated unit & integration test suite
-├── requirements.txt                # Python 3.11 pinned package dependencies
+├── test_parity_and_acceptance.py   # Parity, 200-match history & CI equivalence, 7 freeze hashes, gate & grid suite
+├── tests/
+│   ├── test_golden_legacy.py       # 50-payload full-JSON golden test pinning USE_BUNDLE=False to main@7d67674
+│   ├── golden_legacy_50.json       # Committed 50-payload golden fixture
+│   └── equivalence_200.json        # Committed 2026-10-01 cutoff + 210-match CI equivalence fixture
+├── reports/                        # Walk-forward CSVs, Elo diagnostic, mapper validation, test logs & weekly replays
+├── requirements.txt                # Python 3.11 pinned dependencies (pandas 2.3.3, numpy 1.26.4, sklearn 1.6.1, pyarrow 21.0.0)
 ├── .python-version                 # Python runtime pin (3.11)
-├── replay_plan.md                  # Pre-registered prospective replay protocol
+├── replay_plan.md                  # Pre-registered v3 prospective replay protocol & Post-freeze harness log
 ├── .env.example                    # Environment variable template
 ├── .github/workflows/
 │   ├── sync-matches.yml            # 6-hour scheduled GitHub Action for match sync to Supabase
-│   ├── update-states.yml           # Daily 03:00 UTC idempotent team/league state updater
-│   ├── retrain.yml                 # Manual-only (workflow_dispatch) gated retrain check
-│   └── ci-smoke.yml                # Python 3.11 CI golden, parity, and symmetry smoke checks
+│   ├── update-states.yml           # Daily 03:00 UTC deterministic state rebuild via rebuild_state.py
+│   ├── weekly-replay.yml           # Weekly Mon 06:00 UTC monitoring replay report -> reports/
+│   ├── retrain.yml                 # Manual-only (workflow_dispatch) dry-run gated retrain
+│   └── ci-smoke.yml                # Python 3.11 CI golden, parity, equivalence, 7 hashes & dual-arm smoke checks
 ├── templates/
-│   └── index.html                  # PitchPulse AI single-page application template
+│   └── index.html                  # PitchPulse AI single-page application template (includes #neutral switch)
 ├── static/
 │   ├── css/style.css               # Stadium Obsidian UI stylesheet, Bronze/Silver/Gold tier frames & dark scrollbars
-│   └── js/app.js                   # Frontend tactical pitch, optimal formation rearrangement, Match Calendar & Explorer UI
+│   └── js/app.js                   # Frontend tactical pitch, #neutral toggle logic, Match Calendar & Explorer UI
 ├── README.md                       # Production engineering, pipeline & API documentation
 └── THESIS_METHODOLOGY.md           # Academic thesis methodology & sidang defense reference
 ```
