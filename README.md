@@ -16,7 +16,7 @@ Designed for both production sports analytics and rigorous academic thesis (*skr
   - **Attack (`ATT`)**: `LW` (Left Winger), `RW` (Right Winger), `CF` (Second Striker / Centre-Forward), `ST` (Striker)
 - **8 Supported Tactical Formations & Auto-Rearrangement**: `4-3-3`, `4-2-3-1`, `4-4-2`, `3-5-2`, `3-4-3`, `5-3-2`, `5-4-1`, `4-1-4-1`. Changing formation automatically runs `rearrangeLineupForFormation` (`fitScore`), pooling all starters and substitutes to compute the highest-rated, line-aligned Starting XI and bench.
 - **Bronze / Silver / Gold Player Rating Tiers**: Pitch cards and player avatars render **Bronze (`< 72`)**, **Silver (`72–82.9`)**, and **Gold (`>= 83`)** metallic frames with face-centered portrait framing (`object-position: 50% 16%`).
-- **Gameplay-Stats Player Ratings (`[52.0, 97.0]`)**: Computed in [`build_gameplay_ratings.py`](../build_gameplay_ratings.py) from real Transfermarkt match appearances (`appearances.csv` + `games.csv`) using position-specific weighted metrics (goals/90, assists/90, goals conceded/90, clean-sheet rate, competition-weighted minutes, win contribution, cards/90 penalty, Bayesian shrinkage, and `0.52 ** (2025 - season)` recency decay for active players).
+- **Gameplay-Stats Player Ratings (`[52.0, 97.0]`)**: Computed in [`offline/build_gameplay_ratings.py`](offline/build_gameplay_ratings.py) from real Transfermarkt match appearances (`appearances.csv` + `games.csv`) using position-specific weighted metrics (goals/90, assists/90, goals conceded/90, clean-sheet rate, competition-weighted minutes, win contribution, cards/90 penalty, Bayesian shrinkage, and `0.52 ** (2025 - season)` recency decay for active players).
 - **Granular Effective Rating & OOP Penalty Matrix**: Deploying a player outside their natural role applies a calibrated rating deduction before team aggregation ($R_{\text{eff}} = \max(35.0, R_{\text{base}} - \text{Penalty})$), ranging from `-1` (`ST <-> CF`) and `-2` (`LW <-> RW`, `CAM <-> CM`, `CM <-> CDM`) to `-18` (`DEF <-> ATT`) and `-40` / `-45` (`GK <-> Outfield`).
 
 ### 2. Active Squads vs. Legends & Former Icons Split
@@ -47,7 +47,9 @@ Designed for both production sports analytics and rigorous academic thesis (*skr
 - **Zero-Key Transfermarkt JSON API Sync (`tmapi-alpha`)**: `sync_matches.py` queries `https://tmapi-alpha.transfermarkt.technology` across `GB1`, `ES1`, `L1`, `IT1`, `FR1`, `CL`, `UNLA`, `UNLB`, `UNLC`, `UNLD`, `IN1L`, `MYS1`, `THA1`, `VIE1`, `SIN1`, plus optional `API_FOOTBALL_KEY` (yesterday + today UTC fixtures) and `FOOTBALL_DATA_KEY` feeds into Supabase (`finished_matches`, `players`) or local/serverless cache (`local_sync_cache.json` / `/tmp/local_sync_cache.json` on Vercel).
 - **GitHub Actions Automation**:
   - `.github/workflows/sync-matches.yml`: Runs `python sync_matches.py` every 6 hours (`0 */6 * * *`) to update Supabase.
-  - `.github/workflows/retrain.yml`: Runs `python retrain.py` daily at `02:00 UTC` (`0 2 * * *`), rebuilding chronological lineup features from `finished_matches` and promoting `model_advanced_3class.joblib` and `model_advanced_xg.joblib` only when validation multi-class log-loss improves (`new_ll <= old_ll`).
+  - `.github/workflows/update-states.yml`: Runs `python update_states.py` daily at `03:00 UTC` (`0 3 * * *`) to update `models/team_state.json` and `models/league_state.json` idempotently.
+  - `.github/workflows/retrain.yml`: Manual-only (`workflow_dispatch`, dry-run `contents: read`) gated retrain via `retrain_gate.py`.
+  - `.github/workflows/ci-smoke.yml`: Python `3.11` CI check running golden legacy regression, parity/gate checks, and symmetry smoke test.
 
 ---
 
@@ -60,8 +62,9 @@ Designed for both production sports analytics and rigorous academic thesis (*skr
    - Aggregates per-player appearances with competition-tier weights (`1.00` Big-5/UCL, `0.86` Major, `0.74` ASEAN) and exponential recency decay (`0.52 ** (2025 - season)` for active players; `1.0` for Legends).
    - Computes Bayesian-shrunk per-90 gameplay metrics per position (`GK`, `DEF`, `MID`, `ATT`): goals/90, assists/90, goals conceded/90, clean-sheet rate, competition-weighted minutes, win contribution, and cards/90 penalty, mapped onto `[52.0, 97.0]`.
    - Outputs `players_lite.json` and precomputed binary caches (`startup_cache.joblib`, `explorer_bundle.joblib`).
-3. **Zero-Leakage Feature Engineering (`build_features_from_value_ratings.py`)**:
-   - Builds **16 pre-kickoff differential features** (`diff_overall_mean`, `diff_overall_max`, `diff_overall_min`, `diff_attack_vs_defense`, `diff_defense_vs_attack`, `diff_midfield`, `diff_sub_mean`, `diff_depth_gap`, `diff_market_val_log`, `diff_form_pts_5`, `diff_form_gd_5`, `diff_aerial_att_vs_def`, `diff_aerial_def_vs_att`, `diff_prime_score`, `diff_cohesion`, `league_tier_factor`).
+3. **Zero-Leakage Feature Engineering (`offline/build_features_from_value_ratings.py` & `features.py`)**:
+   - **Legacy Live Model (`USE_BUNDLE=False`)**: Uses **16 pre-kickoff differential features** (`diff_overall_mean`, `diff_overall_max`, `diff_overall_min`, `diff_attack_vs_defense`, `diff_defense_vs_attack`, `diff_midfield`, `diff_sub_mean`, `diff_depth_gap`, `diff_market_val_log`, `diff_form_pts_5`, `diff_form_gd_5`, `diff_aerial_att_vs_def`, `diff_aerial_def_vs_att`, `diff_prime_score`, `diff_cohesion`, `league_tier_factor`).
+   - **Frozen v2 Candidate Bundle (`models/model_bundle.joblib`, `G6+tier`, 25 features)**: Prunes 10 low-signal features and adds `home_flag`, `diff_elo`, `sum_elo`, `league_avg_goals`, `league_home_win_rate`, and absolute own/opponent `ATT/DEF/GK/Elo/gf10/ga10/rest`, evaluated via `prospective_replay.py` per `replay_plan.md`.
    - Enforces causal `shift(1)` on rolling 5-match form (`Win=3`, `Draw=1`, `Loss=0`) and symmetrical mirroring (`158,120` samples).
 4. **Chronological Model Training (`retrain_full_thesis_pipeline.py`)**:
    - **Train (`<= 2021`)**: `86,400` samples | **Validation (`2022`)**: `11,826` samples (`tau_draw = 0.27` tuning) | **Unseen Hold-Out Test (`2023–2026`)**: `59,894` samples.
@@ -111,7 +114,7 @@ gunicorn app:app --bind 0.0.0.0:${PORT:-5000} --workers 2 --threads 4 --timeout 
 
 ```bash
 # 1. Recompute real gameplay-stats player ratings
-python build_gameplay_ratings.py
+python offline/build_gameplay_ratings.py
 
 # 2. Rebuild explorer_bundle.joblib (leagues, standings, clubs, countries, player seasons)
 python build_explorer_data.py
@@ -283,12 +286,15 @@ web_app_new_v2/
 ├── preset_categories.json          # Categorized preset index
 ├── historical_presets.json         # Monthly historical club & national team lineups (2020-01 to 2026-11)
 ├── test_dual_deck_e2e.py           # End-to-end automated unit & integration test suite
-├── requirements.txt                # Python package dependencies
-├── Procfile                        # Production Gunicorn entrypoint
+├── requirements.txt                # Python 3.11 pinned package dependencies
+├── .python-version                 # Python runtime pin (3.11)
+├── replay_plan.md                  # Pre-registered prospective replay protocol
 ├── .env.example                    # Environment variable template
 ├── .github/workflows/
 │   ├── sync-matches.yml            # 6-hour scheduled GitHub Action for match sync to Supabase
-│   └── retrain.yml                 # Daily 02:00 UTC scheduled GitHub Action for chronological model retraining
+│   ├── update-states.yml           # Daily 03:00 UTC idempotent team/league state updater
+│   ├── retrain.yml                 # Manual-only (workflow_dispatch) gated retrain check
+│   └── ci-smoke.yml                # Python 3.11 CI golden, parity, and symmetry smoke checks
 ├── templates/
 │   └── index.html                  # PitchPulse AI single-page application template
 ├── static/

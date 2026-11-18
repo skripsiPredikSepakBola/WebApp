@@ -1,19 +1,20 @@
+"""Safe gated retrain using shared features.py, league_tiers.py, and history_features.parquet."""
 import json
 import os
 import joblib
-import numpy as np
 import pandas as pd
-from collections import defaultdict, deque
-from sklearn.ensemble import HistGradientBoostingClassifier, HistGradientBoostingRegressor
-from sklearn.metrics import log_loss
 
-from app import aggregate_team_advanced, cohesion_proxy, advanced_features, model_advanced_3class
+from app import aggregate_team_advanced, cohesion_proxy, model_advanced_3class, advanced_features
+from elo import EloTracker
+from features import FEATURE_COLS, LeagueStats, TeamState, build_feature_row, is_neutral_match, mirror
+from league_tiers import resolve_league_tier
+from retrain_gate import BUNDLE_PATH, retrain as gated_retrain
 from sync_matches import _sb_cfg, _sb_req
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_3_PATH = os.path.join(BASE_DIR, 'model_advanced_3class.joblib')
-MODEL_XG_PATH = os.path.join(BASE_DIR, 'model_advanced_xg.joblib')
-
+HISTORY_PATH = os.environ.get('HISTORY_FEATURES_PATH', os.path.join(BASE_DIR, 'data', 'history_features.parquet'))
+TEAM_STATE_PATH = os.path.join(BASE_DIR, 'models', 'team_state.json')
+LEAGUE_STATE_PATH = os.path.join(BASE_DIR, 'models', 'league_state.json')
 
 _POS_MAP = {
     'G': 'GK', 'GK': 'GK', 'GOALKEEPER': 'GK',
@@ -68,19 +69,48 @@ def _extract_lineups(raw):
     return None
 
 
+def _seed_trackers():
+    elo, leagues, teams = EloTracker(), LeagueStats(), TeamState()
+    if os.path.exists(TEAM_STATE_PATH):
+        with open(TEAM_STATE_PATH, 'r', encoding='utf-8') as f:
+            ts = json.load(f)
+        for name, v in (ts.get('by_name') or {}).items():
+            elo.r[name] = float(v.get('elo', 1500.0))
+            if v.get('last_date'):
+                teams.last[name] = pd.Timestamp(v['last_date'])
+    if os.path.exists(LEAGUE_STATE_PATH):
+        with open(LEAGUE_STATE_PATH, 'r', encoding='utf-8') as f:
+            ls = json.load(f)
+        for cid, v in ls.items():
+            leagues.n[cid] = int(v.get('n', 0))
+            leagues.goals[cid] = float(v.get('goals', 0.0))
+            leagues.home[cid] = float(v.get('home', 0.0))
+    return elo, leagues, teams
+
+
 def build_dataset(matches):
-    form = defaultdict(lambda: deque(maxlen=5))
-    rows_X, rows_y3, rows_yxg = [], [], []
+    elo, leagues, teams = _seed_trackers()
+    rows = []
+    prev_season = None
 
     for m in matches:
         hg, ag = m.get('home_goals'), m.get('away_goals')
         if hg is None or ag is None:
             continue
         ht, at = m['home_team'], m['away_team']
-        h_pts = sum(p for p, _ in form[ht]) / max(len(form[ht]), 1) if form[ht] else 1.5
-        a_pts = sum(p for p, _ in form[at]) / max(len(form[at]), 1) if form[at] else 1.5
-        h_gd = sum(g for _, g in form[ht]) / max(len(form[ht]), 1) if form[ht] else 0.0
-        a_gd = sum(g for _, g in form[at]) / max(len(form[at]), 1) if form[at] else 0.0
+        lg = str(m.get('league_id') or m.get('league') or '').strip()
+        dt = pd.to_datetime(m.get('match_date'), errors='coerce')
+        season = m.get('season') or (dt.year if pd.notna(dt) else 2026)
+        if prev_season is not None and season != prev_season:
+            elo.season_regress(0.25)
+        prev_season = season
+        neutral = bool(m.get('neutral', False)) or is_neutral_match(lg)
+
+        eh, ea = elo.rating(ht), elo.rating(at)
+        lg_g, lg_h = leagues.get(lg)
+        tier_val, _ = resolve_league_tier(lg)
+        gfh, gah, rh = teams.get(ht, dt if pd.notna(dt) else None)
+        gfa, gaa, ra = teams.get(at, dt if pd.notna(dt) else None)
 
         lu = _extract_lineups(m.get('raw_json') or {})
         if lu:
@@ -88,72 +118,58 @@ def build_dataset(matches):
             try:
                 sa, st_a, _ = aggregate_team_advanced(hs, hb, ht)
                 sb, st_b, _ = aggregate_team_advanced(as_, ab, at)
-                f_ab = {
-                    'diff_overall_mean': sa['starter_overall_mean'] - sb['starter_overall_mean'],
-                    'diff_overall_max': sa['starter_overall_max'] - sb['starter_overall_max'],
-                    'diff_overall_min': sa['starter_overall_min'] - sb['starter_overall_min'],
-                    'diff_attack_vs_defense': sa['overall_mean_ATT'] - sb['overall_mean_DEF'],
-                    'diff_defense_vs_attack': sa['overall_mean_DEF'] - sb['overall_mean_ATT'],
-                    'diff_midfield': sa['overall_mean_MID'] - sb['overall_mean_MID'],
-                    'diff_sub_mean': sa['sub_overall_mean'] - sb['sub_overall_mean'],
-                    'diff_depth_gap': sa['depth_gap'] - sb['depth_gap'],
-                    'diff_market_val_log': float(np.log1p(sa['starter_market_val_sum']) - np.log1p(sb['starter_market_val_sum'])),
-                    'diff_form_pts_5': h_pts - a_pts,
-                    'diff_form_gd_5': h_gd - a_gd,
-                    'diff_aerial_att_vs_def': sa['height_mean_ATT'] - sb['height_mean_DEF'],
-                    'diff_aerial_def_vs_att': sa['height_mean_DEF'] - sb['height_mean_ATT'],
-                    'diff_prime_score': sa['starter_prime_mean'] - sb['starter_prime_mean'],
-                    'diff_cohesion': cohesion_proxy(st_a) - cohesion_proxy(st_b),
-                    'league_tier_factor': 0.95,
-                }
-                f_ba = {k: (v if k == 'league_tier_factor' else -v) for k, v in f_ab.items()}
-                f_ba['diff_attack_vs_defense'] = -f_ab['diff_defense_vs_attack']
-                f_ba['diff_defense_vs_attack'] = -f_ab['diff_attack_vs_defense']
-                f_ba['diff_aerial_att_vs_def'] = -f_ab['diff_aerial_def_vs_att']
-                f_ba['diff_aerial_def_vs_att'] = -f_ab['diff_aerial_att_vs_def']
-
+                f_ab = build_feature_row(
+                    sa, sb, cohesion_proxy(st_a), cohesion_proxy(st_b),
+                    eh, ea, gfh, gah, rh, gfa, gaa, ra,
+                    (gfh - gah) - (gfa - gaa),
+                    lg_g, lg_h, tier_val, neutral=neutral,
+                )
+                f_ba = mirror(f_ab)
                 y_ab = 2 if hg > ag else (1 if hg == ag else 0)
-                y_ba = 0 if y_ab == 2 else (2 if y_ab == 0 else 1)
-                rows_X.extend([f_ab, f_ba])
-                rows_y3.extend([y_ab, y_ba])
-                rows_yxg.extend([float(hg), float(ag)])
+                common = dict(
+                    match_id=m.get('id') or f"{m.get('match_date')}-{ht}-{at}",
+                    date=str(m.get('match_date') or '')[:10],
+                    season=int(season),
+                )
+                rows.append({**f_ab, **common, 'is_forward': 1, 'y3': y_ab, 'goals_a': float(hg), 'goals_b': float(ag)})
+                rows.append({**f_ba, **common, 'is_forward': 0, 'y3': 2 - y_ab, 'goals_a': float(ag), 'goals_b': float(hg)})
             except Exception:
                 pass
 
-        form[ht].append((3 if hg > ag else (1 if hg == ag else 0), hg - ag))
-        form[at].append((3 if ag > hg else (1 if ag == hg else 0), ag - hg))
+        # Always update Elo, league stats, and team rolling state even if lineup is missing
+        elo.update(ht, at, hg, ag, neutral=neutral)
+        leagues.update(lg, hg, ag)
+        teams.update(ht, hg, ag, dt if pd.notna(dt) else None)
+        teams.update(at, ag, hg, dt if pd.notna(dt) else None)
 
-    if not rows_X:
-        return None, None, None
-    return pd.DataFrame(rows_X)[advanced_features], np.array(rows_y3), np.array(rows_yxg)
+    return pd.DataFrame(rows) if rows else None
 
 
-def retrain(min_matches=50):
+def _wrap_legacy_models():
+    return {
+        'clf': model_advanced_3class,
+        'reg': None,
+        'rho': 0.0,
+        'blend_w': 0.0,
+        'feats': list(advanced_features),
+    }
+
+
+def retrain():
     url, _ = _sb_cfg()
     if not url:
         return {'status': 'skipped', 'reason': 'Set SUPABASE_URL and SUPABASE_KEY'}
+    if not os.path.exists(HISTORY_PATH):
+        return {'status': 'skipped', 'reason': f'missing {HISTORY_PATH}'}
 
-    matches = _sb_req('finished_matches?select=home_team,away_team,home_goals,away_goals,match_date,raw_json&order=match_date.asc&limit=5000') or []
-    X, y3, yxg = build_dataset(matches)
-    if X is None or len(X) < min_matches * 2:
-        return {'status': 'skipped', 'reason': f'Need >= {min_matches} matches with lineups (found {(len(X)//2) if X is not None else 0})'}
+    live = _sb_req('finished_matches?select=id,home_team,away_team,home_goals,away_goals,match_date,league,raw_json&order=match_date.asc&limit=5000') or []
+    live_df = build_dataset(live)
+    history = pd.read_parquet(HISTORY_PATH)
+    df = pd.concat([history, live_df], ignore_index=True) if live_df is not None else history
+    df = df.drop_duplicates(['match_id', 'is_forward'], keep='last')
 
-    split = int(len(X) * 0.8)
-    X_tr, X_val = X.iloc[:split], X.iloc[split:]
-    y3_tr, y3_val = y3[:split], y3[split:]
-    yxg_tr = yxg[:split]
-
-    new_3c = HistGradientBoostingClassifier(max_iter=200, learning_rate=0.05, random_state=42).fit(X_tr, y3_tr)
-    new_xg = HistGradientBoostingRegressor(max_iter=200, learning_rate=0.05, random_state=42).fit(X_tr, yxg_tr)
-
-    new_ll = float(log_loss(y3_val, new_3c.predict_proba(X_val), labels=[0, 1, 2]))
-    old_ll = float(log_loss(y3_val, model_advanced_3class.predict_proba(X_val), labels=[0, 1, 2]))
-
-    if new_ll <= old_ll:
-        joblib.dump(new_3c, MODEL_3_PATH)
-        joblib.dump(new_xg, MODEL_XG_PATH)
-        return {'status': 'promoted', 'samples': len(X), 'old_log_loss': round(old_ll, 4), 'new_log_loss': round(new_ll, 4)}
-    return {'status': 'rejected', 'samples': len(X), 'old_log_loss': round(old_ll, 4), 'new_log_loss': round(new_ll, 4)}
+    current = joblib.load(BUNDLE_PATH) if os.path.exists(BUNDLE_PATH) else _wrap_legacy_models()
+    return gated_retrain(df, FEATURE_COLS, current)
 
 
 if __name__ == '__main__':

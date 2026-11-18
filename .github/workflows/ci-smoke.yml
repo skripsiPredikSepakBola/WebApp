@@ -1,0 +1,42 @@
+name: CI Smoke Test (H.4)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [exp/patch-bc-walkforward]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Run golden legacy test (50 payloads, USE_BUNDLE=False)
+        run: python tests/test_golden_legacy.py
+      - name: Run F11 payload parity (100 matchups)
+        run: python -c "import test_parity_and_acceptance as t; t.test_f11_independent_parity(100)"
+      - name: Run idempotency & Freeze SHA-256 integrity
+        run: python -c "import test_parity_and_acceptance as t; t.test_idempotent_state_updater_and_freeze_hashes()"
+      - name: Run rescaled grid & gate unit checks
+        run: python -c "import test_parity_and_acceptance as t; t.test_rescaled_grid_and_gate()"
+      - name: Run smoke test (probabilities sum to 1, swap symmetry < 1e-9, version guard)
+        run: |
+          python -c "
+          import app as m
+          m._ensure_models()
+          c = m.app.test_client()
+          p_map = {p['name']: p for p in m.players_lite}
+          roles = ['GK','LB','CB','CB','RB','CM','CM','CAM','LW','ST','RW']
+          sp = [{'id':p_map[nm]['id'],'name':nm,'slot_pos':r} for nm, r in zip(m.presets['Spain (National Team)']['starters'][:11], roles)]
+          en = [{'id':p_map[nm]['id'],'name':nm,'slot_pos':r} for nm, r in zip(m.presets['England (National Team)']['starters'][:11], roles)]
+          r1 = c.post('/api/predict', json={'home_name':'Spain (National Team)','away_name':'England (National Team)','home_starters':sp,'away_starters':en,'home_subs':[],'away_subs':[]}).get_json()
+          r2 = c.post('/api/predict', json={'home_name':'England (National Team)','away_name':'Spain (National Team)','home_starters':en,'away_starters':sp,'home_subs':[],'away_subs':[]}).get_json()
+          p1, p2 = r1['probabilities'], r2['probabilities']
+          assert abs((p1['home'] + p1['draw'] + p1['away']) - 100.0) <= 0.2, p1
+          assert abs(p1['home'] - p2['away']) < 1e-9 and abs(p1['draw'] - p2['draw']) < 1e-9, (p1, p2)
+          print('CI_SMOKE_OK:', p1)
+          "
