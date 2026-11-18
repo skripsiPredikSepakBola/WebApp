@@ -358,6 +358,7 @@ async function init() {
     if (p?.id) openPlayerInspector(p.id);
   };
   $('knockout').onchange = () => { if (last) predict(); };
+  if ($('neutral')) $('neutral').onchange = () => { if (last) predict(); };
   $('exp').onclick = exportXlsx;
   if ($('imp-xlsx') && $('imp-xlsx-file')) {
     $('imp-xlsx').onclick = () => $('imp-xlsx-file').click();
@@ -1050,6 +1051,7 @@ async function predict() {
     home_subs: T.home.subs.map(p => ({ id: p.id, name: p.name, slot_pos: 'SUB' })),
     away_subs: T.away.subs.map(p => ({ id: p.id, name: p.name, slot_pos: 'SUB' })),
     home_form_pts: T.home.form, away_form_pts: T.away.form, knockout: $('knockout').checked,
+    neutral: $('neutral') ? $('neutral').checked : true,
     threshold_mode: 'tuned',
     league_tier_factor: +($('wi-tier')?.value || 0.95),
     report_date: $('wi-date')?.value || '2026-11'
@@ -1221,6 +1223,7 @@ async function exportXlsx() {
       home_form_pts: T.home.form,
       away_form_pts: T.away.form,
       knockout: !!$('knockout')?.checked,
+      neutral: $('neutral') ? $('neutral').checked : true,
       league_tier_factor: +($('wi-tier')?.value || 0.95),
       report_date: $('wi-date')?.value || '2026-11',
       home_slots: T.home.slots.map(p => p ? { id: p.id, name: p.name } : null),
@@ -1298,6 +1301,7 @@ async function importXlsx(e) {
     if ($('wi-af')) { $('wi-af').value = T.away.form; $('wi-af-val').textContent = T.away.form.toFixed(1); }
 
     if ($('knockout')) $('knockout').checked = !!p.knockout;
+    if ($('neutral') && p.neutral !== undefined) $('neutral').checked = !!p.neutral;
     if (p.league_tier_factor != null && $('wi-tier')) {
       $('wi-tier').value = String(p.league_tier_factor);
       $('wi-tier-val').textContent = (+p.league_tier_factor).toFixed(2);

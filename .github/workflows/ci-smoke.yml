@@ -40,3 +40,24 @@ jobs:
           assert abs(p1['home'] - p2['away']) < 1e-9 and abs(p1['draw'] - p2['draw']) < 1e-9, (p1, p2)
           print('CI_SMOKE_OK:', p1)
           "
+      - name: Run flag-on bundle smoke test (PITCHPULSE_USE_BUNDLE=1, neutral=True)
+        env:
+          PITCHPULSE_USE_BUNDLE: '1'
+        run: |
+          python -c "
+          import app as m
+          m._ensure_models()
+          assert m.USE_BUNDLE is True and m.MODEL_BUNDLE is not None
+          c = m.app.test_client()
+          p_map = {p['name']: p for p in m.players_lite}
+          roles = ['GK','LB','CB','CB','RB','CM','CM','CAM','LW','ST','RW']
+          sp = [{'id':p_map[nm]['id'],'name':nm,'slot_pos':r} for nm, r in zip(m.presets['Spain (National Team)']['starters'][:11], roles)]
+          en = [{'id':p_map[nm]['id'],'name':nm,'slot_pos':r} for nm, r in zip(m.presets['England (National Team)']['starters'][:11], roles)]
+          r1 = c.post('/api/predict', json={'home_name':'Spain (National Team)','away_name':'England (National Team)','home_starters':sp,'away_starters':en,'home_subs':[],'away_subs':[],'neutral':True}).get_json()
+          r2 = c.post('/api/predict', json={'home_name':'England (National Team)','away_name':'Spain (National Team)','home_starters':en,'away_starters':sp,'home_subs':[],'away_subs':[],'neutral':True}).get_json()
+          p1, p2 = r1['probabilities'], r2['probabilities']
+          assert abs((p1['home'] + p1['draw'] + p1['away']) - 100.0) <= 0.2, p1
+          assert abs(p1['home'] - p2['away']) < 1e-9 and abs(p1['draw'] - p2['draw']) < 1e-9, (p1, p2)
+          assert r1['summary']['confidence'] != 'Low', r1
+          print('CI_BUNDLE_SMOKE_OK:', p1, r1['summary']['confidence'])
+          "

@@ -1,9 +1,8 @@
 name: Weekly Prospective Replay (Monitoring Only)
 
 on:
-  # schedule paused pending state-builder & equivalence fix
-  # schedule:
-  #   - cron: '0 6 * * 1'
+  schedule:
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 concurrency:

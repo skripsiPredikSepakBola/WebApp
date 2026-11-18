@@ -379,6 +379,29 @@ def test_rebuild_state_equivalence_and_freeze_hashes():
     import prospective_replay as pr
     empty_res = pr.run_prospective_replay(matches=[])
     assert empty_res['status'] == 'empty' and empty_res['mapping_coverage'] == 0.0, empty_res
+
+    # Problems 2 & 5: missing league_id -> league_tier_factor=0.95, tier_missing=False; rest days from last_date
+    orig_ts2 = web_app.TEAM_STATE
+    try:
+        web_app.TEAM_STATE = {
+            'as_of': '2026-11-17',
+            'by_id': {
+                '9991': {'elo': 1600.0, 'gf10': 1.5, 'ga10': 1.0, 'last_date': '2026-11-14'},
+                '9992': {'elo': 1550.0, 'gf10': 1.2, 'ga10': 1.1, 'last_date': '2026-11-10'},
+            },
+            'by_name': {},
+        }
+        ctx_p25 = web_app.get_match_context('Home', 'Away', {
+            'home_club_id': 9991,
+            'away_club_id': 9992,
+        })
+        assert abs(ctx_p25['league_tier_factor'] - 0.95) < 1e-12, ctx_p25
+        assert ctx_p25['tier_missing'] is False, ctx_p25
+        assert abs(ctx_p25['rest_a'] - 3.0) < 1e-12, ctx_p25
+        assert abs(ctx_p25['rest_b'] - 7.0) < 1e-12, ctx_p25
+    finally:
+        web_app.TEAM_STATE = orig_ts2
+
     print(f"Rebuild State & 200-Match CI Equivalence PASSED (n={eq_checked}, max_diff={max_eq_err:.2e}, mapped=1, skipped=1).")
 
     # Verify freeze SHA-256 hashes in models/model_meta.json
