@@ -263,20 +263,59 @@ def test_context_lookup_parity_and_mutation(n=100):
     print(f"F11 Independent Context Parity + Mutation PASSED ({checked} matches, max_diff={max_err:.2e}, mutation_caught=True).")
 
 
-def test_idempotent_state_updater_and_freeze_hashes():
+def test_rebuild_state_equivalence_and_freeze_hashes():
     import hashlib, json
-    from update_states import apply_matches_idempotent
+    from rebuild_state import BASE_STATE_PATH, rebuild
 
-    ts0 = {'as_of': '2026-11-17', 'watermark': {'date': '2026-11-17', 'ids': []}, 'by_id': {}, 'by_name': {}}
-    ls0 = {}
+    with open(BASE_STATE_PATH, 'r', encoding='utf-8') as f:
+        base = json.load(f)
+
+    # Finding 5: base state must not suffer Elo collapse to 1500.0 (e.g. Germany id=3262 != 1500.0)
+    germany_base = base['teams']['3262']
+    assert abs(germany_base['elo'] - 1500.0) > 50.0, f"Germany Elo collapsed: {germany_base}"
+
+    # Findings 1-4: deterministic rebuild preserves untouched rolling goals, keys by ID, skips youth, no case split
     batch = [
-        {'match_id': 'm2', 'home_team': 'TeamA', 'away_team': 'TeamB', 'home_goals': 2, 'away_goals': 1, 'match_date': '2026-11-18', 'league': 'GB1'},
-        {'match_id': 'm1', 'home_team': 'TeamA', 'away_team': 'TeamB', 'home_goals': 1, 'away_goals': 1, 'match_date': '2026-11-18', 'league': 'GB1'},
+        {
+            'match_id': 'tmapi:999001',
+            'home_team': 'Germany',
+            'away_team': 'Spain',
+            'home_goals': 2,
+            'away_goals': 1,
+            'match_date': '2026-11-18',
+            'league': 'UEFA Nations League A',
+            'raw_json': {
+                'homeClub': {'clubId': '3262'},
+                'awayClub': {'clubId': '3375'},
+                'baseDetails': {'competition': 'UNLA'},
+            },
+        },
+        {
+            'match_id': 'apifootball:999002',
+            'home_team': 'Armenia U19',
+            'away_team': 'Montenegro U17',
+            'home_goals': 1,
+            'away_goals': 0,
+            'match_date': '2026-11-18',
+            'league': 'UEFA U19 Championship - Qualification',
+            'raw_json': {},
+        },
     ]
-    ts1, ls1, c1 = apply_matches_idempotent(ts0, ls0, batch)
-    ts2, ls2, c2 = apply_matches_idempotent(ts1, ls1, batch)
-    assert c1 == 2 and c2 == 0 and ts1 == ts2 and ls1 == ls2
-    print(f"State Updater Idempotency PASSED (first_run={c1}, second_run={c2}).")
+    r1 = rebuild(batch, write_files=False)
+    r2 = rebuild(batch, write_files=False)
+    assert r1 == r2 and r1['mapped_matches'] == 1 and r1['skipped_unmapped'] == 1, r1
+
+    # Verify Costa Rica (untouched) retains non-default gf10/ga10 from base_state (not wiped to 1.35)
+    from rebuild_state import load_trackers_from_base
+    elo_b, lg_b, tm_b, _, _ = load_trackers_from_base(base)
+    cr_gf, cr_ga, _ = tm_b.get(base['club_name_to_id']['costa rica'], pd.Timestamp('2026-11-12'))
+    assert abs(cr_gf - 1.35) > 0.05 and abs(cr_ga - 1.35) > 0.05, (cr_gf, cr_ga)
+
+    # Verify prospective_replay imports and uses production build_legacy_feature_pair cleanly
+    import prospective_replay as pr
+    empty_res = pr.run_prospective_replay(matches=[])
+    assert empty_res['status'] == 'empty' and empty_res['mapping_coverage'] == 0.0, empty_res
+    print(f"Rebuild State & Replay Equivalence CI PASSED (mapped=1, skipped=1, Germany_base_elo={germany_base['elo']:.2f}).")
 
     # Verify freeze SHA-256 hashes in models/model_meta.json
     meta_path = os.path.join(web_app.DATA_DIR, 'models', 'model_meta.json')
@@ -297,6 +336,6 @@ def test_idempotent_state_updater_and_freeze_hashes():
 
 if __name__ == '__main__':
     test_f11_independent_parity(100)
-    test_context_lookup_parity_and_mutation(100)
-    test_idempotent_state_updater_and_freeze_hashes()
+    test_context_lookup_parity_and_mutation(200)
+    test_rebuild_state_equivalence_and_freeze_hashes()
     test_rescaled_grid_and_gate()

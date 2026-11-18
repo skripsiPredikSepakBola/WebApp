@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [exp/patch-bc-walkforward]
+    branches: [main, exp/patch-bc-walkforward]
 
 jobs:
   smoke:
@@ -19,8 +19,8 @@ jobs:
         run: python tests/test_golden_legacy.py
       - name: Run F11 payload parity (100 matchups)
         run: python -c "import test_parity_and_acceptance as t; t.test_f11_independent_parity(100)"
-      - name: Run idempotency & Freeze SHA-256 integrity
-        run: python -c "import test_parity_and_acceptance as t; t.test_idempotent_state_updater_and_freeze_hashes()"
+      - name: Run rebuild state equivalence & Freeze SHA-256 integrity
+        run: python -c "import test_parity_and_acceptance as t; t.test_rebuild_state_equivalence_and_freeze_hashes()"
       - name: Run rescaled grid & gate unit checks
         run: python -c "import test_parity_and_acceptance as t; t.test_rescaled_grid_and_gate()"
       - name: Run smoke test (probabilities sum to 1, swap symmetry < 1e-9, version guard)

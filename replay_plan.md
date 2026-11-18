@@ -35,6 +35,7 @@
 | `f218079` | `2026-11-17 19:32` | Freeze recipe (features, params, tier map) |
 | `65f14a0` | `2026-11-18 00:45` | `model_bundle.joblib` and its SHA-256 hash committed |
 | `4459c59` | `2026-11-18 01:37` | CI fix where `freeze-2026-11-17` tag points (kept unmoved) |
+- **State & replay fix (`2026-11-18`):** Replaced incremental `update_states.py` with deterministic `rebuild_state.py` (keyed by Transfermarkt ID, built from `models/base_state_2026-11-12.json` without `season_regress` collapse, preserving `last10` rolling goals, skipping unmapped youth matches) and switched `prospective_replay.py` legacy arm to `app.build_legacy_feature_pair`. Any replay results generated prior to this fix are discarded.
 
 ## Part 2 Flag-Flip Prerequisites (Before `PITCHPULSE_USE_BUNDLE=1`)
 In addition to the replay decision rules above, the following serving/CI fixes must land before flipping `PITCHPULSE_USE_BUNDLE=1` in production:

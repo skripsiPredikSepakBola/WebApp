@@ -1,7 +1,9 @@
 """Weekly prospective replay on finished matches played after freeze_date (2026-11-17).
 
-Scores both legacy and new models sequentially in date order using exact as-of state,
-then compares LL, RPS, calibration, and ASEAN subset via paired bootstrap.
+Starts from immutable 2026-11-12 base state (models/base_state_2026-11-12.json),
+advances sequentially through all mapped matches > 2026-11-12, and scores both
+production legacy (app.build_legacy_feature_pair) and candidate bundle arms on
+mapped matches with lineups played after freeze_date.
 """
 import json
 import os
@@ -11,11 +13,11 @@ import pandas as pd
 from sklearn.metrics import log_loss
 
 import app as web_app
-from elo import EloTracker
-from features import FEATURE_COLS, LeagueStats, TeamState, build_feature_row, is_neutral_match, mirror
-from league_tiers import resolve_league_tier
+from features import FEATURE_COLS, build_feature_row, is_neutral_match, mirror
+from league_tiers import LEAGUE_TIER_MAP, resolve_league_tier
+from rebuild_state import BASE_CUTOFF_DATE, BASE_STATE_PATH, load_trackers_from_base, map_match_ids
 from retrain import _extract_lineups
-from retrain_gate import BUNDLE_PATH, META_PATH, sym_proba
+from retrain_gate import BUNDLE_PATH, sym_proba
 from scoreline import rps
 from sync_matches import _sb_cfg, _sb_req
 
@@ -30,7 +32,7 @@ def paired_boot(p_leg, p_new, y, seed=0, n_boot=1000):
     return float(d.mean()), float(np.percentile(boot, 5)), float(np.percentile(boot, 95)), float((boot > 0).mean())
 
 
-def run_prospective_replay(freeze_date='2026-11-17', matches=None):
+def run_prospective_replay(freeze_date='2026-11-17', matches=None, base_path=BASE_STATE_PATH):
     web_app._ensure_models()
     if matches is None:
         url, _ = _sb_cfg()
@@ -38,114 +40,120 @@ def run_prospective_replay(freeze_date='2026-11-17', matches=None):
             return {'status': 'skipped', 'reason': 'Set SUPABASE_URL and SUPABASE_KEY'}
         matches = _sb_req(
             f'finished_matches?select=match_id,home_team,away_team,home_goals,away_goals,match_date,league,raw_json'
-            f'&match_date=gt.{freeze_date}&order=match_date.asc&limit=5000'
+            f'&match_date=gt.{BASE_CUTOFF_DATE}&order=match_date.asc&limit=5000'
         ) or []
 
     if not os.path.exists(BUNDLE_PATH):
         return {'status': 'skipped', 'reason': f'Missing candidate bundle at {BUNDLE_PATH}'}
     bundle = joblib.load(BUNDLE_PATH)
 
-    elo, leagues, teams = EloTracker(), LeagueStats(), TeamState()
-    for name, v in (web_app.TEAM_STATE.get('by_name') or {}).items():
-        elo.r[name] = float(v.get('elo', 1500.0))
-        if v.get('last_date'):
-            teams.last[name] = pd.Timestamp(v['last_date'])
-    for cid, v in (web_app.LEAGUE_STATE or {}).items():
-        leagues.n[cid] = int(v.get('n', 0))
-        leagues.goals[cid] = float(v.get('goals', 0.0))
-        leagues.home[cid] = float(v.get('home', 0.0))
+    with open(base_path, 'r', encoding='utf-8') as f:
+        base = json.load(f)
+    elo, leagues, teams, _, league_meta = load_trackers_from_base(base)
+    club_name_to_id = base.get('club_name_to_id') or {}
+    comp_name_to_id = base.get('comp_name_to_id') or {}
+    known_cids = set(league_meta.keys()) | set(LEAGUE_TIER_MAP.keys())
 
-    p_leg_all, p_new_all, y_all, cids = [], [], [], []
     dedup = {}
     for m in matches:
         mid = m.get('match_id') or m.get('id')
         dt_str = str(m.get('match_date') or '')[:10]
-        if mid and dt_str > freeze_date and m.get('home_goals') is not None and m.get('away_goals') is not None:
+        if mid and dt_str > BASE_CUTOFF_DATE and m.get('home_goals') is not None and m.get('away_goals') is not None:
             dedup[str(mid)] = (dt_str, str(mid), m)
 
-    total_finished = len(dedup)
+    p_leg_all, p_new_all, y_all, cids = [], [], [], []
+    total_post_freeze, mapped_post_freeze, skipped_unmapped_post_freeze = 0, 0, 0
+
     for dt_str, _, m in sorted(dedup.values(), key=lambda x: (x[0], x[1])):
+        in_window = dt_str > freeze_date
+        if in_window:
+            total_post_freeze += 1
+
+        hid, aid, cid = map_match_ids(m, club_name_to_id, comp_name_to_id, known_cids=known_cids)
+        if hid is None or aid is None or cid is None:
+            if in_window:
+                skipped_unmapped_post_freeze += 1
+            continue
+        if in_window:
+            mapped_post_freeze += 1
+
         ht, at = str(m['home_team']).strip(), str(m['away_team']).strip()
         hg, ag = int(m['home_goals']), int(m['away_goals'])
-        cid = str(m.get('league') or '').strip()
         dt = pd.to_datetime(dt_str, errors='coerce')
         neu = is_neutral_match(cid)
 
-        lu = _extract_lineups(m.get('raw_json') or {})
-        if lu:
-            hs, hb, as_, ab = lu
-            try:
-                sa, st_a, _ = web_app.aggregate_team_advanced(hs, hb, ht)
-                sb, st_b, _ = web_app.aggregate_team_advanced(as_, ab, at)
-                eh, ea = elo.rating(ht), elo.rating(at)
-                gfh, gah, rh = teams.get(ht, dt if pd.notna(dt) else None)
-                gfa, gaa, ra = teams.get(at, dt if pd.notna(dt) else None)
-                lgg, lgh = leagues.get(cid)
-                tier_v, _ = resolve_league_tier(cid)
+        if in_window:
+            lu = _extract_lineups(m.get('raw_json') or {})
+            if lu:
+                hs, hb, as_, ab = lu
+                try:
+                    sa, st_a, _ = web_app.aggregate_team_advanced(hs, hb, ht)
+                    sb, st_b, _ = web_app.aggregate_team_advanced(as_, ab, at)
+                    eh, ea = elo.rating(hid), elo.rating(aid)
+                    gfh, gah, rh = teams.get(hid, dt if pd.notna(dt) else None)
+                    gfa, gaa, ra = teams.get(aid, dt if pd.notna(dt) else None)
+                    lgg, lgh = leagues.get(cid)
+                    tier_v, _ = resolve_league_tier(cid)
 
-                # Legacy probabilities
-                leg_ab = {
-                    'diff_overall_mean': sa['starter_overall_mean'] - sb['starter_overall_mean'],
-                    'diff_overall_max': sa['starter_overall_max'] - sb['starter_overall_max'],
-                    'diff_overall_min': sa['starter_overall_min'] - sb['starter_overall_min'],
-                    'diff_attack_vs_defense': sa['overall_mean_ATT'] - sb['overall_mean_DEF'],
-                    'diff_defense_vs_attack': sa['overall_mean_DEF'] - sb['overall_mean_ATT'],
-                    'diff_midfield': sa['overall_mean_MID'] - sb['overall_mean_MID'],
-                    'diff_sub_mean': sa['sub_overall_mean'] - sb['sub_overall_mean'],
-                    'diff_depth_gap': sa['depth_gap'] - sb['depth_gap'],
-                    'diff_market_val_log': float(np.log1p(sa['starter_market_val_sum']) - np.log1p(sb['starter_market_val_sum'])),
-                    'diff_form_pts_5': (3.0 if gfh > gah else 1.5) - (3.0 if gfa > gaa else 1.5),
-                    'diff_form_gd_5': (gfh - gah) - (gfa - gaa),
-                    'diff_aerial_att_vs_def': sa['height_mean_ATT'] - sb['height_mean_DEF'],
-                    'diff_aerial_def_vs_att': sa['height_mean_DEF'] - sb['height_mean_ATT'],
-                    'diff_prime_score': sa['starter_prime_mean'] - sb['starter_prime_mean'],
-                    'diff_cohesion': web_app.cohesion_proxy(st_a) - web_app.cohesion_proxy(st_b),
-                    'league_tier_factor': 0.95,
-                }
-                leg_ba = {k: (v if k == 'league_tier_factor' else -v) for k, v in leg_ab.items()}
-                leg_ba['diff_attack_vs_defense'] = -leg_ab['diff_defense_vs_attack']
-                leg_ba['diff_defense_vs_attack'] = -leg_ab['diff_attack_vs_defense']
-                leg_ba['diff_aerial_att_vs_def'] = -leg_ab['diff_aerial_def_vs_att']
-                leg_ba['diff_aerial_def_vs_att'] = -leg_ab['diff_aerial_att_vs_def']
-                p_leg = sym_proba(
-                    web_app.model_advanced_3class,
-                    pd.DataFrame([leg_ab])[web_app.advanced_features],
-                    pd.DataFrame([leg_ba])[web_app.advanced_features],
-                )[0]
+                    # Production legacy arm (shared helper with app.py)
+                    leg_ab, leg_ba = web_app.build_legacy_feature_pair(sa, sb, st_a, st_b)
+                    p_leg = sym_proba(
+                        web_app.model_advanced_3class,
+                        pd.DataFrame([leg_ab])[web_app.advanced_features],
+                        pd.DataFrame([leg_ba])[web_app.advanced_features],
+                    )[0]
 
-                # New bundle probabilities
-                f_ab = build_feature_row(
-                    sa, sb, web_app.cohesion_proxy(st_a), web_app.cohesion_proxy(st_b),
-                    eh, ea, gfh, gah, rh, gfa, gaa, ra, (gfh - gah) - (gfa - gaa),
-                    lgg, lgh, tier_v, neutral=neu,
-                )
-                f_ba = mirror(f_ab)
-                p_new = sym_proba(bundle['clf'], pd.DataFrame([f_ab])[FEATURE_COLS], pd.DataFrame([f_ba])[FEATURE_COLS])[0]
+                    # New bundle arm (25 G6+tier features, keyed by id)
+                    f_ab = build_feature_row(
+                        sa, sb, web_app.cohesion_proxy(st_a), web_app.cohesion_proxy(st_b),
+                        eh, ea, gfh, gah, rh, gfa, gaa, ra, (gfh - gah) - (gfa - gaa),
+                        lgg, lgh, tier_v, neutral=neu,
+                    )
+                    f_ba = mirror(f_ab)
+                    p_new = sym_proba(
+                        bundle['clf'],
+                        pd.DataFrame([f_ab])[FEATURE_COLS],
+                        pd.DataFrame([f_ba])[FEATURE_COLS],
+                    )[0]
 
-                y = 2 if hg > ag else (1 if hg == ag else 0)
-                p_leg_all.append(p_leg)
-                p_new_all.append(p_new)
-                y_all.append(y)
-                cids.append(cid)
-            except Exception:
-                pass
+                    y = 2 if hg > ag else (1 if hg == ag else 0)
+                    p_leg_all.append(p_leg)
+                    p_new_all.append(p_new)
+                    y_all.append(y)
+                    cids.append(cid)
+                except Exception:
+                    pass
 
-        elo.update(ht, at, hg, ag, neutral=neu)
+        elo.update(hid, aid, hg, ag, neutral=neu)
         leagues.update(cid, hg, ag)
-        teams.update(ht, hg, ag, dt if pd.notna(dt) else None)
-        teams.update(at, ag, hg, dt if pd.notna(dt) else None)
+        if pd.notna(dt):
+            teams.update(hid, hg, ag, dt)
+            teams.update(aid, ag, hg, dt)
 
+    mapping_cov = round(mapped_post_freeze / max(total_post_freeze, 1), 4)
     if not y_all:
-        return {'status': 'empty', 'freeze_date': freeze_date, 'all_finished_matches': total_finished, 'scored_matches': 0, 'coverage': 0.0}
+        return {
+            'status': 'empty',
+            'freeze_date': freeze_date,
+            'all_finished_matches': total_post_freeze,
+            'mapped_matches': mapped_post_freeze,
+            'skipped_unmapped': skipped_unmapped_post_freeze,
+            'mapping_coverage': mapping_cov,
+            'scored_matches': 0,
+            'coverage': 0.0,
+        }
 
     PL, PN, Y = np.vstack(p_leg_all), np.vstack(p_new_all), np.array(y_all)
     mg, p5, p95, pgt = paired_boot(PL, PN, Y)
     res = {
         'status': 'ok',
         'freeze_date': freeze_date,
-        'all_finished_matches': total_finished,
+        'all_finished_matches': total_post_freeze,
+        'mapped_matches': mapped_post_freeze,
+        'skipped_unmapped': skipped_unmapped_post_freeze,
+        'mapping_coverage': mapping_cov,
         'scored_matches': int(len(Y)),
-        'coverage': round(len(Y) / max(total_finished, 1), 4),
+        'coverage': round(len(Y) / max(total_post_freeze, 1), 4),
         'legacy_ll': round(float(log_loss(Y, PL, labels=[0, 1, 2])), 5),
         'new_ll': round(float(log_loss(Y, PN, labels=[0, 1, 2])), 5),
         'legacy_rps': round(rps(PL, Y), 5),

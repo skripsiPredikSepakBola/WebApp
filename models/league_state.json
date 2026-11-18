@@ -656,6 +656,42 @@
     "tier": 0.85,
     "tier_known": true
   },
+  "UNLA": {
+    "n": 12,
+    "goals": 52.0,
+    "home": 7.0,
+    "avg_goals": 2.7925,
+    "home_win": 0.4575,
+    "tier": 0.95,
+    "tier_known": false
+  },
+  "UNLB": {
+    "n": 16,
+    "goals": 35.0,
+    "home": 9.0,
+    "avg_goals": 2.662,
+    "home_win": 0.4583,
+    "tier": 0.95,
+    "tier_known": false
+  },
+  "UNLC": {
+    "n": 12,
+    "goals": 40.0,
+    "home": 5.0,
+    "avg_goals": 2.7358,
+    "home_win": 0.4481,
+    "tier": 0.95,
+    "tier_known": false
+  },
+  "UNLD": {
+    "n": 4,
+    "goals": 8.0,
+    "home": 2.0,
+    "avg_goals": 2.6863,
+    "home_win": 0.451,
+    "tier": 0.95,
+    "tier_known": false
+  },
   "USC": {
     "n": 15,
     "goals": 101.0,

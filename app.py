@@ -1507,6 +1507,49 @@ def _predict_with_bundle(bundle, f_ab, f_ba, stats_a, stats_b):
     return p_a_win, p_draw, p_b_win, xg_a, xg_b, grid
 
 
+def build_legacy_feature_pair(stats_a, stats_b, st_a, st_b, form_pts_a=1.8, form_pts_b=1.8,
+                              form_gd_a=0.5, form_gd_b=0.5, league_tier_factor=0.95):
+    """Build forward and mirrored 16-feature dicts for the legacy model."""
+    _, np = _pd_mod, _np_mod
+    features_ab = {
+        'diff_overall_mean': stats_a['starter_overall_mean'] - stats_b['starter_overall_mean'],
+        'diff_overall_max': stats_a['starter_overall_max'] - stats_b['starter_overall_max'],
+        'diff_overall_min': stats_a['starter_overall_min'] - stats_b['starter_overall_min'],
+        'diff_attack_vs_defense': stats_a['overall_mean_ATT'] - stats_b['overall_mean_DEF'],
+        'diff_defense_vs_attack': stats_a['overall_mean_DEF'] - stats_b['overall_mean_ATT'],
+        'diff_midfield': stats_a['overall_mean_MID'] - stats_b['overall_mean_MID'],
+        'diff_sub_mean': stats_a['sub_overall_mean'] - stats_b['sub_overall_mean'],
+        'diff_depth_gap': stats_a['depth_gap'] - stats_b['depth_gap'],
+        'diff_market_val_log': np.log1p(stats_a['starter_market_val_sum']) - np.log1p(stats_b['starter_market_val_sum']),
+        'diff_form_pts_5': form_pts_a - form_pts_b,
+        'diff_form_gd_5': form_gd_a - form_gd_b,
+        'diff_aerial_att_vs_def': stats_a['height_mean_ATT'] - stats_b['height_mean_DEF'],
+        'diff_aerial_def_vs_att': stats_a['height_mean_DEF'] - stats_b['height_mean_ATT'],
+        'diff_prime_score': stats_a['starter_prime_mean'] - stats_b['starter_prime_mean'],
+        'diff_cohesion': cohesion_proxy(st_a) - cohesion_proxy(st_b),
+        'league_tier_factor': float(league_tier_factor),
+    }
+    features_ba = {
+        'diff_overall_mean': -features_ab['diff_overall_mean'],
+        'diff_overall_max': -features_ab['diff_overall_max'],
+        'diff_overall_min': -features_ab['diff_overall_min'],
+        'diff_attack_vs_defense': -features_ab['diff_defense_vs_attack'],
+        'diff_defense_vs_attack': -features_ab['diff_attack_vs_defense'],
+        'diff_midfield': -features_ab['diff_midfield'],
+        'diff_sub_mean': -features_ab['diff_sub_mean'],
+        'diff_depth_gap': -features_ab['diff_depth_gap'],
+        'diff_market_val_log': -features_ab['diff_market_val_log'],
+        'diff_form_pts_5': -features_ab['diff_form_pts_5'],
+        'diff_form_gd_5': -features_ab['diff_form_gd_5'],
+        'diff_aerial_att_vs_def': -features_ab['diff_aerial_def_vs_att'],
+        'diff_aerial_def_vs_att': -features_ab['diff_aerial_att_vs_def'],
+        'diff_prime_score': -features_ab['diff_prime_score'],
+        'diff_cohesion': -features_ab['diff_cohesion'],
+        'league_tier_factor': features_ab['league_tier_factor'],
+    }
+    return features_ab, features_ba
+
+
 @app.route('/api/predict', methods=['POST'])
 def predict():
     try:
@@ -1555,45 +1598,13 @@ def predict():
             if ctx['elo_missing'] or ctx['tier_missing']:
                 confidence_cap = 'Low'
         else:
-            features_ab = {
-                'diff_overall_mean': stats_a['starter_overall_mean'] - stats_b['starter_overall_mean'],
-                'diff_overall_max': stats_a['starter_overall_max'] - stats_b['starter_overall_max'],
-                'diff_overall_min': stats_a['starter_overall_min'] - stats_b['starter_overall_min'],
-                'diff_attack_vs_defense': stats_a['overall_mean_ATT'] - stats_b['overall_mean_DEF'],
-                'diff_defense_vs_attack': stats_a['overall_mean_DEF'] - stats_b['overall_mean_ATT'],
-                'diff_midfield': stats_a['overall_mean_MID'] - stats_b['overall_mean_MID'],
-                'diff_sub_mean': stats_a['sub_overall_mean'] - stats_b['sub_overall_mean'],
-                'diff_depth_gap': stats_a['depth_gap'] - stats_b['depth_gap'],
-                'diff_market_val_log': np.log1p(stats_a['starter_market_val_sum']) - np.log1p(stats_b['starter_market_val_sum']),
-                'diff_form_pts_5': form_pts_a - form_pts_b,
-                'diff_form_gd_5': form_gd_a - form_gd_b,
-                'diff_aerial_att_vs_def': stats_a['height_mean_ATT'] - stats_b['height_mean_DEF'],
-                'diff_aerial_def_vs_att': stats_a['height_mean_DEF'] - stats_b['height_mean_ATT'],
-                'diff_prime_score': stats_a['starter_prime_mean'] - stats_b['starter_prime_mean'],
-                'diff_cohesion': cohesion_proxy(st_a) - cohesion_proxy(st_b),
-                'league_tier_factor': float(data.get('league_tier_factor', 0.95))
-            }
-
+            features_ab, features_ba = build_legacy_feature_pair(
+                stats_a, stats_b, st_a, st_b,
+                form_pts_a=form_pts_a, form_pts_b=form_pts_b,
+                form_gd_a=form_gd_a, form_gd_b=form_gd_b,
+                league_tier_factor=float(data.get('league_tier_factor', 0.95)),
+            )
             X_ab = pd.DataFrame([features_ab])[advanced_features]
-
-            features_ba = {
-                'diff_overall_mean': -features_ab['diff_overall_mean'],
-                'diff_overall_max': -features_ab['diff_overall_max'],
-                'diff_overall_min': -features_ab['diff_overall_min'],
-                'diff_attack_vs_defense': -features_ab['diff_defense_vs_attack'],
-                'diff_defense_vs_attack': -features_ab['diff_attack_vs_defense'],
-                'diff_midfield': -features_ab['diff_midfield'],
-                'diff_sub_mean': -features_ab['diff_sub_mean'],
-                'diff_depth_gap': -features_ab['diff_depth_gap'],
-                'diff_market_val_log': -features_ab['diff_market_val_log'],
-                'diff_form_pts_5': -features_ab['diff_form_pts_5'],
-                'diff_form_gd_5': -features_ab['diff_form_gd_5'],
-                'diff_aerial_att_vs_def': -features_ab['diff_aerial_def_vs_att'],
-                'diff_aerial_def_vs_att': -features_ab['diff_aerial_att_vs_def'],
-                'diff_prime_score': -features_ab['diff_prime_score'],
-                'diff_cohesion': -features_ab['diff_cohesion'],
-                'league_tier_factor': features_ab['league_tier_factor']
-            }
             X_ba = pd.DataFrame([features_ba])[advanced_features]
 
             # 1. 3-Class Probabilities
