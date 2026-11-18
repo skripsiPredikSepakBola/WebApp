@@ -24,3 +24,10 @@
   5. Candidate RPS `<=` Legacy RPS, **AND**
   6. Explicit user approval.
 - **Stop rule:** If paired bootstrap `gain_p95 < 0` at any weekly look, stop replay and investigate immediately.
+
+## Part 2 Flag-Flip Prerequisites (Before `PITCHPULSE_USE_BUNDLE=1`)
+In addition to the replay decision rules above, the following serving/CI fixes must land before flipping `PITCHPULSE_USE_BUNDLE=1` in production:
+1. **Home/Neutral venue selector & custom lineup default:** Add a Home/Neutral venue selector in the UI, and default custom lineups to `neutral=True` (legacy model is order-symmetric, whereas the bundle gives the first-listed team home advantage unless `neutral=True`).
+2. **Confidence capping on missing `league_id`:** Treat a missing `league_id` as `league_tier_factor = 0.95` without capping confidence; cap confidence to `Low` only when Elo state (`elo_missing`) is missing.
+3. **CI flag-on end-to-end step:** Add a CI step in `.github/workflows/ci-smoke.yml` running `/api/predict` with `PITCHPULSE_USE_BUNDLE=1` and `neutral=True` (verifying probability sum and swap symmetry).
+4. **Rest days from state:** Compute `home_rest` / `away_rest` from `last_date` in `team_state.json` (instead of defaulting to `7.0`) and cover rest days in `test_context_lookup_parity_and_mutation`.

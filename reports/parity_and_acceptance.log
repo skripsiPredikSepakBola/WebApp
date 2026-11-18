@@ -1,0 +1,8 @@
+Loaded startup cache (71161 players, 9661 boot, 545 presets).
+Loaded explorer bundle (70 leagues, 124 countries).
+F11 Independent Payload Parity PASSED (100 matchups, max_diff=0.00e+00 < 1e-9).
+F11 Independent Context Parity + Mutation PASSED (100 matches, max_diff=4.44e-16, mutation_caught=True).
+State Updater Idempotency PASSED (first_run=2, second_run=0).
+Freeze SHA-256 Integrity PASSED (5 artifacts verified).
+Rescaled Grid & Clf-Only PASSED: LL=0.95418, RPS=0.19873, max_region_err=3.33e-16, max_sym_err=0.00e+00
+Gate Unit Checks PASSED: identical=False (gain=0.00e+00), better_vs_prior=True (gain=+0.1208, p5=+0.1141), <20k=skipped.
