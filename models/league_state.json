@@ -225,11 +225,11 @@
     "tier_known": true
   },
   "ES1": {
-    "n": 5444,
-    "goals": 14493.0,
-    "home": 2505.0,
-    "avg_goals": 2.6635,
-    "home_win": 0.4598,
+    "n": 5448,
+    "goals": 14507.0,
+    "home": 2508.0,
+    "avg_goals": 2.6641,
+    "home_win": 0.46,
     "tier": 1.0,
     "tier_known": true
   },
@@ -261,11 +261,11 @@
     "tier_known": true
   },
   "FR1": {
-    "n": 5095,
-    "goals": 13572.0,
-    "home": 2250.0,
-    "avg_goals": 2.6652,
-    "home_win": 0.4419,
+    "n": 5099,
+    "goals": 13587.0,
+    "home": 2252.0,
+    "avg_goals": 2.666,
+    "home_win": 0.442,
     "tier": 1.0,
     "tier_known": true
   },
@@ -279,11 +279,11 @@
     "tier_known": true
   },
   "GB1": {
-    "n": 5427,
-    "goals": 15182.0,
-    "home": 2415.0,
-    "avg_goals": 2.794,
-    "home_win": 0.4452,
+    "n": 5429,
+    "goals": 15188.0,
+    "home": 2417.0,
+    "avg_goals": 2.7941,
+    "home_win": 0.4454,
     "tier": 1.0,
     "tier_known": true
   },
@@ -315,20 +315,20 @@
     "tier_known": true
   },
   "IN1L": {
-    "n": 1617,
-    "goals": 4364.0,
-    "home": 702.0,
-    "avg_goals": 2.699,
-    "home_win": 0.4359,
+    "n": 1619,
+    "goals": 4367.0,
+    "home": 703.0,
+    "avg_goals": 2.6976,
+    "home_win": 0.436,
     "tier": 0.76,
     "tier_known": true
   },
   "IT1": {
-    "n": 5438,
-    "goals": 14833.0,
-    "home": 2337.0,
-    "avg_goals": 2.7267,
-    "home_win": 0.4305,
+    "n": 5446,
+    "goals": 14867.0,
+    "home": 2341.0,
+    "avg_goals": 2.7288,
+    "home_win": 0.4306,
     "tier": 1.0,
     "tier_known": true
   },
@@ -360,11 +360,11 @@
     "tier_known": true
   },
   "L1": {
-    "n": 4372,
-    "goals": 13345.0,
-    "home": 1951.0,
-    "avg_goals": 3.037,
-    "home_win": 0.4464,
+    "n": 4374,
+    "goals": 13353.0,
+    "home": 1953.0,
+    "avg_goals": 3.0374,
+    "home_win": 0.4467,
     "tier": 1.0,
     "tier_known": true
   },
@@ -378,29 +378,29 @@
     "tier_known": true
   },
   "MLS1": {
-    "n": 1022,
-    "goals": 3194.0,
+    "n": 1023,
+    "goals": 3195.0,
     "home": 458.0,
-    "avg_goals": 3.0556,
-    "home_win": 0.4484,
+    "avg_goals": 3.054,
+    "home_win": 0.4481,
     "tier": 0.85,
     "tier_known": true
   },
   "MYS1": {
-    "n": 798,
-    "goals": 2499.0,
+    "n": 799,
+    "goals": 2500.0,
     "home": 350.0,
-    "avg_goals": 3.0451,
-    "home_win": 0.4409,
+    "avg_goals": 3.043,
+    "home_win": 0.4404,
     "tier": 0.77,
     "tier_known": true
   },
   "NL1": {
-    "n": 4320,
-    "goals": 13453.0,
+    "n": 4321,
+    "goals": 13454.0,
     "home": 1946.0,
-    "avg_goals": 3.0958,
-    "home_win": 0.4504,
+    "avg_goals": 3.0953,
+    "home_win": 0.4503,
     "tier": 0.9,
     "tier_known": true
   },
@@ -576,11 +576,11 @@
     "tier_known": true
   },
   "SIN1": {
-    "n": 557,
-    "goals": 2300.0,
-    "home": 230.0,
-    "avg_goals": 3.7517,
-    "home_win": 0.4227,
+    "n": 559,
+    "goals": 2310.0,
+    "home": 231.0,
+    "avg_goals": 3.7549,
+    "home_win": 0.4229,
     "tier": 0.75,
     "tier_known": true
   },
@@ -594,11 +594,11 @@
     "tier_known": true
   },
   "THA1": {
-    "n": 1505,
-    "goals": 4268.0,
-    "home": 698.0,
-    "avg_goals": 2.8199,
-    "home_win": 0.4622,
+    "n": 1508,
+    "goals": 4277.0,
+    "home": 701.0,
+    "avg_goals": 2.8203,
+    "home_win": 0.4631,
     "tier": 0.78,
     "tier_known": true
   },
@@ -702,11 +702,11 @@
     "tier_known": true
   },
   "VIE1": {
-    "n": 973,
-    "goals": 2451.0,
-    "home": 421.0,
-    "avg_goals": 2.5499,
-    "home_win": 0.4356,
+    "n": 975,
+    "goals": 2455.0,
+    "home": 422.0,
+    "avg_goals": 2.5489,
+    "home_win": 0.4357,
     "tier": 0.76,
     "tier_known": true
   }
