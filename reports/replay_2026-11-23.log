@@ -1,0 +1,85 @@
+report_date=2026-11-23 label=MONITORING ONLY (do not flip until >= 2026-12-16 and >= 500 lineup matches) team_state_as_of=2026-11-22
+{
+  "status": "empty",
+  "freeze_date": "2026-11-18",
+  "domain_note": "Only finished matches in the 74 history competitions (plus tracked UEFA Nations League divisions) with lineups (>= 7 starters per team) are scored; unmapped rows are out-of-domain youth, women, lower-tier, or friendly matches.",
+  "all_finished_matches": 775,
+  "mapped_matches": 96,
+  "skipped_unmapped": 679,
+  "mapping_coverage": 0.1239,
+  "scored_matches": 0,
+  "coverage": 0.0,
+  "mapped_coverage": 0.0,
+  "by_competition": {
+    "BE1": {
+      "mapped": 2,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "ES1": {
+      "mapped": 9,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "FR1": {
+      "mapped": 12,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "GB1": {
+      "mapped": 9,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "IN1L": {
+      "mapped": 9,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "IT1": {
+      "mapped": 16,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "JAP1": {
+      "mapped": 2,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "L1": {
+      "mapped": 9,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "MLS1": {
+      "mapped": 4,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "MYS1": {
+      "mapped": 5,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "NL1": {
+      "mapped": 3,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "SIN1": {
+      "mapped": 4,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "THA1": {
+      "mapped": 6,
+      "scored": 0,
+      "lineup_rate": 0.0
+    },
+    "VIE1": {
+      "mapped": 6,
+      "scored": 0,
+      "lineup_rate": 0.0
+    }
+  }
+}

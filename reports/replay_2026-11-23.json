@@ -1,0 +1,98 @@
+{
+  "report_date": "2026-11-23",
+  "label": "MONITORING ONLY (do not flip until >= 2026-12-16 and >= 500 lineup matches)",
+  "team_state_as_of": "2026-11-22",
+  "model_hashes": {
+    "features.py": "14ffd29726436c260195aa52f3572918b5a0f48a3d65dbe1b5106dc26489ad1f",
+    "league_tiers.py": "3780cc3fa6fd37a10be359e36c15b974596b33af89b1413a901056085f49a75e",
+    "retrain_gate.py": "d419dff9d0aabcbf36d6c7e3db8373646106ee69b7464827a1db43b3e8ce3a8e",
+    "data/history_features.parquet": "4384350ec91a464b821ac8007020c7b82d0a69544707c60a02619eed13a96d39",
+    "models/model_bundle.joblib": "5be979a3c365e86e3ae3289e58bbcf267a88862e1ac7d18cda79cf48a9b50506",
+    "models/base_state_2026-11-12.json": "242cef782e74c47e0e56b7cf15cdb2bbcfe9c870af03a26f729a0a8edfbe9cee",
+    "tests/equivalence_200.json": "33de2fe879eb905787225193af5462faf65cec44ef6e9bfa46701963edba3a40"
+  },
+  "replay": {
+    "status": "empty",
+    "freeze_date": "2026-11-18",
+    "domain_note": "Only finished matches in the 74 history competitions (plus tracked UEFA Nations League divisions) with lineups (>= 7 starters per team) are scored; unmapped rows are out-of-domain youth, women, lower-tier, or friendly matches.",
+    "all_finished_matches": 775,
+    "mapped_matches": 96,
+    "skipped_unmapped": 679,
+    "mapping_coverage": 0.1239,
+    "scored_matches": 0,
+    "coverage": 0.0,
+    "mapped_coverage": 0.0,
+    "by_competition": {
+      "BE1": {
+        "mapped": 2,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "ES1": {
+        "mapped": 9,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "FR1": {
+        "mapped": 12,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "GB1": {
+        "mapped": 9,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "IN1L": {
+        "mapped": 9,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "IT1": {
+        "mapped": 16,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "JAP1": {
+        "mapped": 2,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "L1": {
+        "mapped": 9,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "MLS1": {
+        "mapped": 4,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "MYS1": {
+        "mapped": 5,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "NL1": {
+        "mapped": 3,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "SIN1": {
+        "mapped": 4,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "THA1": {
+        "mapped": 6,
+        "scored": 0,
+        "lineup_rate": 0.0
+      },
+      "VIE1": {
+        "mapped": 6,
+        "scored": 0,
+        "lineup_rate": 0.0
+      }
+    }
+  }
+}
