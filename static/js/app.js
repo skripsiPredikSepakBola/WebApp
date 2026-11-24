@@ -33,108 +33,108 @@ const GRANULAR_OOP = {
 
 const FORMATION_LAYOUTS = {
   '4-3-3': [
-    { role: 'GK', u: 0.055, v: 0.50 },
-    { role: 'LB', u: 0.175, v: 0.14 },
-    { role: 'CB', u: 0.155, v: 0.38 },
-    { role: 'CB', u: 0.155, v: 0.62 },
-    { role: 'RB', u: 0.175, v: 0.86 },
-    { role: 'CM', u: 0.295, v: 0.27 },
-    { role: 'CDM', u: 0.255, v: 0.50 },
-    { role: 'CM', u: 0.295, v: 0.73 },
-    { role: 'LW', u: 0.395, v: 0.16 },
-    { role: 'ST', u: 0.420, v: 0.50 },
-    { role: 'RW', u: 0.395, v: 0.84 },
+    { role: 'GK', u: 0.048, v: 0.50 },
+    { role: 'LB', u: 0.162, v: 0.12 },
+    { role: 'CB', u: 0.152, v: 0.36 },
+    { role: 'CB', u: 0.152, v: 0.64 },
+    { role: 'RB', u: 0.162, v: 0.88 },
+    { role: 'CM', u: 0.298, v: 0.24 },
+    { role: 'CDM', u: 0.256, v: 0.50 },
+    { role: 'CM', u: 0.298, v: 0.76 },
+    { role: 'LW', u: 0.410, v: 0.14 },
+    { role: 'ST', u: 0.435, v: 0.50 },
+    { role: 'RW', u: 0.410, v: 0.86 },
   ],
   '4-2-3-1': [
-    { role: 'GK', u: 0.055, v: 0.50 },
-    { role: 'LB', u: 0.170, v: 0.14 },
-    { role: 'CB', u: 0.150, v: 0.38 },
-    { role: 'CB', u: 0.150, v: 0.62 },
-    { role: 'RB', u: 0.170, v: 0.86 },
-    { role: 'CDM', u: 0.245, v: 0.35 },
-    { role: 'CDM', u: 0.245, v: 0.65 },
-    { role: 'LW', u: 0.340, v: 0.16 },
-    { role: 'CAM', u: 0.335, v: 0.50 },
-    { role: 'RW', u: 0.340, v: 0.84 },
-    { role: 'ST', u: 0.425, v: 0.50 },
+    { role: 'GK', u: 0.048, v: 0.50 },
+    { role: 'LB', u: 0.162, v: 0.12 },
+    { role: 'CB', u: 0.152, v: 0.36 },
+    { role: 'CB', u: 0.152, v: 0.64 },
+    { role: 'RB', u: 0.162, v: 0.88 },
+    { role: 'CDM', u: 0.256, v: 0.33 },
+    { role: 'CDM', u: 0.256, v: 0.67 },
+    { role: 'LW', u: 0.352, v: 0.13 },
+    { role: 'CAM', u: 0.340, v: 0.50 },
+    { role: 'RW', u: 0.352, v: 0.87 },
+    { role: 'ST', u: 0.442, v: 0.50 },
   ],
   '4-4-2': [
-    { role: 'GK', u: 0.055, v: 0.50 },
-    { role: 'LB', u: 0.170, v: 0.14 },
-    { role: 'CB', u: 0.155, v: 0.38 },
-    { role: 'CB', u: 0.155, v: 0.62 },
-    { role: 'RB', u: 0.170, v: 0.86 },
-    { role: 'LM', u: 0.290, v: 0.14 },
-    { role: 'CM', u: 0.280, v: 0.38 },
-    { role: 'CM', u: 0.280, v: 0.62 },
-    { role: 'RM', u: 0.290, v: 0.86 },
-    { role: 'ST', u: 0.415, v: 0.36 },
-    { role: 'CF', u: 0.395, v: 0.64 },
+    { role: 'GK', u: 0.048, v: 0.50 },
+    { role: 'LB', u: 0.162, v: 0.11 },
+    { role: 'CB', u: 0.152, v: 0.35 },
+    { role: 'CB', u: 0.152, v: 0.65 },
+    { role: 'RB', u: 0.162, v: 0.89 },
+    { role: 'LM', u: 0.295, v: 0.11 },
+    { role: 'CM', u: 0.285, v: 0.35 },
+    { role: 'CM', u: 0.285, v: 0.65 },
+    { role: 'RM', u: 0.295, v: 0.89 },
+    { role: 'ST', u: 0.430, v: 0.35 },
+    { role: 'CF', u: 0.415, v: 0.65 },
   ],
   '3-5-2': [
-    { role: 'GK', u: 0.055, v: 0.50 },
-    { role: 'CB', u: 0.160, v: 0.24 },
-    { role: 'CB', u: 0.150, v: 0.50 },
-    { role: 'CB', u: 0.160, v: 0.76 },
-    { role: 'LM', u: 0.285, v: 0.12 },
-    { role: 'CDM', u: 0.245, v: 0.38 },
-    { role: 'CAM', u: 0.330, v: 0.50 },
-    { role: 'CM', u: 0.265, v: 0.64 },
-    { role: 'RM', u: 0.285, v: 0.88 },
-    { role: 'ST', u: 0.415, v: 0.36 },
-    { role: 'CF', u: 0.395, v: 0.64 },
+    { role: 'GK', u: 0.048, v: 0.50 },
+    { role: 'CB', u: 0.158, v: 0.22 },
+    { role: 'CB', u: 0.152, v: 0.50 },
+    { role: 'CB', u: 0.158, v: 0.78 },
+    { role: 'LM', u: 0.285, v: 0.10 },
+    { role: 'CDM', u: 0.258, v: 0.32 },
+    { role: 'CAM', u: 0.342, v: 0.50 },
+    { role: 'CM', u: 0.258, v: 0.68 },
+    { role: 'RM', u: 0.285, v: 0.90 },
+    { role: 'ST', u: 0.440, v: 0.32 },
+    { role: 'CF', u: 0.432, v: 0.68 },
   ],
   '3-4-3': [
-    { role: 'GK', u: 0.055, v: 0.50 },
-    { role: 'CB', u: 0.160, v: 0.24 },
-    { role: 'CB', u: 0.150, v: 0.50 },
-    { role: 'CB', u: 0.160, v: 0.76 },
-    { role: 'LM', u: 0.285, v: 0.13 },
-    { role: 'CM', u: 0.275, v: 0.38 },
-    { role: 'CM', u: 0.275, v: 0.62 },
-    { role: 'RM', u: 0.285, v: 0.87 },
-    { role: 'LW', u: 0.400, v: 0.17 },
-    { role: 'ST', u: 0.420, v: 0.50 },
-    { role: 'RW', u: 0.400, v: 0.83 },
+    { role: 'GK', u: 0.048, v: 0.50 },
+    { role: 'CB', u: 0.158, v: 0.22 },
+    { role: 'CB', u: 0.152, v: 0.50 },
+    { role: 'CB', u: 0.158, v: 0.78 },
+    { role: 'LM', u: 0.288, v: 0.11 },
+    { role: 'CM', u: 0.278, v: 0.35 },
+    { role: 'CM', u: 0.278, v: 0.65 },
+    { role: 'RM', u: 0.288, v: 0.89 },
+    { role: 'LW', u: 0.412, v: 0.16 },
+    { role: 'ST', u: 0.435, v: 0.50 },
+    { role: 'RW', u: 0.412, v: 0.84 },
   ],
   '5-3-2': [
-    { role: 'GK', u: 0.055, v: 0.50 },
-    { role: 'LB', u: 0.195, v: 0.12 },
-    { role: 'CB', u: 0.155, v: 0.31 },
-    { role: 'CB', u: 0.145, v: 0.50 },
-    { role: 'CB', u: 0.155, v: 0.69 },
-    { role: 'RB', u: 0.195, v: 0.88 },
-    { role: 'CM', u: 0.295, v: 0.28 },
-    { role: 'CDM', u: 0.255, v: 0.50 },
-    { role: 'CM', u: 0.295, v: 0.72 },
-    { role: 'ST', u: 0.415, v: 0.36 },
-    { role: 'CF', u: 0.395, v: 0.64 },
+    { role: 'GK', u: 0.048, v: 0.50 },
+    { role: 'LB', u: 0.188, v: 0.10 },
+    { role: 'CB', u: 0.156, v: 0.30 },
+    { role: 'CB', u: 0.150, v: 0.50 },
+    { role: 'CB', u: 0.156, v: 0.70 },
+    { role: 'RB', u: 0.188, v: 0.90 },
+    { role: 'CM', u: 0.305, v: 0.26 },
+    { role: 'CDM', u: 0.262, v: 0.50 },
+    { role: 'CM', u: 0.305, v: 0.74 },
+    { role: 'ST', u: 0.432, v: 0.35 },
+    { role: 'CF', u: 0.418, v: 0.65 },
   ],
   '5-4-1': [
-    { role: 'GK', u: 0.055, v: 0.50 },
-    { role: 'LB', u: 0.190, v: 0.12 },
-    { role: 'CB', u: 0.155, v: 0.31 },
-    { role: 'CB', u: 0.145, v: 0.50 },
-    { role: 'CB', u: 0.155, v: 0.69 },
-    { role: 'RB', u: 0.190, v: 0.88 },
-    { role: 'LM', u: 0.300, v: 0.14 },
-    { role: 'CM', u: 0.285, v: 0.38 },
-    { role: 'CM', u: 0.285, v: 0.62 },
-    { role: 'RM', u: 0.300, v: 0.86 },
-    { role: 'ST', u: 0.420, v: 0.50 },
+    { role: 'GK', u: 0.048, v: 0.50 },
+    { role: 'LB', u: 0.188, v: 0.10 },
+    { role: 'CB', u: 0.156, v: 0.30 },
+    { role: 'CB', u: 0.150, v: 0.50 },
+    { role: 'CB', u: 0.156, v: 0.70 },
+    { role: 'RB', u: 0.188, v: 0.90 },
+    { role: 'LM', u: 0.312, v: 0.11 },
+    { role: 'CM', u: 0.296, v: 0.35 },
+    { role: 'CM', u: 0.296, v: 0.65 },
+    { role: 'RM', u: 0.312, v: 0.89 },
+    { role: 'ST', u: 0.435, v: 0.50 },
   ],
   '4-1-4-1': [
-    { role: 'GK', u: 0.055, v: 0.50 },
-    { role: 'LB', u: 0.170, v: 0.14 },
-    { role: 'CB', u: 0.150, v: 0.38 },
-    { role: 'CB', u: 0.150, v: 0.62 },
-    { role: 'RB', u: 0.170, v: 0.86 },
-    { role: 'CDM', u: 0.235, v: 0.50 },
-    { role: 'LM', u: 0.320, v: 0.14 },
-    { role: 'CM', u: 0.315, v: 0.37 },
-    { role: 'CM', u: 0.315, v: 0.63 },
-    { role: 'RM', u: 0.320, v: 0.86 },
-    { role: 'ST', u: 0.425, v: 0.50 },
+    { role: 'GK', u: 0.048, v: 0.50 },
+    { role: 'LB', u: 0.162, v: 0.11 },
+    { role: 'CB', u: 0.152, v: 0.33 },
+    { role: 'CB', u: 0.152, v: 0.67 },
+    { role: 'RB', u: 0.162, v: 0.89 },
+    { role: 'CDM', u: 0.246, v: 0.50 },
+    { role: 'LM', u: 0.340, v: 0.11 },
+    { role: 'CM', u: 0.336, v: 0.33 },
+    { role: 'CM', u: 0.336, v: 0.67 },
+    { role: 'RM', u: 0.340, v: 0.89 },
+    { role: 'ST', u: 0.442, v: 0.50 },
   ],
 };
 
@@ -218,7 +218,7 @@ function initialsOf(name) {
 }
 
 function shieldSvg() {
-  return '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" aria-hidden="true"><path d="M12 2.5L20 6V12.5C20 17.5 16.5 20.8 12 22.3C7.5 20.8 4 17.5 4 12.5V6L12 2.5Z" fill="rgba(30,41,59,0.9)" stroke="currentColor" stroke-width="1.6"/></svg>';
+  return '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" aria-hidden="true"><path d="M12 2.5L20 6V12.5C20 17.5 16.5 20.8 12 22.3C7.5 20.8 4 17.5 4 12.5V6L12 2.5Z" fill="#efe9df" stroke="#7b7266" stroke-width="1.5"/></svg>';
 }
 
 function crestUrlFor(teamName, explicitUrl = '') {
@@ -308,7 +308,7 @@ async function init() {
   indexPlayers(pBoot);
   flat = [];
   for (const [c, names] of Object.entries(cat || {})) {
-    const cleanCat = c.replace(/^[^\p{L}]+/u, '');
+    const cleanCat = c.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu, '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
     const isLegendCat = /legend|icon/i.test(c);
     names.forEach(n => flat.push({ n, c: cleanCat, isLegend: isLegendCat || /legends$/i.test(n) }));
   }
@@ -506,7 +506,7 @@ async function loadSyncStatus() {
     const r = await fetch('/api/sync/status');
     if (!r.ok) {
       if (dot) dot.className = 'sync-dot';
-      if (lbl) lbl.textContent = 'Auto-Sync: Ready';
+      if (lbl) lbl.textContent = 'Ready';
       return;
     }
     const d = await r.json();
@@ -519,16 +519,16 @@ async function loadSyncStatus() {
       dot.className = 'sync-dot' + (isRunning ? ' busy' : (hasErr ? ' warn' : (!enabled ? ' off' : (!sbOk ? ' warn' : ''))));
     }
     if (lbl) {
-      if (isRunning) lbl.textContent = 'Auto-Sync: Syncing';
-      else if (hasErr) lbl.textContent = 'Auto-Sync: Check';
-      else if (!enabled) lbl.textContent = 'Auto-Sync: Off';
-      else if (!sbOk) lbl.textContent = 'Auto-Sync: Local';
-      else lbl.textContent = 'Auto-Sync: Live';
+      if (isRunning) lbl.textContent = 'Syncing';
+      else if (hasErr) lbl.textContent = 'Check';
+      else if (!enabled) lbl.textContent = 'Off';
+      else if (!sbOk) lbl.textContent = 'Local';
+      else lbl.textContent = 'Live';
     }
     if ($('sync-dlg')?.open) renderSyncModalBody();
   } catch (_) {
     if (dot) dot.className = 'sync-dot off';
-    if (lbl) lbl.textContent = 'Auto-Sync: Offline';
+    if (lbl) lbl.textContent = 'Offline';
   }
 }
 
@@ -578,10 +578,10 @@ function wireSyncModal() {
       await loadSyncStatus();
       renderSyncModalBody();
       if (ok) {
-        btn.textContent = 'Synced ✓';
-        setTimeout(() => { btn.textContent = 'Sync Finished Matches Now'; }, 2000);
+        btn.textContent = 'Synced';
+        setTimeout(() => { btn.textContent = 'Sync finished matches'; }, 2000);
       } else {
-        btn.textContent = 'Sync Finished Matches Now';
+        btn.textContent = 'Sync finished matches';
       }
       btn.disabled = false;
     };
@@ -592,7 +592,7 @@ function wireSyncModal() {
       switchView('predictor');
       const results = $('analyst-results');
       if (results && results.hidden && last) results.hidden = false;
-      const target = ($('thesis-sync-card') && !results?.hidden) ? $('thesis-sync-card') : $('analyst-deck');
+      const target = ($('thesis-sync-card') && !results?.hidden) ? $('thesis-sync-card') : ($('analyst-deck') || $('view-predictor'));
       target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
   }
@@ -609,8 +609,13 @@ function switchView(view) {
       tab.setAttribute('aria-selected', v === view ? 'true' : 'false');
     }
   });
-  if ($('actionbar')) $('actionbar').hidden = view !== 'predictor';
-  document.body.classList.toggle('no-actionbar', view !== 'predictor');
+  const actBar = $('actionbar');
+  if (actBar) {
+    actBar.hidden = view !== 'predictor';
+    document.body?.classList.toggle('no-actionbar', view !== 'predictor');
+  } else {
+    document.body?.classList.remove('no-actionbar');
+  }
   if (view === 'leagues') ensureLeaguesLoaded();
   if (view === 'calendar') ensureCalendarLoaded();
   if (view === 'explorer') ensureExplorerSubLoaded(activeExSub);
@@ -651,9 +656,9 @@ function wireGlobalSearch() {
       const lgHits = (leaguesCache?.leagues || []).filter(l => `${l.name} ${l.country_name || ''} ${l.comp_id}`.toLowerCase().includes(ql)).slice(0, 3);
       const items = [
         ...lgHits.map(l => ({ kind: 'League', label: l.name, sub: `${l.region_group || ''} · ${l.comp_id}`, act: () => openLeagueStandings(l.comp_id) })),
-        ...(clRes.clubs || []).map(c => ({ kind: 'Club', label: c.name, sub: `${c.comp_name || c.country_name || ''} · Rtg ${c.avg_rating ?? '-'}`, act: () => openClubInspector(c.name, c.club_id) })),
+        ...(clRes.clubs || []).map(c => ({ kind: 'Club', label: c.name, sub: `${c.comp_name || c.country_name || ''} · Rtg ${c.avg_rating != null ? Number(c.avg_rating).toFixed(1) : '-'}`, act: () => openClubInspector(c.name, c.club_id) })),
         ...(ctRes.countries || []).map(c => ({ kind: 'Country', label: c.name, sub: `${c.confederation || 'FIFA'} · ${c.total_players ?? 0} players`, act: () => openCountryInspector(c.name) })),
-        ...(plRes.players || []).map(p => ({ kind: p.is_former ? 'Legend' : 'Player', label: p.name, sub: `${playerRole(p)} · ${p.is_former ? `Former: ${p.former_club || p.club || 'Retired'}` : (p.club || p.nat || '')} · Rtg ${p.rating}`, act: () => openPlayerInspector(p.id) })),
+        ...(plRes.players || []).map(p => ({ kind: p.is_former ? 'Legend' : 'Player', label: p.name, sub: `${playerRole(p)} · ${p.is_former ? `Former: ${p.former_club || p.club || 'Retired'}` : (p.club || p.nat || '')} · Rtg ${p.rating != null ? Number(p.rating).toFixed(1) : '-'}`, act: () => openPlayerInspector(p.id) })),
       ];
       list._items = items;
       list.innerHTML = items.length
@@ -675,9 +680,58 @@ function wireGlobalSearch() {
   };
 }
 
+function formatVerdictCopy(d) {
+  const h = String(d?.home_name || 'Home').replaceAll(' (National Team)', '').trim();
+  const a = String(d?.away_name || 'Away').replaceAll(' (National Team)', '').trim();
+  const pr = d?.probabilities || { home: 0, draw: 0, away: 0 };
+  const pHome = Number(pr.home || 0);
+  const pDraw = Number(pr.draw || 0);
+  const pAway = Number(pr.away || 0);
+  const conf = d?.summary?.confidence || 'Medium';
+  const leader = pHome >= pAway ? h : a;
+  const edge = Math.max(pHome, pAway);
+
+  if (d?.knockout) {
+    const advHome = Number(d.knockout.advance_home || 0);
+    const advAway = Number(d.knockout.advance_away || 0);
+    const fav = advHome >= advAway ? h : a;
+    const advPct = Math.max(advHome, advAway).toFixed(1);
+    return {
+      headline: `${fav} favoured to advance`,
+      confHtml: `<b>${escRaw(conf)} confidence</b> &middot; ${escRaw(fav)} ${advPct}% to advance &middot; 90 min draw ${pDraw.toFixed(1)}%`
+    };
+  }
+
+  const rawHead = String(d?.summary?.headline || d?.headline_tuned || '');
+  const isDrawVerdict = d?.verdict_tuned === 'draw' || /draw risk flagged|draw most likely/i.test(rawHead);
+
+  if (isDrawVerdict) {
+    if (pDraw >= pHome && pDraw >= pAway) {
+      return {
+        headline: 'Even contest — Draw most likely',
+        confHtml: `<b>${escRaw(conf)} confidence</b> &middot; Draw ${pDraw.toFixed(1)}% leads &middot; ${escRaw(leader)} ${edge.toFixed(1)}%`
+      };
+    }
+    return {
+      headline: 'Tight contest — Draw risk flagged',
+      confHtml: `<b>${escRaw(conf)} confidence</b> &middot; Draw ${pDraw.toFixed(1)}% meets 27.0% draw-flag threshold &middot; ${escRaw(leader)} ${edge.toFixed(1)}% edge`
+    };
+  }
+
+  const favIsAway = d?.verdict_tuned === 'away' || (d?.verdict_tuned !== 'home' && pAway > pHome);
+  const fav = favIsAway ? a : h;
+  const winPct = (favIsAway ? pAway : pHome).toFixed(1);
+  return {
+    headline: `${fav} favoured to win`,
+    confHtml: `<b>${escRaw(conf)} confidence</b> &middot; ${escRaw(fav)} ${winPct}% win probability &middot; Draw ${pDraw.toFixed(1)}%`
+  };
+}
+
 function invertPrediction(d) {
   if (!d) return null;
   const h = d.home_name, a = d.away_name;
+  const hClean = String(h || '').replaceAll(' (National Team)', '').trim();
+  const aClean = String(a || '').replaceAll(' (National Team)', '').trim();
   const [ga, gb] = (d.score_prediction?.most_likely_score || '0 - 0').split(' - ');
   const invScores = (d.score_prediction?.top_scores || []).map(s => ({
     ...s,
@@ -694,18 +748,15 @@ function invertPrediction(d) {
   const invWinnerKey = d.winner_key === 'home' ? 'away' : (d.winner_key === 'away' ? 'home' : 'draw');
   const invArgmax = d.verdict_argmax === 'home' ? 'away' : (d.verdict_argmax === 'away' ? 'home' : 'draw');
   const invTuned = d.verdict_tuned === 'home' ? 'away' : (d.verdict_tuned === 'away' ? 'home' : 'draw');
-  const invHeadArgmax = invArgmax === 'draw' ? `Even contest: draw most likely (${invProb.draw}%)` :
-    (invArgmax === 'home' ? `${a} favoured to win (${invProb.home}%)` : `${h} favoured to win (${invProb.away}%)`);
-  const invEdgeTeam = invProb.home >= invProb.away ? a : h;
-  const invEdgePct = Math.max(invProb.home, invProb.away);
+  const invHeadArgmax = invArgmax === 'draw' ? 'Even contest — Draw most likely' :
+    (invArgmax === 'home' ? `${aClean} favoured to win` : `${hClean} favoured to win`);
   const invHeadTuned = invTuned === 'draw'
     ? (invProb.draw >= invProb.home && invProb.draw >= invProb.away
-        ? `Even contest: draw most likely (${invProb.draw}%)`
-        : `Tight contest — Draw risk flagged (${invProb.draw}% >= 27% threshold; ${invEdgeTeam} ${invEdgePct}% edge)`)
-    : (invTuned === 'home' ? `${a} favoured to win (${invProb.home}%)` : `${h} favoured to win (${invProb.away}%)`);
+        ? 'Even contest — Draw most likely'
+        : 'Tight contest — Draw risk flagged')
+    : (invTuned === 'home' ? `${aClean} favoured to win` : `${hClean} favoured to win`);
 
   let invKo = null;
-  let invHeadline = invHeadTuned;
   if (d.knockout) {
     invKo = {
       ...d.knockout,
@@ -713,10 +764,8 @@ function invertPrediction(d) {
       advance_away: d.knockout.advance_home,
       shootout_home: 100 - d.knockout.shootout_home
     };
-    const fav = invKo.advance_home >= 50 ? a : h;
-    invHeadline = `${fav} favoured to advance (${Math.max(invKo.advance_home, invKo.advance_away)}%)`;
   }
-  return {
+  const invObj = {
     ...d,
     home_name: a, away_name: h,
     home_crest: d.away_crest || '', away_crest: d.home_crest || '',
@@ -731,15 +780,17 @@ function invertPrediction(d) {
     tactical_metrics: (d.tactical_metrics || []).map(m => ({ ...m, home: m.away, away: m.home })),
     summary: {
       ...d.summary,
-      headline: invHeadline,
+      headline: invHeadTuned,
       points: [
-        `Win probability: ${a} ${invProb.home}% | Draw ${invProb.draw}% | ${h} ${invProb.away}%.`,
-        `Most likely score ${gb} - ${ga} (xG ${Number(invXgHome).toFixed(2)} - ${Number(invXgAway).toFixed(2)}); over 2.5 goals ${d.score_prediction.over_2_5_prob}%.`,
-        `Biggest edge: favours ${invXgHome > invXgAway ? a : h}.`,
-        `Top scoring threats: ${d.goalscorers?.away?.[0]?.name || a} (${a}), ${d.goalscorers?.home?.[0]?.name || h} (${h}).`
+        `Win probability: ${aClean} ${Number(invProb.home).toFixed(1)}% | Draw ${Number(invProb.draw).toFixed(1)}% | ${hClean} ${Number(invProb.away).toFixed(1)}%.`,
+        `Most likely score ${gb} - ${ga} (xG ${Number(invXgHome).toFixed(2)} - ${Number(invXgAway).toFixed(2)}); over 2.5 goals ${Number(d.score_prediction.over_2_5_prob).toFixed(1)}%.`,
+        `Biggest edge: favours ${invXgHome > invXgAway ? aClean : hClean}.`,
+        `Top scoring threats: ${d.goalscorers?.away?.[0]?.name || aClean} (${aClean}), ${d.goalscorers?.home?.[0]?.name || hClean} (${hClean}).`
       ]
     }
   };
+  invObj.summary.headline = formatVerdictCopy(invObj).headline;
+  return invObj;
 }
 
 function swapSides() {
@@ -756,13 +807,13 @@ function swapSides() {
 }
 
 function buildPicker(t) {
+  const sideLabel = t === 'home' ? 'Home' : 'Away';
   $('pick-' + t).innerHTML = `
-    <div class="pk-name" id="${t}-name"></div>
-    <div class="pk-search"><input class="field" id="${t}-q" placeholder="Change squad: club, country or Legends XI" autocomplete="off" aria-label="Change ${t} squad"><ul class="pk-list" id="${t}-list" hidden></ul></div>
-    <div class="pk-opts">
-      <label>Formation<select class="field" id="${t}-f">${FORMATIONS.map(f => `<option>${f}</option>`).join('')}</select></label>
-      <label>Recent form<select class="field" id="${t}-form">${FORMS.map(([v, l]) => `<option value="${v}" ${v === 2 ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-    </div>`;
+    <div class="pk-head">
+      <div class="pk-name" id="${t}-name"></div>
+      <select class="field field-sm" id="${t}-f" aria-label="${sideLabel} formation">${FORMATIONS.map(f => `<option value="${f}">${f}</option>`).join('')}</select>
+    </div>
+    <div class="pk-search"><input class="field" id="${t}-q" placeholder="Change squad" autocomplete="off" aria-label="Change ${t} squad"><ul class="pk-list" id="${t}-list" hidden></ul></div>`;
   const q = $(t + '-q'), list = $(t + '-list');
   const show = () => {
     const s = q.value.trim().toLowerCase();
@@ -770,7 +821,7 @@ function buildPicker(t) {
     list.innerHTML = hits.map(x => `
       <li><button type="button" class="${x.isLegend ? 'is-legend' : ''}" data-n="${escRaw(x.n)}">
         <span>${esc(x.n)}</span>
-        <span class="pk-meta-right">${x.isLegend ? '<span class="legend-tag">LEGEND</span>' : ''}<small>${escRaw(x.c)}</small></span>
+        <span class="pk-meta-right">${x.isLegend ? '<span class="legend-tag">Legend</span>' : ''}<small>${escRaw(x.c)}</small></span>
       </button></li>`).join('') || '<li><small style="padding:8px 10px;display:block">No squad found</small></li>';
     list.hidden = false;
   };
@@ -785,12 +836,16 @@ function buildPicker(t) {
       predict();
     }
   };
-  $(t + '-f').onchange = e => {
-    rearrangeLineupForFormation(t, e.target.value);
-    render();
-    predict();
-  };
-  $(t + '-form').onchange = e => { T[t].form = +e.target.value; predict(); };
+  if ($(t + '-f')) {
+    $(t + '-f').onchange = e => {
+      rearrangeLineupForFormation(t, e.target.value, { useBench: false });
+      render();
+      predict();
+    };
+  }
+  if ($(t + '-form')) {
+    $(t + '-form').onchange = e => { T[t].form = +e.target.value; predict(); };
+  }
 }
 
 function find(name) {
@@ -1068,9 +1123,10 @@ function handleSwapTap(t, kind, i) {
 }
 
 function updatePitchToolbar() {
-  const pvHome = $('pv-home'), pvAway = $('pv-away');
-  if (pvHome) pvHome.textContent = `${shortTeamLabel('home')} (${T.home.formation})`;
-  if (pvAway) pvAway.textContent = `${shortTeamLabel('away')} (${T.away.formation})`;
+  const pvBoth = $('pv-both'), pvHome = $('pv-home'), pvAway = $('pv-away');
+  if (pvBoth) pvBoth.textContent = 'Both 22';
+  if (pvHome) pvHome.textContent = shortTeamLabel('home');
+  if (pvAway) pvAway.textContent = shortTeamLabel('away');
   document.querySelectorAll('#pitch-view-tabs [data-pitch-view]').forEach(b => {
     b.classList.toggle('active', b.dataset.pitchView === pitchViewMode);
   });
@@ -1086,11 +1142,14 @@ function render() {
     const nm = T[t].name.replace(' (National Team)', '') || 'Custom squad';
     const cUrl = crestUrlFor(T[t].name);
     const isLeg = /legends$/i.test(T[t].name);
-    $(t + '-name').innerHTML = `${crestHtml(cUrl, nm, 'crest-sm')}<span>${escRaw(nm)}</span>${isLeg ? '<span class="legend-tag">LEGEND</span>' : ''}`;
-    $(t + '-f').value = T[t].formation;
-    $(t + '-form').value = T[t].form;
+    if ($(t + '-name')) {
+      $(t + '-name').innerHTML = `${crestHtml(cUrl, nm, 'crest-sm')}<span>${escRaw(nm)}</span>${isLeg ? '<span class="legend-tag">Legend</span>' : ''}`;
+    }
+    if ($(t + '-f')) $(t + '-f').value = T[t].formation;
+    if ($(t + '-form')) $(t + '-form').value = T[t].form;
     if ($('ptool-' + t + '-f')) $('ptool-' + t + '-f').value = T[t].formation;
   });
+  if ($('whatif-summary')) $('whatif-summary').textContent = formatWhatIfSummary();
   updatePitchToolbar();
   renderPitch();
   renderBench();
@@ -1098,7 +1157,7 @@ function render() {
 }
 
 function pitchSVG(v) {
-  const g = `<g fill="none" stroke="rgba(226,248,236,0.52)" stroke-width=".36"><rect x="1" y="1" width="103" height="66"/><path d="M52.5 1V67"/><circle cx="52.5" cy="34" r="9.15"/><rect x="1" y="13.84" width="16.5" height="40.32"/><rect x="87.5" y="13.84" width="16.5" height="40.32"/><rect x="1" y="24.84" width="5.5" height="18.32"/><rect x="98.5" y="24.84" width="5.5" height="18.32"/><path d="M17.5 26.7A9.15 9.15 0 0 1 17.5 41.3M87.5 26.7A9.15 9.15 0 0 0 87.5 41.3"/><path d="M1 3A2 2 0 0 0 3 1M102 1A2 2 0 0 0 104 3M1 65A2 2 0 0 1 3 67M102 67A2 2 0 0 1 104 65"/></g><g fill="rgba(226,248,236,0.68)"><circle cx="52.5" cy="34" r=".55"/><circle cx="12" cy="34" r=".55"/><circle cx="93" cy="34" r=".55"/></g>`;
+  const g = `<g fill="none" stroke="rgba(255,252,245,0.44)" stroke-width=".38"><rect x="1" y="1" width="103" height="66"/><path d="M52.5 1V67"/><circle cx="52.5" cy="34" r="9.15"/><rect x="1" y="13.84" width="16.5" height="40.32"/><rect x="87.5" y="13.84" width="16.5" height="40.32"/><rect x="1" y="24.84" width="5.5" height="18.32"/><rect x="98.5" y="24.84" width="5.5" height="18.32"/><path d="M17.5 26.7A9.15 9.15 0 0 1 17.5 41.3M87.5 26.7A9.15 9.15 0 0 0 87.5 41.3"/><path d="M1 3A2 2 0 0 0 3 1M102 1A2 2 0 0 0 104 3M1 65A2 2 0 0 1 3 67M102 67A2 2 0 0 1 104 65"/></g><g fill="rgba(255,252,245,0.72)"><circle cx="52.5" cy="34" r=".55"/><circle cx="12" cy="34" r=".55"/><circle cx="93" cy="34" r=".55"/></g>`;
   return v ? `<svg viewBox="0 0 68 105" preserveAspectRatio="none" aria-hidden="true"><g transform="translate(0 105) rotate(-90)">${g}</g></svg>` : `<svg viewBox="0 0 105 68" preserveAspectRatio="none" aria-hidden="true">${g}</svg>`;
 }
 
@@ -1131,11 +1190,10 @@ function renderPitch() {
       const e = p ? eff(p, pt.role) : 0;
       const natRole = p ? playerRole(p) : pt.role;
       const cardCls = pen >= 4 ? 'oop' : (pen >= 1 ? 'oop-warn' : '');
-      const posCls = pen >= 4 ? 'severe' : (pen >= 1 ? 'warn' : '');
       const posLabel = pen > 0 ? `${natRole}→${pt.role} -${pen}` : pt.role;
       const label = p ? `${p.name}, ${natRole} in ${pt.role}, rating ${Math.round(e)}` : `Empty ${pt.role} spot`;
       const tip = pen > 0
-        ? `${p.name} (natural ${natRole}) playing ${pt.role}: rating ${p.rating} → ${Math.round(e)} (-${pen})`
+        ? `${p.name} (natural ${natRole}) playing ${pt.role}: rating ${Number(p.rating).toFixed(1)} → ${Math.round(e)} (-${pen})`
         : label;
       const fd = p && p.form_delta !== undefined && p.form_delta !== null ? Number(p.form_delta) : 0;
       const deltaBadge = Math.abs(fd) >= 0.05
@@ -1146,15 +1204,18 @@ function renderPitch() {
         const imgUrl = p.image_url || byId.get(p.id)?.image_url || '';
         const tierCls = ratingTier(e);
         h += `<button draggable="true" type="button" class="tok ${t} ${tierCls} ${cardCls}${armedCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
-          ${deltaBadge}
-          <span class="fut-top"><span class="fut-rtg">${Math.round(e)}</span><span class="fut-pos ${posCls}">${escRaw(posLabel)}</span></span>
-          <span class="fut-pic ${tierCls}">${avatarHtml(imgUrl, p.name, 'av-sm', e)}</span>
-          <em>${esc(short(p.name))}</em>
+          <span class="tok-top">
+            <span class="tok-av">${avatarHtml(imgUrl, p.name, 'tok-pic', e)}</span>
+            ${deltaBadge}
+            <span class="tok-rtg">${Math.round(e)}</span>
+          </span>
+          <span class="tok-name">${esc(short(p.name))}</span>
+          <span class="tok-role">${escRaw(posLabel)}</span>
         </button>`;
       } else {
         h += `<button draggable="true" type="button" class="tok ${t} empty${armedCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
           <span class="fut-plus">+</span>
-          <em>${pt.role}</em>
+          <span class="tok-name">${escRaw(pt.role)}</span>
         </button>`;
       }
     });
@@ -1165,12 +1226,13 @@ function renderPitch() {
 function renderBench() {
   TEAMS.forEach(t => {
     const teamName = (T[t].name || 'Team').replace(' (National Team)', '');
-    $('bench-' + t).innerHTML = `<div class="bench"><div class="bench-head"><b>${esc(teamName)} Bench (${T[t].subs.length})</b><button type="button" class="add">+ Add sub</button></div><div class="bench-list">` +
+    $('bench-' + t).innerHTML = `<div class="bench"><div class="bench-head"><b>${esc(teamName)} bench (${T[t].subs.length})</b><button type="button" class="add">+ Add sub</button></div><div class="bench-list">` +
       T[t].subs.map((p, i) => {
         const imgUrl = p.image_url || byId.get(p.id)?.image_url || '';
         const r = playerRole(p);
+        const rtg = p.rating != null ? Number(p.rating).toFixed(1) : '-';
         const isArmed = swapArmed && swapArmed.kind === 'sub' && swapArmed.t === t && swapArmed.i === i;
-        return `<span class="bn ${ratingTier(p.rating)}${isArmed ? ' swap-selected' : ''}"><button type="button" class="bn-card-btn" draggable="true" data-i="${i}">${avatarHtml(imgUrl, p.name, 'av-sm', p.rating)}<span class="bn-rtg">${p.rating}</span><span class="pos-mini">${escRaw(r)}</span><span class="bn-name">${esc(short(p.name))}</span></button><button type="button" data-inspect="${p.id}" title="Inspect ${escRaw(p.name)}" aria-label="Inspect ${escRaw(p.name)}">Info</button><button type="button" data-rm="${i}" aria-label="Remove ${escRaw(p.name)}">&times;</button></span>`;
+        return `<span class="bn ${ratingTier(p.rating)}${isArmed ? ' swap-selected' : ''}"><button type="button" class="bn-card-btn" draggable="true" data-i="${i}">${avatarHtml(imgUrl, p.name, 'av-sm', p.rating)}<span class="bn-rtg">${rtg}</span><span class="pos-mini">${escRaw(r)}</span><span class="bn-name">${esc(short(p.name))}</span></button><button type="button" data-rm="${i}" aria-label="Remove ${escRaw(p.name)}">&times;</button></span>`;
       }).join('') +
       `</div></div>`;
   });
@@ -1198,10 +1260,11 @@ function renderDlgSummary(currentP, kind, role) {
   const e = kind === 'slot' ? eff(p, role) : p.rating;
   const imgUrl = p.image_url || '';
   const clubText = p.is_former ? (p.former_club || p.club || 'Retired') : (p.club || 'Free Agent');
-  const legTag = p.is_former ? ' <span class="legend-tag">LEGEND</span>' : '';
+  const legTag = p.is_former ? ' <span class="legend-tag">Legend</span>' : '';
   const fitText = kind === 'slot'
-    ? (pen > 0 ? `Eff ${Math.round(e)} (-${pen} OOP)` : `Natural ${role}`)
-    : 'Bench Sub';
+    ? (pen > 0 ? `Eff ${Number(e).toFixed(1)} (-${pen} OOP)` : `Natural ${role}`)
+    : 'Bench sub';
+  const rtgDisp = p.rating != null ? Number(p.rating).toFixed(1) : '-';
 
   sumBody.innerHTML = `
     <div class="dlg-sum-top">
@@ -1213,7 +1276,7 @@ function renderDlgSummary(currentP, kind, role) {
         </div>
       </div>
       <div class="dlg-sum-rtg">
-        <b>${p.rating ?? '-'}</b>
+        <b>${rtgDisp}</b>
         <small class="${pen > 0 ? 'warn' : 'ok'}">${escRaw(fitText)}</small>
       </div>
     </div>
@@ -1249,7 +1312,7 @@ function openDlg(t, kind, i) {
     } else {
       bExact.hidden = false;
       bLine.hidden = false;
-      bExact.textContent = `Exact Slot (${role})`;
+      bExact.textContent = `Exact slot (${role})`;
       bLine.textContent = `Line (${roleToGroup(role)})`;
       bExact.classList.toggle('active', dlgFilterMode === 'exact');
       bLine.classList.toggle('active', dlgFilterMode === 'line');
@@ -1298,14 +1361,14 @@ function gatherSquadCandidates(t, kind, idx, activeId) {
   T[t].subs.forEach((p, si) => {
     if (!p || (kind === 'sub' && si === idx) || seen.has(p.id)) return;
     seen.add(p.id);
-    out.push({ p, srcBadge: { cls: 'bench', text: 'ON BENCH' }, order: 0 });
+    out.push({ p, srcBadge: { cls: 'bench', text: 'On bench' }, order: 0 });
   });
 
   const roles = layout(T[t].formation).map(x => x.role);
   T[t].slots.forEach((p, si) => {
     if (!p || (kind === 'slot' && si === idx) || seen.has(p.id)) return;
     seen.add(p.id);
-    out.push({ p, srcBadge: { cls: 'pitch', text: `ON PITCH · ${roles[si] || ''}` }, order: 1 });
+    out.push({ p, srcBadge: { cls: 'pitch', text: `On pitch · ${roles[si] || ''}` }, order: 1 });
   });
 
   const teamName = T[t].name || '';
@@ -1315,7 +1378,7 @@ function gatherSquadCandidates(t, kind, idx, activeId) {
       const p = find(nm);
       if (p && !seen.has(p.id)) {
         seen.add(p.id);
-        out.push({ p, srcBadge: { cls: 'squad', text: 'SQUAD' }, order: 2 });
+        out.push({ p, srcBadge: { cls: 'squad', text: 'Squad' }, order: 2 });
       }
     });
   }
@@ -1332,7 +1395,7 @@ function gatherSquadCandidates(t, kind, idx, activeId) {
       else match = !p.is_former && clean(p.club) === baseClean;
       if (match) {
         seen.add(p.id);
-        out.push({ p, srcBadge: { cls: 'squad', text: 'SQUAD' }, order: 2 });
+        out.push({ p, srcBadge: { cls: 'squad', text: 'Squad' }, order: 2 });
       }
     }
   }
@@ -1344,16 +1407,17 @@ function renderDlgCandidateItem(p, role, srcBadge) {
   const pen = oopPenalty(p, role);
   const e = eff(p, role);
   const penCls = pen >= 4 ? 'pen-severe' : 'pen-warn';
-  const legTag = p.is_former ? ' <span class="legend-tag">LEGEND</span>' : '';
-  const badgeHtml = srcBadge ? `<span class="src-badge ${escRaw(srcBadge.cls)}">${escRaw(srcBadge.text)}</span>` : '';
+  const legTag = p.is_former ? ' <span class="legend-tag">Legend</span>' : '';
+  const badgeHtml = srcBadge ? ` <span class="src-badge ${escRaw(srcBadge.cls)}">${escRaw(srcBadge.text)}</span>` : '';
   const subMeta = p.is_former
     ? `Former: ${escRaw(p.former_club || p.club || 'Retired')} (Last: ${escRaw(p.last_season || '-')}) · ${escRaw(p.nat)}`
     : `${escRaw(p.club)} · ${escRaw(p.nat)}`;
+  const rtgStr = p.rating != null ? Number(p.rating).toFixed(1) : '-';
   return `<li><button type="button" data-id="${p.id}">
     <span class="pos">${escRaw(nr)}</span>
     ${avatarHtml(p.image_url, p.name, 'av-sm', p.rating)}
     <span>${escRaw(p.full_name || p.name)}${legTag}${badgeHtml}<br><small>${subMeta}</small></span>
-    <b class="r">${p.rating}${pen > 0 ? ` <small class="${penCls}">&rarr; ${Math.round(e)}</small>` : ''}</b>
+    <b class="r">${rtgStr}${pen > 0 ? ` <small class="${penCls}">&rarr; ${Number(e).toFixed(1)}</small>` : ''}</b>
   </button></li>`;
 }
 
@@ -1399,20 +1463,20 @@ function fillDlg() {
         byRating
           .filter(p => !seen.has(p.id) && matchesSearchAndRole(p))
           .slice(0, 120)
-          .map(p => ({ p, srcBadge: { cls: 'global', text: 'GLOBAL' } }))
+          .map(p => ({ p, srcBadge: { cls: 'global', text: 'Global' } }))
       ).slice(0, 25);
       if (globalHits.length) {
-        html += `<li class="dlg-sec-hdr">Global 71k Matches</li>` + globalHits.map(it => renderDlgCandidateItem(it.p, role, it.srcBadge)).join('');
+        html += `<li class="dlg-sec-hdr">Global 71k matches</li>` + globalHits.map(it => renderDlgCandidateItem(it.p, role, it.srcBadge)).join('');
       }
     }
 
     if (!html) {
       const exactHint = (role !== 'SUB' && dlgFilterMode === 'exact')
-        ? `No exact ${role} candidates in this squad. Try switching to Line (${roleToGroup(role)}), All, or Global 71k Database.`
-        : 'No matching squad candidates found. Try switching to Global 71k Database or clearing your search.';
-      html = `<li><small style="padding:10px 6px;display:block;color:var(--muted)">${escRaw(exactHint)}</small></li>`;
+        ? `No exact ${role} candidates in this squad. Try switching to Line (${roleToGroup(role)}), All, or Global 71k database`
+        : 'No matching squad candidates found. Try switching to Global 71k database or clearing your search';
+      html = `<li><small style="padding:10px 6px;display:block;color:var(--mute)">${escRaw(exactHint)}</small></li>`;
     } else if (role !== 'SUB' && dlgFilterMode === 'exact' && squadHits.length === 0) {
-      html = `<li><small style="padding:6px;display:block;color:var(--muted)">No exact ${escRaw(role)} in squad — showing Global 71k matches. Switch to Line or All to see other squad players.</small></li>` + html;
+      html = `<li><small style="padding:6px;display:block;color:var(--mute)">No exact ${escRaw(role)} in squad — showing Global 71k matches. Switch to Line or All to see other squad players</small></li>` + html;
     }
 
     $('dlg-list').innerHTML = html;
@@ -1424,7 +1488,7 @@ function fillDlg() {
   const ranked = sortRanked(pool.slice(0, 250).map(p => ({ p, srcBadge: null }))).slice(0, 35);
 
   $('dlg-list').innerHTML = ranked.map(it => renderDlgCandidateItem(it.p, role, null)).join('')
-    || `<li><small style="padding:10px 6px;display:block;color:var(--muted)">${role !== 'SUB' && dlgFilterMode === 'exact' ? `No exact ${escRaw(role)} players found. Try switching to Line or All, or enable Show Legends.` : 'No matching players found. Try switching to Line or All, or enable Show Legends.'}</small></li>`;
+    || `<li><small style="padding:10px 6px;display:block;color:var(--mute)">${role !== 'SUB' && dlgFilterMode === 'exact' ? `No exact ${escRaw(role)} players found. Try switching to Line or All, or enable Show legends` : 'No matching players found. Try switching to Line or All, or enable Show legends'}</small></li>`;
 }
 
 async function assign(p) {
@@ -1488,7 +1552,7 @@ async function predict() {
     updateExecutiveView(d);
     updateAnalystView(d);
   } catch (e) { err = e.message; console.error(e); }
-  busy = false; $('predict-btn').textContent = 'Predict Match'; status();
+  busy = false; $('predict-btn').textContent = 'Predict match'; status();
   if (err) $('status').textContent = `Could not predict: ${err}`;
 }
 
@@ -1496,12 +1560,11 @@ function updateExecutiveView(d) {
   const h = esc(d.home_name), a = esc(d.away_name), pr = d.probabilities, sp = d.score_prediction;
   const hCrest = crestUrlFor(d.home_name, d.home_crest || '');
   const aCrest = crestUrlFor(d.away_name, d.away_crest || '');
-  const seg = (c, v) => `<div class="${c}" style="flex:${v}">${v >= 8 ? v + '%' : ''}</div>`;
-  let headline = d.summary?.headline || d.headline_tuned;
-  if (d.knockout && !d.summary?.headline) {
-    const fav = d.knockout.advance_home >= 50 ? h : a;
-    headline = `${fav} favoured to advance (${Math.max(d.knockout.advance_home, d.knockout.advance_away)}%)`;
-  }
+  const seg = (c, v) => {
+    const n = Number(v || 0);
+    return `<div class="${c}" style="flex:${n}">${n >= 8 ? n.toFixed(1) + '%' : ''}</div>`;
+  };
+  const vc = formatVerdictCopy(d);
 
   const elMatchup = $('exec-matchup');
   if (elMatchup) {
@@ -1510,16 +1573,16 @@ function updateExecutiveView(d) {
     elMatchup.innerHTML = `<span class="matchup-team">${crestHtml(hCrest, h, 'crest-sm')}<span class="c-home">${h}</span> (Home)</span> <span>vs</span> <span class="matchup-team">${crestHtml(aCrest, a, 'crest-sm')}<span class="c-away">${a}</span> (Away)</span>${rdTag}`;
   }
 
-  $('exec-headline').textContent = headline;
-  $('exec-conf').innerHTML = `<b>${escRaw(d.summary.confidence)} confidence.</b> ${CONF[d.summary.confidence] || ''}`;
+  $('exec-headline').textContent = vc.headline;
+  $('exec-conf').innerHTML = vc.confHtml;
   $('exec-strip').innerHTML = `${seg('s-home', pr.home)}${seg('s-draw', pr.draw)}${seg('s-away', pr.away)}`;
   $('exec-legend').innerHTML = `<span><b class="c-home">${h}</b> win</span><span>Draw</span><span><b class="c-away">${a}</b> win</span>`;
 
   if (d.knockout) {
     $('exec-ko-container').innerHTML = `
-      <div class="ko"><p>Knockout match: if level after 90' (${d.knockout.shootout_prob}%), penalties decide it. Advance probability:</p>
+      <div class="ko"><p>Knockout match: if level after 90' (${Number(d.knockout.shootout_prob).toFixed(1)}%), penalties decide advancement</p>
       <div class="strip thin">${seg('s-home', d.knockout.advance_home)}${seg('s-away', d.knockout.advance_away)}</div>
-      <div class="legend"><span><b>${h}</b> ${d.knockout.advance_home}%</span><span><b>${a}</b> ${d.knockout.advance_away}%</span></div></div>`;
+      <div class="legend"><span><b>${h}</b> ${Number(d.knockout.advance_home).toFixed(1)}%</span><span><b>${a}</b> ${Number(d.knockout.advance_away).toFixed(1)}%</span></div></div>`;
   } else {
     $('exec-ko-container').innerHTML = '';
   }
@@ -1530,7 +1593,7 @@ function updateExecutiveView(d) {
   $('score-h').textContent = h;
   $('score-val').textContent = `${ga} - ${gb}`;
   $('score-a').textContent = a;
-  $('exec-xg').textContent = `Expected goals: ${sp.projected_home_xg} to ${sp.projected_away_xg}. Over 2.5 goals: ${sp.over_2_5_prob}%.`;
+  $('exec-xg').textContent = `Expected goals: ${Number(sp.projected_home_xg).toFixed(2)} to ${Number(sp.projected_away_xg).toFixed(2)} · Over 2.5: ${Number(sp.over_2_5_prob).toFixed(1)}%`;
   $('exec-points').innerHTML = d.summary.points.map(p => `<li>${esc(p)}</li>`).join('');
   $('exp').disabled = false;
 }
@@ -1558,12 +1621,12 @@ function renderTacticalRadar(metrics, homeName, awayName) {
   };
   const rings = [0.33, 0.66, 1].map(f => {
     const pts = axes.map((_, i) => ptAt(i, f).map(n => n.toFixed(1)).join(',')).join(' ');
-    return `<polygon points="${pts}" fill="none" stroke="rgba(148,163,184,0.22)" stroke-width="1"/>`;
+    return `<polygon points="${pts}" fill="none" stroke="rgba(31,27,22,0.12)" stroke-width="1"/>`;
   }).join('');
   const spokes = axes.map((ax, i) => {
     const [x2, y2] = ptAt(i, 1);
     const [lx, ly] = ptAt(i, 1.2);
-    return `<line x1="${cx}" y1="${cy}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(148,163,184,0.2)" stroke-width="1"/><text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="#94A3B8">${ax.label}</text>`;
+    return `<line x1="${cx}" y1="${cy}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(31,27,22,0.12)" stroke-width="1"/><text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="500" fill="#5e554a">${ax.label}</text>`;
   }).join('');
   const polyH = axes.map((ax, i) => ptAt(i, norm(ax.home)).map(n => n.toFixed(1)).join(',')).join(' ');
   const polyA = axes.map((ax, i) => ptAt(i, norm(ax.away)).map(n => n.toFixed(1)).join(',')).join(' ');
@@ -1571,12 +1634,12 @@ function renderTacticalRadar(metrics, homeName, awayName) {
   wrap.innerHTML = `
     <svg class="radar-svg" viewBox="0 0 300 280" role="img" aria-label="Tactical radar chart">
       ${rings}${spokes}
-      <polygon points="${polyH}" fill="rgba(245,183,0,0.22)" stroke="#F5B700" stroke-width="2.2"/>
-      <polygon points="${polyA}" fill="rgba(56,189,248,0.22)" stroke="#38BDF8" stroke-width="2.2"/>
+      <polygon points="${polyH}" fill="rgba(184,67,46,0.18)" stroke="#b8432e" stroke-width="2"/>
+      <polygon points="${polyA}" fill="rgba(29,78,137,0.18)" stroke="#1d4e89" stroke-width="2"/>
     </svg>
     <div class="radar-legend">
-      <span><i style="background:#F5B700"></i>${homeName}</span>
-      <span><i style="background:#38BDF8"></i>${awayName}</span>
+      <span><i style="background:#b8432e"></i>${homeName}</span>
+      <span><i style="background:#1d4e89"></i>${awayName}</span>
     </div>`;
 }
 
@@ -1584,8 +1647,8 @@ function updateAnalystView(d) {
   const h = esc(d.home_name), a = esc(d.away_name), sp = d.score_prediction;
   const top = Math.max(...sp.score_grid.flat());
 
-  if ($('heat-x-title')) $('heat-x-title').innerHTML = `AWAY TEAM GOALS (&rarr;): ${a} (0 to 5)`;
-  if ($('heat-y-title')) $('heat-y-title').innerHTML = `HOME TEAM GOALS (&darr;): ${h} (0 to 5)`;
+  if ($('heat-x-title')) $('heat-x-title').innerHTML = `Away goals (&rarr;): ${a} (0 to 5)`;
+  if ($('heat-y-title')) $('heat-y-title').innerHTML = `Home goals (&darr;): ${h} (0 to 5)`;
 
   let homeSum = 0, drawSum = 0, awaySum = 0;
   let heat = `<span class="ax">H\\A</span>${[0, 1, 2, 3, 4, 5].map(n => `<span class="ax ax-x">${n}</span>`).join('')}`;
@@ -1595,24 +1658,17 @@ function updateAnalystView(d) {
       else if (i < j) awaySum += v;
       else drawSum += v;
       const zoneCls = i > j ? 'cell-home' : (i < j ? 'cell-away' : 'cell-draw');
-      const bg = v === top
-        ? 'rgba(245,183,0,0.34)'
-        : v >= 10
-          ? 'rgba(16,185,129,0.36)'
-          : v >= 4
-            ? 'rgba(56,189,248,0.25)'
-            : `rgba(30,41,59,${(0.45 + (v / 4) * 0.25).toFixed(2)})`;
-      const fg = v === top ? '#FDE68A' : (v >= 4 ? '#FFFFFF' : '#CBD5E1');
-      return `<span data-ga="${i}" data-gb="${j}" data-p="${v}" class="${zoneCls} ${v === top ? 'top1' : ''}" style="background:${bg};color:${fg}">${v.toFixed(1)}</span>`;
+      const heatCls = v === top ? 'heat-top1 top1' : (v >= 10 ? 'heat-high' : (v >= 4 ? 'heat-mod' : 'heat-low'));
+      return `<span data-ga="${i}" data-gb="${j}" data-p="${v}" class="${zoneCls} ${heatCls}">${Number(v).toFixed(1)}</span>`;
     }).join('');
   });
   $('analyst-heat').innerHTML = heat;
 
   if ($('heat-sums')) {
     $('heat-sums').innerHTML = `
-      <span class="heat-sum-pill home">Home Win Cells &Sigma;: <b>${homeSum.toFixed(1)}%</b></span>
-      <span class="heat-sum-pill draw">Draw Diagonal &Sigma;: <b>${drawSum.toFixed(1)}%</b></span>
-      <span class="heat-sum-pill away">Away Win Cells &Sigma;: <b>${awaySum.toFixed(1)}%</b></span>`;
+      <span class="heat-sum-pill home">Home win cells <b>${homeSum.toFixed(1)}%</b></span>
+      <span class="heat-sum-pill draw">Draw diagonal <b>${drawSum.toFixed(1)}%</b></span>
+      <span class="heat-sum-pill away">Away win cells <b>${awaySum.toFixed(1)}%</b></span>`;
   }
 
   const max = Math.max(...d.goalscorers.home.concat(d.goalscorers.away).map(p => p.anytime_prob), 1);
@@ -1621,14 +1677,14 @@ function updateAnalystView(d) {
     const imgUrl = p.image_url || pObj?.image_url || '';
     const pidAttr = p.id || pObj?.id ? `data-player-id="${p.id || pObj.id}"` : '';
     const roleBadge = p.pos_role || p.role || pObj?.role || p.slot_pos || p.pos || '';
-    return `<div class="sr">${avatarHtml(imgUrl, p.name, 'av-xs')}<span class="sc-name-wrap"><button type="button" class="sc-link" ${pidAttr} data-player-name="${escRaw(p.name)}">${escRaw(p.name)}</button>${roleBadge ? `<span class="pos-mini">${escRaw(roleBadge)}</span>` : ''}</span><b>${p.anytime_prob}%</b><i style="--w:${p.anytime_prob / max * 100}%;--c:var(${c})"></i></div>`;
+    return `<div class="sr">${avatarHtml(imgUrl, p.name, 'av-xs')}<span class="sc-name-wrap"><button type="button" class="sc-link" ${pidAttr} data-player-name="${escRaw(p.name)}">${escRaw(p.name)}</button>${roleBadge ? `<span class="pos-mini">${escRaw(roleBadge)}</span>` : ''}</span><b>${Number(p.anytime_prob).toFixed(1)}%</b><i style="--w:${p.anytime_prob / max * 100}%;--c:var(${c})"></i></div>`;
   }).join('')}</div>`;
   $('analyst-scorers').innerHTML = `${scorers('home', h, '--home')}${scorers('away', a, '--away')}`;
 
   renderTacticalRadar(d.tactical_metrics, h, a);
   const metrics = d.tactical_metrics.map(m => {
     const len = Math.min(100, Math.abs(m.home - m.away) / Math.max(m.home, m.away, 1) * 500).toFixed(0) + '%';
-    return `<div class="mr"><span>${esc(m.label)}</span><b>${m.home}</b><div class="bar" style="--l:${m.home > m.away ? len : '0%'};--r:${m.away > m.home ? len : '0%'}"></div><b>${m.away}</b></div>`;
+    return `<div class="mr"><span>${esc(m.label)}</span><b>${Number(m.home).toFixed(1)}</b><div class="bar" style="--l:${m.home > m.away ? len : '0%'};--r:${m.away > m.home ? len : '0%'}"></div><b>${Number(m.away).toFixed(1)}</b></div>`;
   }).join('');
   $('analyst-metrics-bars').innerHTML = metrics;
   $('analyst-results').hidden = false;
@@ -1737,7 +1793,7 @@ async function importXlsx(e) {
   } catch (err) {
     $('status').textContent = `Could not import Excel: ${err.message}`;
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Import Excel Preset'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Import'; }
   }
 }
 
@@ -1779,10 +1835,10 @@ async function syncMatches() {
   if (b) {
     b.disabled = false;
     if (ok) {
-      b.textContent = 'Synced ✓';
-      setTimeout(() => { b.textContent = 'Sync Finished Matches'; }, 2000);
+      b.textContent = 'Synced';
+      setTimeout(() => { b.textContent = 'Sync finished matches'; }, 2000);
     } else {
-      b.textContent = 'Sync Finished Matches';
+      b.textContent = 'Sync finished matches';
     }
   }
   return ok;
@@ -1839,14 +1895,20 @@ function enableDragAndDrop() {
   });
 }
 
+function formatWhatIfSummary() {
+  const hf = (+($('wi-hf')?.value ?? T.home.form ?? 2.0)).toFixed(1);
+  const af = (+($('wi-af')?.value ?? T.away.form ?? 2.0)).toFixed(1);
+  const tr = (+($('wi-tier')?.value ?? 0.95)).toFixed(2);
+  const dt = $('wi-date')?.value || '2026-11';
+  return `Form ${hf} vs ${af} · Tier ${tr} · ${dt}`;
+}
+
 function wireWhatIf() {
   const hf = $('wi-hf'), af = $('wi-af'), tr = $('wi-tier'), dt = $('wi-date'), hx = $('wi-hist-xi');
   const toggleBtn = $('whatif-toggle'), bar = $('whatif-bar'), summary = $('whatif-summary');
   const updateSummary = () => {
     if (!summary) return;
-    const dStr = dt?.value || '2026-11';
-    const tStr = (+(tr?.value || 0.95)).toFixed(2);
-    summary.textContent = `${dStr} · Tier ${tStr}`;
+    summary.textContent = formatWhatIfSummary();
   };
   if (toggleBtn && bar) {
     toggleBtn.onclick = () => {
@@ -2058,18 +2120,20 @@ function renderLeagueView(d) {
   const isNt = d.league?.type === 'national_team_competition';
   $('lg-table-title').textContent = `${d.league?.name || d.league?.comp_id || 'League'} (${d.season || ''})`;
   $('lg-kpis').innerHTML = [
-    ['Matches Played', fmtNum(sm.total_matches)],
-    ['Goals / Match', sm.avg_goals_per_match ?? '-'],
-    ['Home Win %', sm.home_win_pct !== undefined ? `${sm.home_win_pct}%` : '-'],
-    ['Draw %', sm.draw_pct !== undefined ? `${sm.draw_pct}%` : '-'],
-    ['Away Win %', sm.away_win_pct !== undefined ? `${sm.away_win_pct}%` : '-'],
-    ['Clean Sheet %', sm.clean_sheet_pct !== undefined ? `${sm.clean_sheet_pct}%` : '-'],
+    ['Matches played', fmtNum(sm.total_matches)],
+    ['Goals / match', sm.avg_goals_per_match != null ? Number(sm.avg_goals_per_match).toFixed(2) : '-'],
+    ['Home win %', sm.home_win_pct !== undefined ? `${Number(sm.home_win_pct).toFixed(1)}%` : '-'],
+    ['Draw %', sm.draw_pct !== undefined ? `${Number(sm.draw_pct).toFixed(1)}%` : '-'],
+    ['Away win %', sm.away_win_pct !== undefined ? `${Number(sm.away_win_pct).toFixed(1)}%` : '-'],
+    ['Clean sheet %', sm.clean_sheet_pct !== undefined ? `${Number(sm.clean_sheet_pct).toFixed(1)}%` : '-'],
   ].map(([k, v]) => `<div class="kpi-card"><span class="kpi-label">${k}</span><span class="kpi-val">${v}</span></div>`).join('');
 
   const rows = d.standings || [];
   $('lg-standings-body').innerHTML = rows.length ? rows.map(r => {
     const zCls = standingsZoneClass(Number(r.rank), rows.length, isNt);
     const cUrl = r.crest_url || (isNt ? crestUrlFor(r.club_name) : clubCrestUrl(r));
+    const ppgStr = r.ppg != null ? Number(r.ppg).toFixed(1) : '-';
+    const avgRtgStr = r.avg_rating != null ? Number(r.avg_rating).toFixed(1) : '-';
     return `
     <tr class="clickable ${zCls}" data-club-name="${escRaw(r.club_name)}" data-club-id="${r.club_id ?? ''}">
       <td class="num"><b>${r.rank ?? '-'}</b></td>
@@ -2082,12 +2146,12 @@ function renderLeagueView(d) {
       <td class="num">${r.ga ?? 0}</td>
       <td class="num">${r.gd > 0 ? `+${r.gd}` : (r.gd ?? 0)}</td>
       <td class="num"><b>${r.pts ?? 0}</b></td>
-      <td class="num">${r.ppg ?? '-'}</td>
+      <td class="num">${ppgStr}</td>
       <td>${renderFormBadges(r.form_last5)}</td>
-      <td class="num">${r.avg_rating ?? '-'}</td>
+      <td class="num">${avgRtgStr}</td>
       <td class="num">${fmtVal(r.squad_val)}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="14" class="empty-msg">No standings computed for this competition and season.</td></tr>';
+  }).join('') : '<tr><td colspan="14" class="empty-msg">No standings computed for this competition and season</td></tr>';
 
   renderLeagueLeaders();
 
@@ -2099,9 +2163,9 @@ function renderLeagueView(d) {
         <div class="fixture-teams">${escRaw(hn)} ${m.home_goals ?? '-'} - ${m.away_goals ?? '-'} ${escRaw(an)}</div>
         <div class="fixture-meta">${escRaw((m.date || m.match_date || '').slice(0, 10))}</div>
       </div>
-      <button type="button" class="btn ghost btn-sm" data-sim-home="${escRaw(hn)}" data-sim-away="${escRaw(an)}">Simulate Matchup</button>
+      <button type="button" class="btn ghost btn-sm" data-sim-home="${escRaw(hn)}" data-sim-away="${escRaw(an)}">Simulate</button>
     </div>`;
-  }).join('') : '<p class="empty-msg">No recent fixtures recorded for this season.</p>';
+  }).join('') : '<p class="empty-msg">No recent fixtures recorded for this season</p>';
 }
 
 function renderLeagueLeaders() {
@@ -2109,7 +2173,7 @@ function renderLeagueLeaders() {
   const list = lastLeagueData[activeLeaderKey] || [];
   const label = activeLeaderKey === 'top_scorers' ? 'G' : (activeLeaderKey === 'top_assisters' ? 'A' : 'Rtg');
   const valOf = p => activeLeaderKey === 'top_scorers' ? (p.goals ?? p.total_goals ?? 0)
-    : (activeLeaderKey === 'top_assisters' ? (p.assists ?? p.total_assists ?? 0) : (p.rating ?? '-'));
+    : (activeLeaderKey === 'top_assisters' ? (p.assists ?? p.total_assists ?? 0) : (p.rating != null ? Number(p.rating).toFixed(1) : '-'));
   box.innerHTML = list.length ? list.slice(0, 12).map((p, idx) => {
     const pid = p.player_id ?? p.id;
     const imgUrl = p.image_url || byId.get(pid)?.image_url || '';
@@ -2121,7 +2185,7 @@ function renderLeagueLeaders() {
       <span><b>${escRaw(p.name)}</b><span class="leader-meta">${escRaw(p.club_name || p.club || '')} · ${escRaw(role)}</span></span>
       <span class="leader-stat num">${valOf(p)} <small>${label}</small></span>
     </button>`;
-  }).join('') : '<p class="empty-msg">No player stats available for this season.</p>';
+  }).join('') : '<p class="empty-msg">No player stats available for this season</p>';
 }
 
 async function simulateFixture(homeName, awayName) {
@@ -2221,10 +2285,11 @@ async function searchExplorerPlayers() {
     const rows = d.players || [];
     list.innerHTML = rows.length ? rows.map(p => {
       const role = playerRole(p);
-      const legBadge = p.is_former ? '<span class="legend-tag">LEGEND</span>' : '';
+      const legBadge = p.is_former ? '<span class="legend-tag">Legend</span>' : '';
       const clubLine = p.is_former
         ? `Former: ${escRaw(p.former_club || p.club || 'Retired')} (Last: ${escRaw(p.last_season || '-')})`
         : escRaw(p.club || 'Free Agent');
+      const rtgStr = p.rating != null ? Number(p.rating).toFixed(1) : '-';
       return `
       <button type="button" class="entity-card ${currentPlayerDetail?.player?.id === p.id ? 'active' : ''}" data-pid="${p.id}">
         ${avatarHtml(p.image_url, p.name, 'av-md', p.rating)}
@@ -2232,9 +2297,9 @@ async function searchExplorerPlayers() {
           <div class="entity-title"><span>${escRaw(p.name)}</span>${legBadge}</div>
           <div class="entity-sub"><span class="pos-mini">${escRaw(role)}</span><span>${clubLine}${p.nat ? ` · ${escRaw(p.nat)}` : ''}</span></div>
         </div>
-        <div class="entity-score">${p.rating}<small>${fmtVal(p.val)}</small></div>
+        <div class="entity-score">${rtgStr}<small>${fmtVal(p.val)}</small></div>
       </button>`;
-    }).join('') : '<p class="empty-msg">No players matched your filter. Try clearing the search, status, or position pill.</p>';
+    }).join('') : '<p class="empty-msg">No players matched your filter</p>';
   } catch (e) {
     list.innerHTML = `<p class="state-banner error">Could not load players: ${escRaw(e.message)}</p>`;
   }
@@ -2275,32 +2340,32 @@ function renderSnapshotChart(snapshots) {
   const poly = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const area = `${padL},${padT + ph} ${poly} ${pts[pts.length - 1].x.toFixed(1)},${padT + ph}`;
   const fmtAxis = v => activeChartMetric === 'val' ? `€${v.toFixed(1)}M` : v.toFixed(1);
-  const strokeCol = activeChartMetric === 'val' ? '#38BDF8' : (activeChartMetric === 'form_delta' ? '#10B981' : '#F5B700');
-  const fillCol = activeChartMetric === 'val' ? 'rgba(56,189,248,0.18)' : (activeChartMetric === 'form_delta' ? 'rgba(16,185,129,0.18)' : 'rgba(245,183,0,0.18)');
+  const strokeCol = activeChartMetric === 'val' ? '#1d4e89' : (activeChartMetric === 'form_delta' ? '#166534' : '#b8432e');
+  const fillCol = activeChartMetric === 'val' ? 'rgba(29,78,137,0.14)' : (activeChartMetric === 'form_delta' ? 'rgba(22,101,52,0.14)' : 'rgba(184,67,46,0.14)');
 
   const gridYs = [0, 0.5, 1].map(t => {
     const val = minV + (1 - t) * (maxV - minV), y = padT + t * ph;
-    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="rgba(148,163,184,0.22)" stroke-dasharray="3 3"/><text x="${padL - 6}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="#94A3B8">${fmtAxis(val)}</text>`;
+    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="rgba(31,27,22,0.12)" stroke-dasharray="3 3"/><text x="${padL - 6}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="#7b7266">${fmtAxis(val)}</text>`;
   }).join('');
 
   const xTicks = [0, Math.floor((snapshots.length - 1) / 2), snapshots.length - 1]
     .filter((v, idx, a) => a.indexOf(v) === idx)
-    .map(idx => `<text x="${xAt(idx).toFixed(1)}" y="${H - 6}" text-anchor="${idx === 0 ? 'start' : (idx === snapshots.length - 1 ? 'end' : 'middle')}" font-size="11" fill="#94A3B8">${escRaw((snapshots[idx].report_date || '').slice(0, 7))}</text>`).join('');
+    .map(idx => `<text x="${xAt(idx).toFixed(1)}" y="${H - 6}" text-anchor="${idx === 0 ? 'start' : (idx === snapshots.length - 1 ? 'end' : 'middle')}" font-size="11" fill="#7b7266">${escRaw((snapshots[idx].report_date || '').slice(0, 7))}</text>`).join('');
 
   const lastPt = pts[pts.length - 1];
-  const circles = pts.map((pt, i) => `<circle class="chart-pt ${i === pts.length - 1 ? 'active' : ''}" data-sidx="${i}" tabindex="0" cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${snapshots.length > 40 ? 3 : 4}" fill="${strokeCol}" stroke="#070B12" stroke-width="1.5" aria-label="${escRaw(pt.s.report_date)}: ${fmtAxis(pt.v)}"/>`).join('');
+  const circles = pts.map((pt, i) => `<circle class="chart-pt ${i === pts.length - 1 ? 'active' : ''}" data-sidx="${i}" tabindex="0" cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${snapshots.length > 40 ? 3 : 4}" fill="${strokeCol}" stroke="#ffffff" stroke-width="1.5" aria-label="${escRaw(pt.s.report_date)}: ${fmtAxis(pt.v)}"/>`).join('');
 
   return `
     <svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Player monthly snapshot timeline">
       ${gridYs}
       <polygon points="${area}" fill="${fillCol}"/>
-      <polyline points="${poly}" fill="none" stroke="${strokeCol}" stroke-width="2.4" stroke-linejoin="round"/>
+      <polyline points="${poly}" fill="none" stroke="${strokeCol}" stroke-width="2.2" stroke-linejoin="round"/>
       ${circles}
       ${xTicks}
     </svg>
     <div class="chart-readout num" id="ex-chart-readout">
       <span><b>${escRaw((lastPt.s.report_date || '').slice(0, 7))}</b> · ${escRaw(lastPt.s.club || '-')}</span>
-      <span>Rating: <b>${lastPt.s.rating ?? '-'}</b> · Form Delta: <b>${lastPt.s.form_delta >= 0 ? '+' : ''}${lastPt.s.form_delta ?? 0}</b> · Value: <b>${fmtVal(lastPt.s.val)}</b> · g/90: <b>${lastPt.s.goals_per_90 ?? 0}</b></span>
+      <span>Rating: <b>${lastPt.s.rating != null ? Number(lastPt.s.rating).toFixed(1) : '-'}</b> · Form delta: <b>${lastPt.s.form_delta >= 0 ? '+' : ''}${lastPt.s.form_delta != null ? Number(lastPt.s.form_delta).toFixed(1) : '0.0'}</b> · Value: <b>${fmtVal(lastPt.s.val)}</b> · g/90: <b>${lastPt.s.goals_per_90 != null ? Number(lastPt.s.goals_per_90).toFixed(2) : '0.00'}</b></span>
     </div>`;
 }
 
@@ -2311,8 +2376,10 @@ function renderPlayerDetail(d) {
   const role = playerRole(p);
   const clubLabel = p.is_former ? (p.former_club || p.club || 'Retired') : p.club;
   const legendBanner = p.is_former
-    ? `<span class="legend-badge-hero">&#127942; Retired / Legend (Last season ${escRaw(p.last_season || '-')})</span>`
+    ? `<span class="legend-badge-hero">Retired / Legend (Last season ${escRaw(p.last_season || '-')})</span>`
     : '';
+  const rtgStr = p.rating != null ? Number(p.rating).toFixed(1) : '-';
+  const potStr = p.potential != null ? Number(p.potential).toFixed(1) : '-';
   panel.innerHTML = `
     <div class="detail-head">
       <div class="hero-ident">
@@ -2326,9 +2393,9 @@ function renderPlayerDetail(d) {
             ${p.sub_pos ? ` · ${escRaw(p.sub_pos)}` : ''}
           </div>
           <div class="hero-shields">
-            <span class="stat-shield gold">OVR ${p.rating ?? '-'}</span>
-            <span class="stat-shield cyan">POT ${p.potential ?? '-'}</span>
-            <span class="stat-shield">VAL ${fmtVal(p.val)}</span>
+            <span class="stat-shield gold num">Rating ${rtgStr}</span>
+            <span class="stat-shield cyan num">Potential ${potStr}</span>
+            <span class="stat-shield num">Value ${fmtVal(p.val)}</span>
           </div>
         </div>
       </div>
@@ -2339,7 +2406,7 @@ function renderPlayerDetail(d) {
     </div>
 
     <div class="bio-grid num">
-      <div class="bio-cell"><span>Rating / Potential</span><b>${p.rating ?? '-'} / ${p.potential ?? '-'}</b></div>
+      <div class="bio-cell"><span>Rating / Potential</span><b>${rtgStr} / ${potStr}</b></div>
       <div class="bio-cell"><span>Market Value</span><b>${fmtVal(p.val)}</b></div>
       <div class="bio-cell"><span>Peak Value</span><b>${fmtVal(p.highest_val)}</b></div>
       <div class="bio-cell"><span>Age / DOB</span><b>${p.age ?? '-'} (${escRaw((p.dob || '').slice(0, 10) || '-')})</b></div>
@@ -2407,7 +2474,7 @@ function wireChartPoints(snaps) {
     pt.classList.add('active');
     const s = snaps[+pt.dataset.sidx]; if (!s) return;
     const ro = $('ex-chart-readout');
-    if (ro) ro.innerHTML = `<span><b>${escRaw((s.report_date || '').slice(0, 7))}</b> · ${escRaw(s.club || '-')}</span><span>Rating: <b>${s.rating ?? '-'}</b> · Form Delta: <b>${s.form_delta >= 0 ? '+' : ''}${s.form_delta ?? 0}</b> · Value: <b>${fmtVal(s.val)}</b> · g/90: <b>${s.goals_per_90 ?? 0}</b></span>`;
+    if (ro) ro.innerHTML = `<span><b>${escRaw((s.report_date || '').slice(0, 7))}</b> · ${escRaw(s.club || '-')}</span><span>Rating: <b>${s.rating != null ? Number(s.rating).toFixed(1) : '-'}</b> · Form delta: <b>${s.form_delta >= 0 ? '+' : ''}${s.form_delta != null ? Number(s.form_delta).toFixed(1) : '0.0'}</b> · Value: <b>${fmtVal(s.val)}</b> · g/90: <b>${s.goals_per_90 != null ? Number(s.goals_per_90).toFixed(2) : '0.00'}</b></span>`;
   };
   wrap.addEventListener('mouseover', showPt);
   wrap.addEventListener('focusin', showPt);
@@ -2461,8 +2528,8 @@ async function searchExplorerClubs() {
           <div class="entity-title">${escRaw(c.name)}</div>
           <div class="entity-sub">${escRaw(c.comp_name || c.comp_id || '')}${c.country_name ? ` · ${escRaw(c.country_name)}` : ''}</div>
         </div>
-        <div class="entity-score">${c.avg_rating ?? '-'}<small>${fmtVal(c.total_val)}</small></div>
-      </button>`).join('') : '<p class="empty-msg">No clubs matched your filter.</p>';
+        <div class="entity-score">${c.avg_rating != null ? Number(c.avg_rating).toFixed(1) : '-'}<small>${fmtVal(c.total_val)}</small></div>
+      </button>`).join('') : '<p class="empty-msg">No clubs matched your filter</p>';
   } catch (e) {
     list.innerHTML = `<p class="state-banner error">Could not load clubs: ${escRaw(e.message)}</p>`;
   }
@@ -2491,6 +2558,8 @@ async function openClubInspector(clubName, clubId = null) {
 function renderClubDetail(d) {
   const c = d.club || {}, recs = d.season_records || [], fx = d.recent_matches || [], roster = d.roster || [], former = d.former_players || [];
   const panel = $('ex-c-detail');
+  const avgRtg = c.avg_rating != null ? Number(c.avg_rating).toFixed(1) : '-';
+  const maxRtg = c.max_rating != null ? Number(c.max_rating).toFixed(1) : '-';
   panel.innerHTML = `
     <div class="detail-head">
       <div class="hero-ident">
@@ -2502,32 +2571,32 @@ function renderClubDetail(d) {
             ${c.country_name ? ` · <button type="button" class="row-link-btn" id="ex-c-ct-link">${escRaw(c.country_name)}</button>` : ''}
           </div>
           <div class="hero-shields">
-            <span class="stat-shield gold">AVG ${c.avg_rating ?? '-'}</span>
-            <span class="stat-shield cyan">MAX ${c.max_rating ?? '-'}</span>
-            <span class="stat-shield">VAL ${fmtVal(c.total_val)}</span>
+            <span class="stat-shield gold num">Avg ${avgRtg}</span>
+            <span class="stat-shield cyan num">Max ${maxRtg}</span>
+            <span class="stat-shield num">Value ${fmtVal(c.total_val)}</span>
           </div>
         </div>
       </div>
       <div class="detail-actions">
-        <button type="button" class="btn btn-sm" id="ex-c-home">Set as Home Team</button>
-        <button type="button" class="btn ghost btn-sm" id="ex-c-away">Set as Away Team</button>
+        <button type="button" class="btn btn-sm" id="ex-c-home">Set as Home team</button>
+        <button type="button" class="btn ghost btn-sm" id="ex-c-away">Set as Away team</button>
       </div>
     </div>
 
     <div class="bio-grid num">
-      <div class="bio-cell"><span>Squad Value</span><b>${fmtVal(c.total_val)}</b></div>
-      <div class="bio-cell"><span>Avg / Max Rating</span><b>${c.avg_rating ?? '-'} / ${c.max_rating ?? '-'}</b></div>
-      <div class="bio-cell"><span>Squad Size / Age</span><b>${c.squad_size ?? roster.length} / ${c.avg_age ?? '-'}</b></div>
+      <div class="bio-cell"><span>Squad value</span><b>${fmtVal(c.total_val)}</b></div>
+      <div class="bio-cell"><span>Avg / Max rating</span><b>${avgRtg} / ${maxRtg}</b></div>
+      <div class="bio-cell"><span>Squad size / Age</span><b>${c.squad_size ?? roster.length} / ${c.avg_age != null ? Number(c.avg_age).toFixed(1) : '-'}</b></div>
       <div class="bio-cell"><span>Stadium</span><b>${escRaw(c.stadium_name || '-')}${c.stadium_seats ? ` (${fmtNum(c.stadium_seats)})` : ''}</b></div>
       <div class="bio-cell"><span>Coach</span><b>${escRaw(c.coach_name || '-')}</b></div>
     </div>
 
-    <h4>Season Records (2020 to 2026)</h4>
+    <h4>Season records (2020 to 2026)</h4>
     <div class="pill-grid num">
-      ${recs.length ? recs.map(r => `<button type="button" class="season-pill" data-lg="${escRaw(r.comp_id || c.comp_id || '')}" data-season="${r.season}"><b>${r.season}</b>: ${r.won ?? 0}W-${r.drawn ?? 0}D-${r.lost ?? 0}L (${r.pts ?? 0} pts)</button>`).join('') : '<span class="empty-msg">No seasonal records available.</span>'}
+      ${recs.length ? recs.map(r => `<button type="button" class="season-pill" data-lg="${escRaw(r.comp_id || c.comp_id || '')}" data-season="${r.season}"><b>${r.season}</b>: ${r.won ?? 0}W-${r.drawn ?? 0}D-${r.lost ?? 0}L (${r.pts ?? 0} pts)</button>`).join('') : '<span class="empty-msg">No seasonal records available</span>'}
     </div>
 
-    <h4>Recent Matches</h4>
+    <h4>Recent matches</h4>
     <div class="compact-list">
       ${fx.length ? fx.slice(0, 10).map(m => {
         const res = m.result || '';
@@ -2536,10 +2605,10 @@ function renderClubDetail(d) {
           <span>${res ? `<span class="wdl ${res}">${res}</span> ` : ''}<b>${escRaw(hn)} ${m.home_goals ?? '-'} - ${m.away_goals ?? '-'} ${escRaw(an)}</b> <small class="sub">${escRaw((m.date || '').slice(0, 10))}</small></span>
           <button type="button" class="btn ghost btn-sm" data-sim-h="${escRaw(hn)}" data-sim-a="${escRaw(an)}">Simulate</button>
         </div>`;
-      }).join('') : '<span class="empty-msg">No recent fixtures recorded.</span>'}
+      }).join('') : '<span class="empty-msg">No recent fixtures recorded</span>'}
     </div>
 
-    <h4 style="margin-top:16px">Active First-Team Squad (${roster.length})</h4>
+    <h4 style="margin-top:16px">Active first-team squad (${roster.length})</h4>
     <div class="tbl-wrap">
       <table class="data-tbl">
         <thead><tr><th>Player</th><th>Role</th><th class="num">Age</th><th class="num">Rating</th><th class="num">Goals</th><th class="num">Value</th></tr></thead>
@@ -2549,29 +2618,29 @@ function renderClubDetail(d) {
               <td><button type="button" class="row-link-btn">${avatarHtml(p.image_url, p.name, 'av-xs', p.rating)}<span>${escRaw(p.name)}</span></button></td>
               <td><span class="pos" style="padding:2px 6px">${escRaw(playerRole(p))}</span></td>
               <td class="num">${p.age ?? '-'}</td>
-              <td class="num"><b>${p.rating ?? '-'}</b></td>
+              <td class="num"><b>${p.rating != null ? Number(p.rating).toFixed(1) : '-'}</b></td>
               <td class="num">${p.total_goals ?? 0}</td>
               <td class="num">${fmtVal(p.val)}</td>
-            </tr>`).join('') : '<tr><td colspan="6" class="empty-msg">No active squad players found.</td></tr>'}
+            </tr>`).join('') : '<tr><td colspan="6" class="empty-msg">No active squad players found</td></tr>'}
         </tbody>
       </table>
     </div>
 
     <div class="legends-section">
-      <h4>&#127942; Club Legends &amp; Former Icons (${former.length})</h4>
+      <h4>Club legends &amp; former icons (${former.length})</h4>
       <div class="tbl-wrap">
         <table class="data-tbl">
-          <thead><tr><th>Player</th><th>Role</th><th class="num">Last Season</th><th class="num">Rating</th><th class="num">Goals</th><th class="num">Peak / Last Value</th></tr></thead>
+          <thead><tr><th>Player</th><th>Role</th><th class="num">Last season</th><th class="num">Rating</th><th class="num">Goals</th><th class="num">Peak / Last value</th></tr></thead>
           <tbody>
             ${former.length ? former.map(p => `
               <tr class="clickable" data-pid="${p.id}">
-                <td><button type="button" class="row-link-btn">${avatarHtml(p.image_url, p.name, 'av-xs', p.rating)}<span>${escRaw(p.name)}</span><span class="legend-tag">LEGEND</span></button></td>
+                <td><button type="button" class="row-link-btn">${avatarHtml(p.image_url, p.name, 'av-xs', p.rating)}<span>${escRaw(p.name)}</span><span class="legend-tag">Legend</span></button></td>
                 <td><span class="pos" style="padding:2px 6px">${escRaw(playerRole(p))}</span></td>
                 <td class="num">${escRaw(p.last_season ?? '-')}</td>
-                <td class="num"><b>${p.rating ?? '-'}</b></td>
+                <td class="num"><b>${p.rating != null ? Number(p.rating).toFixed(1) : '-'}</b></td>
                 <td class="num">${p.total_goals ?? 0}</td>
                 <td class="num">${fmtVal(p.highest_val || p.val)}</td>
-              </tr>`).join('') : '<tr><td colspan="6" class="empty-msg">No retired or former legends recorded for this club.</td></tr>'}
+              </tr>`).join('') : '<tr><td colspan="6" class="empty-msg">No retired or former legends recorded for this club</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -2604,9 +2673,9 @@ async function searchExplorerCountries() {
           <div class="entity-title">${escRaw(c.name)}</div>
           <div class="entity-sub">${escRaw(c.confederation || 'FIFA')}${c.fifa_ranking ? ` · FIFA #${c.fifa_ranking}` : ''} · ${c.total_players ?? 0} players</div>
         </div>
-        <div class="entity-score">${c.top11_avg_rating ?? '-'}<small>Top 11 avg</small></div>
+        <div class="entity-score">${c.top11_avg_rating != null ? Number(c.top11_avg_rating).toFixed(1) : '-'}<small>Top 11 avg</small></div>
       </button>`;
-    }).join('') : '<p class="empty-msg">No countries matched your filter.</p>';
+    }).join('') : '<p class="empty-msg">No countries matched your filter</p>';
   } catch (e) {
     list.innerHTML = `<p class="state-banner error">Could not load countries: ${escRaw(e.message)}</p>`;
   }
@@ -2634,6 +2703,7 @@ function renderCountryDetail(d) {
   const ntName = c.nt_preset_name || `${c.name} (National Team)`;
   const canLoadNT = Boolean(d.preset || c.has_preset || presets[ntName] || topP.length >= 11);
   const cUrl = c.team_image_url || crestUrlFor(ntName);
+  const top11Str = c.top11_avg_rating != null ? Number(c.top11_avg_rating).toFixed(1) : '-';
   const panel = $('ex-n-detail');
   panel.innerHTML = `
     <div class="detail-head">
@@ -2641,44 +2711,44 @@ function renderCountryDetail(d) {
         ${crestHtml(cUrl, c.name, 'crest-lg')}
         <div>
           <h3>${escRaw(c.name || 'Country')}</h3>
-          <div class="sub">${escRaw(c.confederation || 'FIFA')}${c.fifa_ranking ? ` · FIFA Ranking #${c.fifa_ranking}` : ''}${c.coach_name ? ` · Coach: ${escRaw(c.coach_name)}` : ''}</div>
+          <div class="sub">${escRaw(c.confederation || 'FIFA')}${c.fifa_ranking ? ` · FIFA ranking #${c.fifa_ranking}` : ''}${c.coach_name ? ` · Coach: ${escRaw(c.coach_name)}` : ''}</div>
           <div class="hero-shields">
-            ${c.fifa_ranking ? `<span class="stat-shield cyan">FIFA #${c.fifa_ranking}</span>` : ''}
-            <span class="stat-shield gold">TOP-11 ${c.top11_avg_rating ?? '-'}</span>
+            ${c.fifa_ranking ? `<span class="stat-shield cyan num">FIFA #${c.fifa_ranking}</span>` : ''}
+            <span class="stat-shield gold num">Top 11 ${top11Str}</span>
             <span class="stat-shield">${escRaw(c.confederation || 'FIFA')}</span>
           </div>
         </div>
       </div>
       <div class="detail-actions">
-        <button type="button" class="btn btn-sm" id="ex-n-home" ${canLoadNT ? '' : 'disabled'}>Load National Team (Home)</button>
-        <button type="button" class="btn ghost btn-sm" id="ex-n-away" ${canLoadNT ? '' : 'disabled'}>Load National Team (Away)</button>
+        <button type="button" class="btn btn-sm" id="ex-n-home" ${canLoadNT ? '' : 'disabled'}>Load national team (Home)</button>
+        <button type="button" class="btn ghost btn-sm" id="ex-n-away" ${canLoadNT ? '' : 'disabled'}>Load national team (Away)</button>
       </div>
     </div>
 
     <div class="bio-grid num">
-      <div class="bio-cell"><span>Player Pool</span><b>${fmtNum(c.total_players)}</b></div>
-      <div class="bio-cell"><span>Clubs Tracked</span><b>${fmtNum(c.total_clubs)}</b></div>
-      <div class="bio-cell"><span>Top-11 Avg Rating</span><b>${c.top11_avg_rating ?? '-'}</b></div>
-      <div class="bio-cell"><span>Top-25 Value</span><b>${fmtVal(c.top25_val)}</b></div>
-      <div class="bio-cell"><span>Pool Avg Age</span><b>${c.avg_age ?? '-'}</b></div>
+      <div class="bio-cell"><span>Player pool</span><b>${fmtNum(c.total_players)}</b></div>
+      <div class="bio-cell"><span>Clubs tracked</span><b>${fmtNum(c.total_clubs)}</b></div>
+      <div class="bio-cell"><span>Top-11 avg rating</span><b>${top11Str}</b></div>
+      <div class="bio-cell"><span>Top-25 value</span><b>${fmtVal(c.top25_val)}</b></div>
+      <div class="bio-cell"><span>Pool avg age</span><b>${c.avg_age != null ? Number(c.avg_age).toFixed(1) : '-'}</b></div>
     </div>
 
     <div class="detail-split">
       <div>
-        <h4>Domestic Leagues</h4>
+        <h4>Domestic leagues</h4>
         <div class="compact-list">
-          ${lgs.length ? lgs.map(l => `<button type="button" class="compact-row clickable" data-lg="${escRaw(l.comp_id)}"><span><b>${escRaw(l.name)}</b></span><span class="sub">${escRaw(l.comp_id)}</span></button>`).join('') : '<span class="empty-msg">No domestic leagues tracked.</span>'}
+          ${lgs.length ? lgs.map(l => `<button type="button" class="compact-row clickable" data-lg="${escRaw(l.comp_id)}"><span><b>${escRaw(l.name)}</b></span><span class="sub">${escRaw(l.comp_id)}</span></button>`).join('') : '<span class="empty-msg">No domestic leagues tracked</span>'}
         </div>
       </div>
       <div>
-        <h4>Top Domestic Clubs</h4>
+        <h4>Top domestic clubs</h4>
         <div class="compact-list">
-          ${clubs.length ? clubs.map(cl => `<button type="button" class="compact-row clickable" data-club="${escRaw(cl.name)}" data-cid="${cl.club_id ?? ''}"><span style="display:inline-flex;align-items:center;gap:8px">${crestHtml(clubCrestUrl(cl), cl.name, 'crest-xs')}<b>${escRaw(cl.name)}</b></span><span class="sub num">Rtg ${cl.avg_rating ?? '-'} · ${fmtVal(cl.total_val)}</span></button>`).join('') : '<span class="empty-msg">No domestic clubs tracked.</span>'}
+          ${clubs.length ? clubs.map(cl => `<button type="button" class="compact-row clickable" data-club="${escRaw(cl.name)}" data-cid="${cl.club_id ?? ''}"><span style="display:inline-flex;align-items:center;gap:8px">${crestHtml(clubCrestUrl(cl), cl.name, 'crest-xs')}<b>${escRaw(cl.name)}</b></span><span class="sub num">Rtg ${cl.avg_rating != null ? Number(cl.avg_rating).toFixed(1) : '-'} · ${fmtVal(cl.total_val)}</span></button>`).join('') : '<span class="empty-msg">No domestic clubs tracked</span>'}
         </div>
       </div>
     </div>
 
-    <h4 style="margin-top:16px">Top Players by Nationality</h4>
+    <h4 style="margin-top:16px">Top players by nationality</h4>
     <div class="tbl-wrap">
       <table class="data-tbl">
         <thead><tr><th>Player</th><th>Role</th><th>Club</th><th class="num">Age</th><th class="num">Rating</th><th class="num">Value</th></tr></thead>
@@ -2689,9 +2759,9 @@ function renderCountryDetail(d) {
               <td><span class="pos" style="padding:2px 6px">${escRaw(playerRole(p))}</span></td>
               <td>${escRaw(p.club || '-')}</td>
               <td class="num">${p.age ?? '-'}</td>
-              <td class="num"><b>${p.rating ?? '-'}</b></td>
+              <td class="num"><b>${p.rating != null ? Number(p.rating).toFixed(1) : '-'}</b></td>
               <td class="num">${fmtVal(p.val)}</td>
-            </tr>`).join('') : '<tr><td colspan="6" class="empty-msg">No players recorded.</td></tr>'}
+            </tr>`).join('') : '<tr><td colspan="6" class="empty-msg">No players recorded</td></tr>'}
         </tbody>
       </table>
     </div>`;

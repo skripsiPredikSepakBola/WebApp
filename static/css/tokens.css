@@ -1,0 +1,55 @@
+/* PitchPulse AI — Warm Daylight Editorial Design Tokens */
+
+:root {
+  /* Paper & Surface Ramp */
+  --bg: #f7f4ee;
+  --surface: #ffffff;
+  --surface-soft: #fdfbf7;
+  --surface-raised: #efe9df;
+
+  /* Ink & Hairlines */
+  --ink: #1f1b16;
+  --ink-2: #5e554a;
+  --mute: #7b7266;
+  --border: rgba(31, 27, 22, 0.09);
+  --border-strong: rgba(31, 27, 22, 0.16);
+
+  /* Matchup Accents */
+  --home: #b8432e;
+  --home-soft: #f9ece9;
+  --away: #1d4e89;
+  --away-soft: #e9f0f8;
+  --draw: #d8d1c5;
+  --draw-ink: #1f1b16;
+
+  /* Matte Pitch Turf & Chalk */
+  --pitch: #2d5a43;
+  --pitch-stripe: #28523d;
+  --chalk: rgba(255, 252, 245, 0.44);
+
+  /* Semantic Status */
+  --positive: #166534;
+  --positive-soft: #e7f3ec;
+  --warning: #9a5b13;
+  --warning-soft: #fbf2e3;
+  --negative: #b91c1c;
+  --negative-soft: #fbeaea;
+
+  /* Typography */
+  --sans: "Instrument Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Nested Radius Scale */
+  --r-panel: 16px;
+  --r-card: 12px;
+  --r-ctrl: 8px;
+  --r-badge: 6px;
+  --r-pill: 4px;
+
+  /* Motion & Subtle Neutral Elevation */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --shadow-sm: 0 1px 2px rgba(31, 27, 22, 0.05);
+  --shadow-lg: 0 12px 32px rgba(31, 27, 22, 0.12);
+}
