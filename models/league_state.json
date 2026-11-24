@@ -225,11 +225,11 @@
     "tier_known": true
   },
   "ES1": {
-    "n": 5448,
-    "goals": 14507.0,
+    "n": 5449,
+    "goals": 14509.0,
     "home": 2508.0,
-    "avg_goals": 2.6641,
-    "home_win": 0.46,
+    "avg_goals": 2.664,
+    "home_win": 0.4599,
     "tier": 1.0,
     "tier_known": true
   },
@@ -279,11 +279,11 @@
     "tier_known": true
   },
   "GB1": {
-    "n": 5429,
-    "goals": 15188.0,
-    "home": 2417.0,
-    "avg_goals": 2.7941,
-    "home_win": 0.4454,
+    "n": 5430,
+    "goals": 15192.0,
+    "home": 2418.0,
+    "avg_goals": 2.7943,
+    "home_win": 0.4455,
     "tier": 1.0,
     "tier_known": true
   },
@@ -324,11 +324,11 @@
     "tier_known": true
   },
   "IT1": {
-    "n": 5446,
-    "goals": 14867.0,
-    "home": 2341.0,
-    "avg_goals": 2.7288,
-    "home_win": 0.4306,
+    "n": 5448,
+    "goals": 14873.0,
+    "home": 2343.0,
+    "avg_goals": 2.7289,
+    "home_win": 0.4308,
     "tier": 1.0,
     "tier_known": true
   },
@@ -549,11 +549,11 @@
     "tier_known": true
   },
   "SE1": {
-    "n": 464,
-    "goals": 1318.0,
-    "home": 187.0,
-    "avg_goals": 2.7982,
-    "home_win": 0.4172,
+    "n": 465,
+    "goals": 1323.0,
+    "home": 188.0,
+    "avg_goals": 2.8015,
+    "home_win": 0.418,
     "tier": 0.85,
     "tier_known": true
   },
