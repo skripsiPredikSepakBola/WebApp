@@ -117,11 +117,11 @@
     "tier_known": true
   },
   "CL": {
-    "n": 1944,
-    "goals": 6091.0,
-    "home": 933.0,
-    "avg_goals": 3.0928,
-    "home_win": 0.4771,
+    "n": 1956,
+    "goals": 6122.0,
+    "home": 939.0,
+    "avg_goals": 3.09,
+    "home_win": 0.4773,
     "tier": 1.0,
     "tier_known": true
   },
@@ -378,11 +378,11 @@
     "tier_known": true
   },
   "MLS1": {
-    "n": 1023,
-    "goals": 3195.0,
-    "home": 458.0,
-    "avg_goals": 3.054,
-    "home_win": 0.4481,
+    "n": 1024,
+    "goals": 3198.0,
+    "home": 459.0,
+    "avg_goals": 3.0539,
+    "home_win": 0.4485,
     "tier": 0.85,
     "tier_known": true
   },
