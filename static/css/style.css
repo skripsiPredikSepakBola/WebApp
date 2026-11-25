@@ -89,7 +89,7 @@ button:disabled,
 .top {
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: 55;
   height: 56px;
   background-color: var(--surface-soft);
   border-bottom: 1px solid var(--border);
@@ -238,6 +238,20 @@ button:disabled,
   50% { opacity: 0.35; }
 }
 
+.mobile-search-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-ctrl);
+  background-color: var(--surface);
+  color: var(--ink);
+  flex-shrink: 0;
+}
+
 .g-search {
   position: relative;
   width: 260px;
@@ -251,6 +265,7 @@ button:disabled,
 
 .g-search-list {
   max-height: 360px;
+  z-index: 65;
 }
 
 .g-search-item {
@@ -301,6 +316,17 @@ main {
   color: var(--mute);
 }
 
+select.field {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235e554a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+}
+
 select.field option {
   background-color: var(--surface);
   color: var(--ink);
@@ -310,7 +336,7 @@ select.field option {
   width: auto;
   min-width: 96px;
   height: 32px;
-  padding: 4px 8px;
+  padding: 4px 28px 4px 8px;
   font-size: 13px;
 }
 
@@ -318,7 +344,7 @@ select.field option {
   width: auto;
   min-width: 84px;
   height: 32px;
-  padding: 4px 8px;
+  padding: 4px 26px 4px 8px;
   font-size: 12px;
 }
 
@@ -453,6 +479,13 @@ select.field option {
   .workbench-rail {
     position: sticky;
     top: 72px;
+  }
+}
+
+@media (max-width: 1119px) {
+  .workbench-rail {
+    order: -1;
+    position: static;
   }
 }
 
@@ -3446,22 +3479,23 @@ dialog::backdrop {
   }
 }
 
-/* Mobile Layout (<= 760px): Single Top Row + Search, Single Fixed Bottom Nav */
+/* Mobile Layout (<= 760px): Single Top Row + Toggle Search, Single High-Contrast Bottom Nav */
 @media (max-width: 760px) {
   .hide-mobile {
     display: none;
   }
 
   body {
-    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 
   .top {
     height: auto;
     min-height: 56px;
     flex-wrap: wrap;
-    padding: 8px 12px 12px;
+    padding: 8px 12px;
     gap: 8px 12px;
+    background-color: var(--surface);
   }
 
   .header-right {
@@ -3474,11 +3508,22 @@ dialog::backdrop {
     min-height: 36px;
   }
 
-  .g-search {
+  .mobile-search-btn {
+    display: inline-flex;
     order: 3;
+  }
+
+  .g-search {
+    display: none;
+    order: 4;
     flex: 1 1 100%;
     width: 100%;
     max-width: none;
+    padding-top: 4px;
+  }
+
+  .g-search.is-open {
+    display: block;
   }
 
   .g-search-input {
@@ -3490,11 +3535,12 @@ dialog::backdrop {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 45;
-    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    z-index: 50;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
     padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
-    background-color: var(--surface-soft);
+    background-color: var(--surface);
     border-top: 1px solid var(--border-strong);
+    box-shadow: 0 -4px 16px rgba(31, 27, 22, 0.08);
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
@@ -3504,13 +3550,31 @@ dialog::backdrop {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 4px;
     height: auto;
     min-height: 48px;
-    padding: 4px;
-    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: 10px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink-2);
     line-height: 1.1;
     white-space: normal;
+  }
+
+  .nav-ico svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .nav-tab.active {
+    background-color: var(--ink);
+    color: var(--surface-soft);
+    font-weight: 600;
+  }
+
+  .nav-tab.active .nav-ico {
+    color: var(--surface-soft);
   }
 
   main {
@@ -3547,9 +3611,51 @@ dialog::backdrop {
     min-height: 36px;
   }
 
+  .swap-col {
+    order: 0;
+  }
+
+  .btn-swap {
+    min-height: 36px;
+    height: 36px;
+  }
+
+  .picker {
+    padding: 12px;
+  }
+
+  .pk-head {
+    margin-bottom: 8px;
+  }
+
+  .pk-list {
+    max-height: 280px;
+  }
+
+  .pk-list li button {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 10px 12px;
+    min-height: 44px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+  }
+
+  .pk-list li:last-child button {
+    border-bottom: 0;
+  }
+
+  .whatif-toggle-btn {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 2px;
+    padding: 10px 14px;
+  }
+
   .field,
   .btn,
-  .filter-pill,
   .whatif-toggle-btn {
     min-height: 44px;
   }
@@ -3558,6 +3664,50 @@ dialog::backdrop {
   .field-xs,
   .field-sm {
     min-height: 36px;
+  }
+
+  .seg-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .filter-bar select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  #ex-p-pos .pill-bar,
+  #ex-p-status,
+  #cal-scope-tabs,
+  #thesis-tabs,
+  #ex-n-sea {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  #ex-p-pos .pill-bar::-webkit-scrollbar,
+  #ex-p-status::-webkit-scrollbar,
+  #cal-scope-tabs::-webkit-scrollbar,
+  #thesis-tabs::-webkit-scrollbar,
+  #ex-n-sea::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pill-sep {
+    display: none;
+  }
+
+  .filter-pill,
+  .tab-btn {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 6px 12px;
   }
 
   .pitch-toolbar {
