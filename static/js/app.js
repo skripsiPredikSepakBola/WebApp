@@ -1433,7 +1433,7 @@ function renderDlgCandidateItem(p, role, srcBadge) {
   const e = eff(p, role);
   const penCls = pen >= 4 ? 'pen-severe' : 'pen-warn';
   const legTag = p.is_former ? ' <span class="legend-tag">Legend</span>' : '';
-  const badgeHtml = srcBadge ? ` <span class="src-badge ${escRaw(srcBadge.cls)}">${escRaw(srcBadge.text)}</span>` : '';
+  const badgeHtml = srcBadge ? ` <span class="src-badge src-badge-${escRaw(srcBadge.cls)}">${escRaw(srcBadge.text)}</span>` : '';
   const subMeta = p.is_former
     ? `Former: ${escRaw(p.former_club || p.club || 'Retired')} (Last: ${escRaw(p.last_season || '-')}) · ${escRaw(p.nat)}`
     : `${escRaw(p.club)} · ${escRaw(p.nat)}`;

@@ -3136,12 +3136,16 @@ dialog::backdrop {
   padding: 2px 6px;
   border-radius: var(--r-pill);
   flex-shrink: 0;
+  margin-left: 4px;
+  vertical-align: middle;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
-.src-badge.bench { background-color: var(--positive-soft); color: var(--positive); }
-.src-badge.pitch { background-color: var(--away-soft); color: var(--away); }
-.src-badge.squad { background-color: var(--home-soft); color: var(--home); }
-.src-badge.global { background-color: var(--surface-raised); color: var(--ink-2); }
+.src-badge.src-badge-bench { background-color: var(--positive-soft); color: var(--positive); }
+.src-badge.src-badge-pitch { background-color: var(--away-soft); color: var(--away); }
+.src-badge.src-badge-squad { background-color: var(--home-soft); color: var(--home); }
+.src-badge.src-badge-global { background-color: var(--surface-raised); color: var(--ink-2); }
 
 #dlg-list b.r {
   font-size: 16px;
@@ -3782,6 +3786,7 @@ dialog::backdrop {
     max-height: 88dvh;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
   }
 
   .dlg-sheet-handle {
@@ -3794,9 +3799,19 @@ dialog::backdrop {
     flex-shrink: 0;
   }
 
+  #dlg-role-pills .filter-pill {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+
+  .dlg-legends-toggle {
+    min-height: 36px;
+    padding: 6px 10px;
+  }
+
   #dlg-list {
     flex: 1 1 auto;
-    min-height: 0;
+    min-height: 180px;
     max-height: none;
     overflow: auto;
   }
