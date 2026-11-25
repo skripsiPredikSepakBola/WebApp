@@ -195,6 +195,12 @@ function oopPenalty(p, slotRole) {
   return OOP[gFrom]?.[gTo] ?? 0;
 }
 
+function fitClassFor(p, slotRole) {
+  const pen = oopPenalty(p, slotRole);
+  if (pen === 0) return 'good';
+  return pen < 4 ? 'warn' : 'bad';
+}
+
 const eff = (p, slotRole) => {
   if (!p) return 0;
   if (slotRole === 'SUB') return p.rating;
@@ -364,6 +370,27 @@ async function init() {
       renderBench();
     };
   }
+  if ($('reset-xi-btn')) {
+    $('reset-xi-btn').onclick = async () => {
+      const sides = (pitchViewMode === 'home' || pitchViewMode === 'away') ? [pitchViewMode] : TEAMS;
+      for (const s of sides) {
+        await resetTeamXI(s);
+      }
+      if (($('wi-date')?.value || '2026-11') !== '2026-11') {
+        await applySnapshot(sides.length === 1 ? sides[0] : null);
+      }
+      updateSwapUI();
+      render();
+      predict();
+    };
+  }
+  if ($('swap-banner-bench')) {
+    $('swap-banner-bench').onclick = () => {
+      if (swapArmed && swapArmed.kind === 'slot' && playerAt(swapArmed)) {
+        benchStarter(swapArmed.t, swapArmed.i);
+      }
+    };
+  }
   if ($('swap-banner-cancel')) $('swap-banner-cancel').onclick = cancelSwapMode;
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && (swapArmed || pitchSwapMode)) cancelSwapMode();
@@ -372,6 +399,7 @@ async function init() {
   $('swap-sides-btn').onclick = swapSides;
 
   $('pitch').onclick = e => {
+    if (performance.now() < justDraggedUntil) return;
     const b = e.target.closest('.tok');
     if (!b) return;
     const t = b.dataset.t, i = +b.dataset.i;
@@ -379,8 +407,14 @@ async function init() {
     openDlg(t, 'slot', i);
   };
   TEAMS.forEach(t => $('bench-' + t).onclick = e => {
+    if (performance.now() < justDraggedUntil) return;
     const ins = e.target.closest('button[data-inspect]');
     if (ins) { openPlayerInspector(+ins.dataset.inspect); return; }
+    const isCardOrCtrl = e.target.closest('button[data-i], button[data-rm], button.add, button[data-inspect]');
+    if (!isCardOrCtrl && swapArmed && swapArmed.kind === 'slot' && swapArmed.t === t && playerAt(swapArmed)) {
+      benchStarter(t, swapArmed.i);
+      return;
+    }
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.rm !== undefined) {
       if (swapArmed && swapArmed.t === t && swapArmed.kind === 'sub' && swapArmed.i === +b.dataset.rm) swapArmed = null;
@@ -461,6 +495,7 @@ async function init() {
   loadSyncStatus();
   setInterval(loadSyncStatus, 60000);
   enableDragAndDrop();
+  wireTokContextMenu();
   wireWhatIf();
   wireHeatMap();
   wireWorkspaceNav();
@@ -1067,6 +1102,30 @@ function playerAt(ref) {
   return ref.kind === 'slot' ? T[ref.t].slots[ref.i] : T[ref.t].subs[ref.i];
 }
 
+function benchStarter(t, slotIdx) {
+  const p = T[t]?.slots?.[slotIdx];
+  if (!p) return;
+  if (!T[t].subs.some(s => s && s.id === p.id)) {
+    T[t].subs.push(p);
+  }
+  T[t].slots[slotIdx] = null;
+  swapArmed = null;
+  updateSwapUI();
+  render();
+  predict();
+}
+
+async function resetTeamXI(side) {
+  swapArmed = null;
+  const name = T[side]?.name;
+  if (!name) return false;
+  if (presets[name]) {
+    loadPreset(side, name);
+    return true;
+  }
+  return await setPredictorTeam(side, name);
+}
+
 function updateSwapUI() {
   const btn = $('pitch-swap-mode-btn');
   if (btn) {
@@ -1074,15 +1133,19 @@ function updateSwapUI() {
     btn.setAttribute('aria-pressed', pitchSwapMode ? 'true' : 'false');
   }
   const banner = $('swap-banner'), txt = $('swap-banner-text');
+  const benchBtn = $('swap-banner-bench'), cancelBtn = $('swap-banner-cancel');
+  if (cancelBtn) cancelBtn.textContent = pitchSwapMode ? 'Done' : 'Cancel';
   if (!banner || !txt) return;
   if (!swapArmed && !pitchSwapMode) {
     banner.hidden = true;
+    if (benchBtn) benchBtn.hidden = true;
     return;
   }
   banner.hidden = false;
+  const armedP = swapArmed ? playerAt(swapArmed) : null;
+  if (benchBtn) benchBtn.hidden = !(swapArmed && swapArmed.kind === 'slot' && armedP);
   if (swapArmed) {
-    const p = playerAt(swapArmed);
-    const pName = p ? short(p.name) : 'Empty slot';
+    const pName = armedP ? short(armedP.name) : 'Empty slot';
     const teamNm = (T[swapArmed.t].name || swapArmed.t).replace(/ \(National Team\)/i, '');
     txt.textContent = `Tap another ${teamNm} starter or sub to swap with ${pName}.`;
   } else {
@@ -1159,6 +1222,12 @@ function updatePitchToolbar() {
   if ($('bench-away')) $('bench-away').classList.toggle('bench-focus-hidden', pitchViewMode === 'home');
   if ($('ptool-home')) $('ptool-home').classList.toggle('is-dimmed', pitchViewMode === 'away');
   if ($('ptool-away')) $('ptool-away').classList.toggle('is-dimmed', pitchViewMode === 'home');
+  const resetBtn = $('reset-xi-btn');
+  if (resetBtn) {
+    if (pitchViewMode === 'home') resetBtn.title = `Restore default ${shortTeamLabel('home')} lineup`;
+    else if (pitchViewMode === 'away') resetBtn.title = `Restore default ${shortTeamLabel('away')} lineup`;
+    else resetBtn.title = 'Restore default preset lineups for both teams';
+  }
   updateSwapUI();
 }
 
@@ -1191,6 +1260,7 @@ function renderPitch() {
   const single = pitchViewMode === 'home' || pitchViewMode === 'away';
   el.classList.toggle('vert', v);
   el.classList.toggle('single-team', single);
+  const armedP = swapArmed ? playerAt(swapArmed) : null;
   let h = pitchSVG(v);
   const visibleTeams = single ? [pitchViewMode] : TEAMS;
   visibleTeams.forEach(t => {
@@ -1224,11 +1294,25 @@ function renderPitch() {
       const deltaBadge = Math.abs(fd) >= 0.05
         ? `<span class="fut-delta ${fd > 0 ? 'pos' : 'neg'}">${fd > 0 ? '+' : ''}${fd.toFixed(1)}</span>`
         : '';
-      const armedCls = (swapArmed && swapArmed.kind === 'slot' && swapArmed.t === t && swapArmed.i === i) ? ' swap-selected' : '';
+      const isArmedSlot = Boolean(swapArmed && swapArmed.kind === 'slot' && swapArmed.t === t && swapArmed.i === i);
+      const armedCls = isArmedSlot ? ' swap-selected' : '';
+      let swapHintCls = '';
+      let swapFitChip = '';
+      if (armedP && !isArmedSlot) {
+        if (t !== swapArmed.t) {
+          swapHintCls = ' drag-invalid';
+        } else {
+          const fCls = fitClassFor(armedP, pt.role);
+          const fPen = oopPenalty(armedP, pt.role);
+          const fEff = Math.round(eff(armedP, pt.role));
+          swapHintCls = ` drag-fit-${fCls}`;
+          swapFitChip = `<span class="swap-fit-chip fit-${fCls}">${escRaw(pt.role)} ${fEff}${fPen > 0 ? ` (-${fPen})` : ''}</span>`;
+        }
+      }
       if (p) {
         const imgUrl = p.image_url || byId.get(p.id)?.image_url || '';
         const tierCls = ratingTier(e);
-        h += `<button draggable="true" type="button" class="tok ${t} ${tierCls} ${cardCls}${armedCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
+        h += `<button type="button" class="tok ${t} ${tierCls} ${cardCls}${armedCls}${swapHintCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
           <span class="tok-top">
             <span class="tok-av">${avatarHtml(imgUrl, p.name, 'tok-pic', e)}</span>
             ${deltaBadge}
@@ -1236,11 +1320,13 @@ function renderPitch() {
           </span>
           <span class="tok-name">${esc(short(p.name))}</span>
           <span class="tok-role">${escRaw(posLabel)}</span>
+          ${swapFitChip}
         </button>`;
       } else {
-        h += `<button draggable="true" type="button" class="tok ${t} empty${armedCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
+        h += `<button type="button" class="tok ${t} empty${armedCls}${swapHintCls}" style="left:${left * 100}%;top:${top * 100}%" data-t="${t}" data-i="${i}" aria-label="${escRaw(label)}" title="${escRaw(tip)}">
           <span class="fut-plus">+</span>
           <span class="tok-name">${escRaw(pt.role)}</span>
+          ${swapFitChip}
         </button>`;
       }
     });
@@ -1249,15 +1335,20 @@ function renderPitch() {
 }
 
 function renderBench() {
+  const armedP = swapArmed ? playerAt(swapArmed) : null;
   TEAMS.forEach(t => {
     const teamName = (T[t].name || 'Team').replace(' (National Team)', '');
-    $('bench-' + t).innerHTML = `<div class="bench"><div class="bench-head"><b>${esc(teamName)} bench (${T[t].subs.length})</b><button type="button" class="add">+ Add sub</button></div><div class="bench-list">` +
+    const isBenchDropTarget = Boolean(armedP && swapArmed.kind === 'slot' && swapArmed.t === t);
+    const isOpponentBench = Boolean(armedP && swapArmed.t !== t);
+    const benchCls = 'bench' + (isBenchDropTarget ? ' drop-zone-eligible' : (isOpponentBench ? ' drag-invalid' : ''));
+    const benchCta = isBenchDropTarget ? `<span class="bench-drop-cta">Tap bench to move ${esc(short(armedP.name))} here</span>` : '';
+    $('bench-' + t).innerHTML = `<div class="${benchCls}"><div class="bench-head"><b>${esc(teamName)} bench (${T[t].subs.length})</b><button type="button" class="add">+ Add sub</button></div>${benchCta}<div class="bench-list">` +
       T[t].subs.map((p, i) => {
         const imgUrl = p.image_url || byId.get(p.id)?.image_url || '';
         const r = playerRole(p);
         const rtg = p.rating != null ? Number(p.rating).toFixed(1) : '-';
         const isArmed = swapArmed && swapArmed.kind === 'sub' && swapArmed.t === t && swapArmed.i === i;
-        return `<span class="bn ${ratingTier(p.rating)}${isArmed ? ' swap-selected' : ''}"><button type="button" class="bn-card-btn" draggable="true" data-i="${i}">${avatarHtml(imgUrl, p.name, 'av-sm', p.rating)}<span class="bn-rtg">${rtg}</span><span class="pos-mini">${escRaw(r)}</span><span class="bn-name">${esc(short(p.name))}</span></button><button type="button" data-rm="${i}" aria-label="Remove ${escRaw(p.name)}">&times;</button></span>`;
+        return `<span class="bn ${ratingTier(p.rating)}${isArmed ? ' swap-selected' : ''}"><button type="button" class="bn-card-btn" data-i="${i}">${avatarHtml(imgUrl, p.name, 'av-sm', p.rating)}<span class="bn-rtg">${rtg}</span><span class="pos-mini">${escRaw(r)}</span><span class="bn-name">${esc(short(p.name))}</span></button><button type="button" data-rm="${i}" aria-label="Remove ${escRaw(p.name)}">&times;</button></span>`;
       }).join('') +
       `</div></div>`;
   });
@@ -1870,54 +1961,457 @@ async function syncMatches() {
 }
 
 // ---- INTERACTIVE ENHANCEMENTS ----
-let dragSrc = null, activeThesisTab = 'finished', thesisData = null, recentData = null, wiTimer = null;
+let dragSrc = null, justDraggedUntil = 0, activeDrag = null, activeThesisTab = 'finished', thesisData = null, recentData = null, wiTimer = null;
 
-function enableDragAndDrop() {
+function resolveDropTarget(clientX, clientY, st) {
+  const t = st.t;
+  // 1. Magnetic 48px radius hit-testing for teammate pitch .tok buttons
   const pitch = $('pitch');
   if (pitch) {
-    pitch.addEventListener('dragstart', e => {
-      const b = e.target.closest('.tok'); if (!b) return;
-      dragSrc = { t: b.dataset.t, kind: 'slot', i: +b.dataset.i };
-      b.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    pitch.addEventListener('dragend', () => {
-      document.querySelectorAll('.tok.dragging,.tok.drag-over').forEach(el => el.classList.remove('dragging', 'drag-over'));
-    });
-    pitch.addEventListener('dragover', e => {
-      const b = e.target.closest('.tok');
-      if (!b || !dragSrc || b.dataset.t !== dragSrc.t) return;
-      e.preventDefault();
-      b.classList.add('drag-over');
-    });
-    pitch.addEventListener('dragleave', e => { const b = e.target.closest('.tok'); if (b) b.classList.remove('drag-over'); });
-    pitch.addEventListener('drop', e => {
-      const b = e.target.closest('.tok');
-      if (!b || !dragSrc || b.dataset.t !== dragSrc.t) return;
-      e.preventDefault();
-      const t = b.dataset.t, dstI = +b.dataset.i;
-      if (dragSrc.kind === 'slot') {
-        const tmp = T[t].slots[dstI];
-        T[t].slots[dstI] = T[t].slots[dragSrc.i];
-        T[t].slots[dragSrc.i] = tmp;
-      } else if (dragSrc.kind === 'sub') {
-        const subP = T[t].subs[dragSrc.i], slotP = T[t].slots[dstI];
-        T[t].slots[dstI] = subP;
-        if (slotP) T[t].subs[dragSrc.i] = slotP;
-        else T[t].subs.splice(dragSrc.i, 1);
+    let bestTok = null;
+    let bestDist = Infinity;
+    pitch.querySelectorAll(`.tok[data-t="${t}"]`).forEach(el => {
+      const idx = +el.dataset.i;
+      if (st.kind === 'slot' && idx === st.i) return;
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) return;
+      const cx = (r.left + r.right) / 2;
+      const cy = (r.top + r.bottom) / 2;
+      const dist = Math.hypot(clientX - cx, clientY - cy);
+      const inside = clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+      const radius = Math.max(48, Math.max(r.width, r.height) * 0.55);
+      if ((inside || dist <= radius) && dist < bestDist) {
+        bestDist = dist;
+        bestTok = { type: 'slot', t, i: idx, el };
       }
-      dragSrc = null; render(); predict();
+    });
+    if (bestTok) return bestTok;
+  }
+
+  // 2. Teammate bench cards (8px pad, midX before/after for reorder)
+  const benchWrap = $('bench-' + t);
+  if (benchWrap) {
+    const cards = benchWrap.querySelectorAll('.bn');
+    for (const bn of cards) {
+      const btn = bn.querySelector('button[data-i]');
+      if (!btn) continue;
+      const idx = +btn.dataset.i;
+      const r = bn.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
+      if (clientX >= r.left - 8 && clientX <= r.right + 8 && clientY >= r.top - 8 && clientY <= r.bottom + 8) {
+        if (st.kind === 'slot') {
+          return { type: 'sub-swap', t, i: idx, el: bn };
+        }
+        if (idx === st.i) return null;
+        const midX = (r.left + r.right) / 2;
+        return { type: 'sub-reorder', t, i: idx, pos: clientX < midX ? 'before' : 'after', el: bn };
+      }
+    }
+
+    // 3. Teammate .bench container (14px expanded rect for bench-zone)
+    if (st.kind === 'slot') {
+      const benchBox = benchWrap.querySelector('.bench');
+      if (benchBox) {
+        const r = benchBox.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0 &&
+            clientX >= r.left - 14 && clientX <= r.right + 14 &&
+            clientY >= r.top - 14 && clientY <= r.bottom + 14) {
+          return { type: 'bench-zone', t, el: benchBox };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function enableDragAndDrop() {
+  const clearTransientHover = () => {
+    document.querySelectorAll('.drag-snap-target, .drag-over-before, .drag-over-after, .drop-zone-active').forEach(el => {
+      el.classList.remove('drag-snap-target', 'drag-over-before', 'drag-over-after', 'drop-zone-active');
+    });
+  };
+
+  const cleanupDrag = (wasActive) => {
+    if (!activeDrag) return;
+    const st = activeDrag;
+    activeDrag = null;
+    dragSrc = null;
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerCancel);
+    window.removeEventListener('keydown', onDragKeyDown);
+    if (st.rafId) cancelAnimationFrame(st.rafId);
+    if (st.ghost) st.ghost.remove();
+    document.body.classList.remove('is-dragging-player');
+    document.querySelectorAll('.is-drag-source, .drag-fit-good, .drag-fit-warn, .drag-fit-bad, .drag-invalid, .drop-zone-eligible, .drop-zone-active, .drag-snap-target, .drag-over-before, .drag-over-after').forEach(el => {
+      el.classList.remove('is-drag-source', 'drag-fit-good', 'drag-fit-warn', 'drag-fit-bad', 'drag-invalid', 'drop-zone-eligible', 'drop-zone-active', 'drag-snap-target', 'drag-over-before', 'drag-over-after');
+    });
+    document.querySelectorAll('.drag-bench-hint').forEach(el => el.remove());
+    if (wasActive) {
+      justDraggedUntil = performance.now() + 260;
+    }
+  };
+
+  const updateDragVisuals = (st, clientX, clientY) => {
+    st.lastX = clientX;
+    st.lastY = clientY;
+    if (st.ghost) {
+      st.ghost.style.left = `${clientX}px`;
+      st.ghost.style.top = `${clientY}px`;
+    }
+    const target = resolveDropTarget(clientX, clientY, st);
+    st.target = target;
+    clearTransientHover();
+
+    const pill = st.ghost?.querySelector('.drag-fit-pill');
+    if (!pill) return;
+
+    if (!target) {
+      pill.hidden = true;
+      pill.className = 'drag-fit-pill';
+      return;
+    }
+
+    if (target.type === 'slot') {
+      target.el.classList.add('drag-snap-target');
+      const slotRole = layout(T[st.t].formation)[target.i]?.role || 'CM';
+      const fitCls = fitClassFor(st.p, slotRole);
+      const pen = oopPenalty(st.p, slotRole);
+      const e = Math.round(eff(st.p, slotRole));
+      pill.className = `drag-fit-pill fit-${fitCls}`;
+      pill.textContent = `${slotRole} ${e}${pen > 0 ? ` (-${pen})` : ''}`;
+      pill.hidden = false;
+    } else if (target.type === 'sub-swap') {
+      target.el.classList.add('drag-snap-target');
+      const subP = T[st.t].subs[target.i];
+      const srcRole = layout(T[st.t].formation)[st.i]?.role || 'CM';
+      const fitCls = fitClassFor(subP, srcRole);
+      const subPen = oopPenalty(subP, srcRole);
+      const subEff = Math.round(eff(subP, srcRole));
+      pill.className = `drag-fit-pill fit-${fitCls}`;
+      pill.textContent = `Swap → ${srcRole} ${subEff}${subPen > 0 ? ` (-${subPen})` : ''}`;
+      pill.hidden = false;
+    } else if (target.type === 'bench-zone') {
+      target.el.classList.add('drop-zone-active');
+      pill.className = 'drag-fit-pill fit-good';
+      pill.textContent = 'Send to bench';
+      pill.hidden = false;
+    } else if (target.type === 'sub-reorder') {
+      target.el.classList.add(target.pos === 'before' ? 'drag-over-before' : 'drag-over-after');
+      pill.className = 'drag-fit-pill fit-good';
+      pill.textContent = 'Reorder bench';
+      pill.hidden = false;
+    }
+  };
+
+  const tickAutoScroll = () => {
+    if (!activeDrag || !activeDrag.active) return;
+    const st = activeDrag;
+    let dy = 0;
+    if (st.lastY < 72) dy = -Math.ceil((72 - st.lastY) / 6);
+    else if (st.lastY > window.innerHeight - 72) dy = Math.ceil((st.lastY - (window.innerHeight - 72)) / 6);
+    if (dy !== 0) {
+      window.scrollBy(0, dy);
+      updateDragVisuals(st, st.lastX, st.lastY);
+    }
+    st.rafId = requestAnimationFrame(tickAutoScroll);
+  };
+
+  const activateDrag = (st, clientX, clientY) => {
+    st.active = true;
+    dragSrc = { t: st.t, kind: st.kind, i: st.i };
+    document.body.classList.add('is-dragging-player');
+    st.srcEl.classList.add('is-drag-source');
+    if (st.kind === 'sub') st.srcEl.closest('.bn')?.classList.add('is-drag-source');
+
+    const ghost = document.createElement('div');
+    ghost.className = `drag-ghost ${st.t} ${ratingTier(st.p.rating)}`;
+    const imgUrl = st.p.image_url || byId.get(st.p.id)?.image_url || '';
+    const natRole = playerRole(st.p);
+    const rtg = st.p.rating != null ? Math.round(st.p.rating) : '-';
+    ghost.innerHTML = `
+      <span class="drag-ghost-av">${avatarHtml(imgUrl, st.p.name, 'av-sm', st.p.rating)}</span>
+      <span class="drag-ghost-name">${esc(short(st.p.name))}</span>
+      <span class="drag-ghost-role">${escRaw(natRole)}</span>
+      <span class="drag-ghost-rtg">${rtg}</span>
+      <span class="drag-fit-pill" hidden></span>`;
+    document.body.appendChild(ghost);
+    st.ghost = ghost;
+
+    // Highlight all pitch slots and benches
+    const pitch = $('pitch');
+    if (pitch) {
+      const roles = layout(T[st.t].formation).map(x => x.role);
+      pitch.querySelectorAll('.tok').forEach(el => {
+        const dt = el.dataset.t;
+        const di = +el.dataset.i;
+        if (dt !== st.t) {
+          el.classList.add('drag-invalid');
+        } else if (!(st.kind === 'slot' && di === st.i)) {
+          const fitCls = fitClassFor(st.p, roles[di]);
+          el.classList.add(`drag-fit-${fitCls}`);
+        }
+      });
+    }
+    TEAMS.forEach(tm => {
+      const benchBox = $('bench-' + tm)?.querySelector('.bench');
+      if (!benchBox) return;
+      if (tm !== st.t) {
+        benchBox.classList.add('drag-invalid');
+      } else {
+        benchBox.classList.add('drop-zone-eligible');
+        if (st.kind === 'slot') {
+          const hint = document.createElement('div');
+          hint.className = 'drag-bench-hint';
+          hint.textContent = `Drop here to bench ${short(st.p.name)}`;
+          benchBox.appendChild(hint);
+        }
+      }
+    });
+
+    updateDragVisuals(st, clientX, clientY);
+    st.rafId = requestAnimationFrame(tickAutoScroll);
+  };
+
+  const commitDrop = (st, target) => {
+    if (!target) return;
+    const t = st.t;
+    if (target.type === 'slot') {
+      if (st.kind === 'slot') {
+        const tmp = T[t].slots[target.i];
+        T[t].slots[target.i] = T[t].slots[st.i];
+        T[t].slots[st.i] = tmp;
+      } else {
+        const subP = T[t].subs[st.i];
+        const slotP = T[t].slots[target.i];
+        T[t].slots[target.i] = subP || null;
+        if (slotP) T[t].subs[st.i] = slotP;
+        else T[t].subs.splice(st.i, 1);
+      }
+      swapArmed = null;
+      updateSwapUI();
+      render();
+      predict();
+    } else if (target.type === 'sub-swap' && st.kind === 'slot') {
+      const slotP = T[t].slots[st.i];
+      const subP = T[t].subs[target.i];
+      T[t].slots[st.i] = subP || null;
+      if (slotP) T[t].subs[target.i] = slotP;
+      else T[t].subs.splice(target.i, 1);
+      swapArmed = null;
+      updateSwapUI();
+      render();
+      predict();
+    } else if (target.type === 'bench-zone' && st.kind === 'slot') {
+      benchStarter(t, st.i);
+    } else if (target.type === 'sub-reorder' && st.kind === 'sub') {
+      const subs = T[t].subs;
+      if (st.i >= 0 && st.i < subs.length && target.i >= 0 && target.i < subs.length) {
+        const [moved] = subs.splice(st.i, 1);
+        let insertAt = target.i;
+        if (st.i < target.i) insertAt -= 1;
+        if (target.pos === 'after') insertAt += 1;
+        insertAt = Math.max(0, Math.min(subs.length, insertAt));
+        subs.splice(insertAt, 0, moved);
+        swapArmed = null;
+        updateSwapUI();
+        render();
+      }
+    }
+  };
+
+  const onPointerMove = e => {
+    if (!activeDrag || e.pointerId !== activeDrag.pointerId) return;
+    const st = activeDrag;
+    if (!st.active) {
+      if (Math.hypot(e.clientX - st.startX, e.clientY - st.startY) < 6) return;
+      activateDrag(st, e.clientX, e.clientY);
+    } else {
+      updateDragVisuals(st, e.clientX, e.clientY);
+    }
+    e.preventDefault();
+  };
+
+  const onPointerUp = e => {
+    if (!activeDrag || e.pointerId !== activeDrag.pointerId) return;
+    const st = activeDrag;
+    const wasActive = st.active;
+    const target = wasActive ? resolveDropTarget(e.clientX, e.clientY, st) : null;
+    cleanupDrag(wasActive);
+    if (wasActive && target) {
+      commitDrop(st, target);
+    }
+  };
+
+  const onPointerCancel = e => {
+    if (!activeDrag || e.pointerId !== activeDrag.pointerId) return;
+    cleanupDrag(activeDrag.active);
+  };
+
+  const onDragKeyDown = e => {
+    if (e.key === 'Escape' && activeDrag) {
+      e.preventDefault();
+      cleanupDrag(activeDrag.active);
+    }
+  };
+
+  const beginPotentialDrag = (e, t, kind, i, srcEl) => {
+    if (e.pointerType === 'touch' || e.button !== 0) return;
+    const p = playerAt({ t, kind, i });
+    if (!p) return;
+    e.preventDefault();
+    closeTokCtxMenu();
+    if (activeDrag) cleanupDrag(false);
+    activeDrag = {
+      t, kind, i, p, srcEl,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      lastX: e.clientX,
+      lastY: e.clientY,
+      active: false,
+      ghost: null,
+      target: null,
+      rafId: 0
+    };
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerCancel);
+    window.addEventListener('keydown', onDragKeyDown);
+  };
+
+  const pitch = $('pitch');
+  if (pitch) {
+    pitch.addEventListener('dragstart', e => e.preventDefault());
+    pitch.addEventListener('pointerdown', e => {
+      const b = e.target.closest('.tok');
+      if (!b) return;
+      beginPotentialDrag(e, b.dataset.t, 'slot', +b.dataset.i, b);
     });
   }
   TEAMS.forEach(t => {
     const bench = $('bench-' + t);
     if (!bench) return;
-    bench.addEventListener('dragstart', e => {
-      const b = e.target.closest('button[data-i]'); if (!b) return;
-      dragSrc = { t, kind: 'sub', i: +b.dataset.i };
-      e.dataTransfer.effectAllowed = 'move';
+    bench.addEventListener('dragstart', e => e.preventDefault());
+    bench.addEventListener('pointerdown', e => {
+      if (e.target.closest('button[data-rm], button.add, button[data-inspect]')) return;
+      const b = e.target.closest('.bn-card-btn[data-i]');
+      if (!b) return;
+      beginPotentialDrag(e, t, 'sub', +b.dataset.i, b);
     });
   });
+}
+
+function closeTokCtxMenu() {
+  const menu = $('tok-ctx-menu');
+  if (!menu) return;
+  menu.hidden = true;
+  menu.innerHTML = '';
+}
+
+function wireTokContextMenu() {
+  const menu = $('tok-ctx-menu');
+  if (!menu) return;
+
+  const openMenu = (e, t, kind, i) => {
+    if (matchMedia('(pointer: coarse)').matches) return;
+    e.preventDefault();
+    const p = playerAt({ t, kind, i });
+    const items = [];
+    if (p) {
+      items.push({
+        label: 'Swap player',
+        act: () => {
+          swapArmed = { t, kind, i };
+          updateSwapUI();
+          renderPitch();
+          renderBench();
+        }
+      });
+    }
+    if (kind === 'slot' && p) {
+      items.push({
+        label: 'Send to bench',
+        act: () => benchStarter(t, i)
+      });
+    }
+    items.push({
+      label: 'Replace player…',
+      act: () => openDlg(t, kind, i)
+    });
+    if (p?.id) {
+      items.push({
+        label: 'Inspect profile',
+        act: () => openPlayerInspector(p.id)
+      });
+    }
+    if (p) {
+      items.push({
+        label: 'Remove',
+        cls: 'ctx-danger',
+        act: () => {
+          if (swapArmed && swapArmed.t === t && swapArmed.kind === kind && swapArmed.i === i) swapArmed = null;
+          if (kind === 'slot') T[t].slots[i] = null;
+          else T[t].subs.splice(i, 1);
+          updateSwapUI();
+          render();
+          predict();
+        }
+      });
+    }
+
+    const slotRole = kind === 'slot' ? (layout(T[t].formation)[i]?.role || 'slot') : 'SUB';
+    const headHtml = p
+      ? `<div class="tok-ctx-head">${esc(short(p.name))} &middot; ${escRaw(playerRole(p))} &middot; ${p.rating != null ? Math.round(p.rating) : '-'}</div>`
+      : `<div class="tok-ctx-head">Empty ${escRaw(slotRole)} spot</div>`;
+    menu._items = items;
+    menu.innerHTML = headHtml + items.map((it, idx) =>
+      `<button type="button" role="menuitem" class="tok-ctx-item${it.cls ? ' ' + it.cls : ''}" data-ctx-idx="${idx}">${escRaw(it.label)}</button>`
+    ).join('');
+    menu.hidden = false;
+    menu.style.left = '0px';
+    menu.style.top = '0px';
+    const rect = menu.getBoundingClientRect();
+    const left = Math.max(8, Math.min(e.clientX, window.innerWidth - rect.width - 8));
+    const top = Math.max(8, Math.min(e.clientY, window.innerHeight - rect.height - 8));
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+  };
+
+  menu.onclick = e => {
+    const b = e.target.closest('button[data-ctx-idx]');
+    if (!b) return;
+    const item = menu._items?.[+b.dataset.ctxIdx];
+    closeTokCtxMenu();
+    if (item?.act) item.act();
+  };
+
+  const pitch = $('pitch');
+  if (pitch) {
+    pitch.addEventListener('contextmenu', e => {
+      const b = e.target.closest('.tok');
+      if (!b) return;
+      openMenu(e, b.dataset.t, 'slot', +b.dataset.i);
+    });
+  }
+  TEAMS.forEach(t => {
+    const bench = $('bench-' + t);
+    if (!bench) return;
+    bench.addEventListener('contextmenu', e => {
+      const b = e.target.closest('.bn-card-btn[data-i], button[data-i]');
+      if (!b) return;
+      openMenu(e, t, 'sub', +b.dataset.i);
+    });
+  });
+
+  document.addEventListener('pointerdown', e => {
+    if (!menu.hidden && !e.target.closest('#tok-ctx-menu')) closeTokCtxMenu();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !menu.hidden) closeTokCtxMenu();
+  });
+  window.addEventListener('scroll', () => { if (!menu.hidden) closeTokCtxMenu(); }, true);
+  window.addEventListener('resize', () => { if (!menu.hidden) closeTokCtxMenu(); });
 }
 
 function formatWhatIfSummary() {

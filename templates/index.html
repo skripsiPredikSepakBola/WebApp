@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="static/css/tokens.css?v=20261125b">
-<link rel="stylesheet" href="static/css/style.css?v=20261125b">
+<link rel="stylesheet" href="static/css/tokens.css?v=20261125c">
+<link rel="stylesheet" href="static/css/style.css?v=20261125c">
 </head>
 <body>
 <header class="top" role="banner">
@@ -112,18 +112,22 @@
           <div class="pitch-quick-tools">
             <button type="button" class="btn ghost btn-xs" id="home-autofit">Auto-fit home</button>
             <button type="button" class="btn ghost btn-xs" id="away-autofit">Auto-fit away</button>
+            <button type="button" class="btn ghost btn-xs" id="reset-xi-btn" title="Restore default preset lineup">Reset XI</button>
             <button type="button" class="filter-pill sm" id="pitch-swap-mode-btn" aria-pressed="false">Quick swap</button>
           </div>
         </div>
 
         <div class="swap-banner" id="swap-banner" hidden>
           <span id="swap-banner-text"></span>
-          <button type="button" class="btn ghost btn-xs" id="swap-banner-cancel">Cancel</button>
+          <div class="swap-banner-actions">
+            <button type="button" class="btn ghost btn-xs" id="swap-banner-bench" hidden>Send to bench</button>
+            <button type="button" class="btn ghost btn-xs" id="swap-banner-cancel">Done</button>
+          </div>
         </div>
 
         <div class="pitch" id="pitch"></div>
         <div class="benches"><div id="bench-home"></div><div id="bench-away"></div></div>
-        <p class="hint">Select any pitch token or bench player to swap or inspect, or drag between slots to reorder</p>
+        <p class="hint">Drag players on desktop to swap, bench, or reorder · Right-click for quick actions · Use Quick swap on touch</p>
       </div>
 
       <!-- RIGHT RAIL: STICKY FORECAST DOSSIER -->
@@ -551,6 +555,8 @@
   </div>
 </dialog>
 
-<script src="static/js/app.js?v=20261125b"></script>
+<div class="tok-ctx-menu" id="tok-ctx-menu" role="menu" hidden></div>
+
+<script src="static/js/app.js?v=20261125c"></script>
 </body>
 </html>
