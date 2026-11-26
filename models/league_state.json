@@ -117,11 +117,11 @@
     "tier_known": true
   },
   "CL": {
-    "n": 1956,
-    "goals": 6122.0,
-    "home": 939.0,
-    "avg_goals": 3.09,
-    "home_win": 0.4773,
+    "n": 1970,
+    "goals": 6164.0,
+    "home": 942.0,
+    "avg_goals": 3.0894,
+    "home_win": 0.4756,
     "tier": 1.0,
     "tier_known": true
   },
