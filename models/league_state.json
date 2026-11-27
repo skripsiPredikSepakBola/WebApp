@@ -207,11 +207,11 @@
     "tier_known": true
   },
   "EL": {
-    "n": 2701,
-    "goals": 7529.0,
-    "home": 1274.0,
+    "n": 2702,
+    "goals": 7532.0,
+    "home": 1275.0,
     "avg_goals": 2.7815,
-    "home_win": 0.4702,
+    "home_win": 0.4704,
     "tier": 0.92,
     "tier_known": true
   },
@@ -315,11 +315,11 @@
     "tier_known": true
   },
   "IN1L": {
-    "n": 1619,
-    "goals": 4367.0,
+    "n": 1620,
+    "goals": 4372.0,
     "home": 703.0,
-    "avg_goals": 2.6976,
-    "home_win": 0.436,
+    "avg_goals": 2.6989,
+    "home_win": 0.4357,
     "tier": 0.76,
     "tier_known": true
   },
