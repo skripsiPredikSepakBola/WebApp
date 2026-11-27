@@ -45,7 +45,7 @@ button {
   outline-offset: 2px;
 }
 
-button:active:not(:disabled),
+button:active:not(:disabled):not(.tok),
 .nav-tab:active:not(:disabled),
 .chip:active:not(:disabled),
 .filter-pill:active:not(:disabled) {
@@ -1356,6 +1356,10 @@ h4 {
 .tok:hover {
   transform: translate(-50%, -50%) translateY(-2px);
   z-index: 12;
+}
+
+.tok:active:not(:disabled) {
+  transform: translate(-50%, -50%) scale(0.97);
 }
 
 .tok:focus-visible {
